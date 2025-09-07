@@ -133,6 +133,11 @@ contract Muaban is ReentrancyGuard {
         bytes32 productHash
     );
 
+    // NEW: granular, gas-friendly events for quick toggles
+    event ListingActiveChanged(uint256 indexed id, bool active);
+    event InventoryUpdated(uint256 indexed id, uint256 inventory);
+
+    // NOTE: contactURI removed from event to reduce metadata exposure in logs
     event OrderPlaced(
         uint256 indexed orderId,
         uint256 indexed listingId,
@@ -144,7 +149,6 @@ contract Muaban is ReentrancyGuard {
         uint256 vinAmount,
         uint256 createdAt,
         uint256 confirmDeadline,
-        string  contactURI,
         bytes32 contactHash
     );
 
@@ -301,17 +305,7 @@ contract Muaban is ReentrancyGuard {
         if (L.seller == address(0)) revert InvalidListing();
         if (msg.sender != L.seller) revert NotSeller();
         L.active = active;
-        emit ListingUpdated(
-            id,
-            L.payoutWallet,
-            L.taxWallet,
-            L.taxBps,
-            L.priceUsd6,
-            L.inventory,
-            active,
-            L.productURI,
-            L.productHash
-        );
+        emit ListingActiveChanged(id, active);
     }
 
     /// @notice Adjust inventory (allows zero to effectively pause via stock).
@@ -320,17 +314,7 @@ contract Muaban is ReentrancyGuard {
         if (L.seller == address(0)) revert InvalidListing();
         if (msg.sender != L.seller) revert NotSeller();
         L.inventory = newInventory;
-        emit ListingUpdated(
-            id,
-            L.payoutWallet,
-            L.taxWallet,
-            L.taxBps,
-            L.priceUsd6,
-            newInventory,
-            L.active,
-            L.productURI,
-            L.productHash
-        );
+        emit InventoryUpdated(id, newInventory);
     }
 
     // ===== Orders & Escrow =====
@@ -397,6 +381,7 @@ contract Muaban is ReentrancyGuard {
             sellerMarked:     false
         });
 
+        // Emit without contactURI to reduce metadata exposure in logs
         emit OrderPlaced(
             orderId,
             listingId,
@@ -408,7 +393,6 @@ contract Muaban is ReentrancyGuard {
             vinAmount,
             block.timestamp,
             block.timestamp + CONFIRM_WINDOW,
-            contactURI,
             contactHash
         );
     }
@@ -517,4 +501,3 @@ contract Muaban is ReentrancyGuard {
         return orders[orderId];
     }
 }
-
