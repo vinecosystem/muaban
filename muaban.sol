@@ -184,16 +184,17 @@ contract Muaban is ReentrancyGuard {
 
     // ===== Registration =====
 
-    /// @notice One-time registration for any wallet (buyer or seller)
-    function register() external {
-        if (registered[msg.sender]) revert AlreadyRegistered();
+/// @notice One-time registration for any wallet (buyer or seller)
+function register() external nonReentrant {
+    if (registered[msg.sender]) revert AlreadyRegistered();
 
-        // Transfer the fixed registration fee directly to the fee recipient
-        VIN.safeTransferFrom(msg.sender, FEE_RECIPIENT, REGISTRATION_FEE);
+    // Transfer the fixed registration fee directly to the fee recipient
+    VIN.safeTransferFrom(msg.sender, FEE_RECIPIENT, REGISTRATION_FEE);
 
-        registered[msg.sender] = true;
-        emit Registered(msg.sender, REGISTRATION_FEE);
-    }
+    registered[msg.sender] = true;
+    emit Registered(msg.sender, REGISTRATION_FEE);
+}
+
 
     // ===== Seller profile (PII kept off-chain; store URI + hash) =====
 
