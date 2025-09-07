@@ -1,7 +1,3 @@
-Here’s your ready-to-copy **`mota.md`** (Markdown, tiếng Việt). Bạn chỉ cần lưu file này lên GitHub; về sau mỗi phiên làm việc, gửi lại file này là mình bám đúng 100% để tiếp tục code hợp đồng (EN) và DApp (VI trước, EN sau).
-
----
-
 # Muaban — Đặc tả Sản phẩm & Kỹ thuật (MVP)
 
 **Phiên bản tài liệu:** `1.0.0`
