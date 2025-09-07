@@ -1,64 +1,68 @@
-Muaban — Đặc tả Sản phẩm & Kỹ thuật (MVP)
+Here’s your ready-to-copy **`mota.md`** (Markdown, tiếng Việt). Bạn chỉ cần lưu file này lên GitHub; về sau mỗi phiên làm việc, gửi lại file này là mình bám đúng 100% để tiếp tục code hợp đồng (EN) và DApp (VI trước, EN sau).
 
-Ngày: 07/09/2025 (GMT+7)
-Chuỗi: Viction Mainnet (chainId = 88)
-Token thanh toán: VIN (ERC-20, 18 decimals) — địa chỉ: 0x941F63807401efCE8afe3C9d88d368bAA287Fac4
-Triết lý: On-chain tối giản, minh bạch, escrow an toàn, không key admin; dữ liệu nặng/PII để IPFS/Pinata.
-Giao diện DApp:
+---
 
-VI: https://vinecosystem.github.io/muaban (làm trước)
+# Muaban — Đặc tả Sản phẩm & Kỹ thuật (MVP)
 
-EN: https://vinecosystem.github.io/commerce (làm sau)
-Ngôn ngữ hợp đồng: Toàn bộ tiếng Anh (để verify công khai). Tài liệu này chỉ để mô tả/điều phối.
+**Phiên bản tài liệu:** `1.0.0`
+**Cập nhật lần cuối:** `07/09/2025` (GMT+7)
 
-1) Mục tiêu & Phạm vi
+* **Chuỗi:** Viction Mainnet (`chainId = 88`)
+* **Token thanh toán:** **VIN** (ERC-20, 18 decimals) — địa chỉ: `0x941F63807401efCE8afe3C9d88d368bAA287Fac4`
+* **Triết lý:** On-chain tối giản, minh bạch; **escrow an toàn**; **không key admin**; dữ liệu nặng/PII để **IPFS/Pinata**.
+* **Giao diện DApp:**
 
-Niêm yết giá USD; thanh toán bằng VIN.
+  * **VI:** `https://vinecosystem.github.io/muaban` (làm trước)
+  * **EN:** `https://vinecosystem.github.io/commerce` (làm sau)
+* **Ngôn ngữ hợp đồng:** toàn bộ **tiếng Anh** (để verify công khai). Tài liệu này **chỉ** để mô tả/điều phối (tiếng Việt).
 
-Escrow on-chain: Buyer nạp VIN vào hợp đồng khi đặt hàng; Buyer xác nhận nhận hàng ⇒ hợp đồng giải ngân cho Seller (tách thuế). Nếu quá hạn Buyer không xác nhận ⇒ tự động hoàn VIN cho Buyer.
+---
 
-Mỗi ví (mua/bán) phải đăng ký 1 lần: phí 0.001 VIN.
+## 1) Mục tiêu & Phạm vi
 
-Thuế theo sản phẩm (BPS); khi giải ngân sẽ chuyển thuế về ví thuế, doanh thu về ví doanh thu của Seller.
+* Niêm yết **giá USD**; thanh toán **bằng VIN**.
+* **Escrow on-chain**: Buyer nạp VIN vào hợp đồng khi đặt hàng; Buyer xác nhận nhận hàng ⇒ hợp đồng **giải ngân** cho Seller (tách **thuế**). Nếu quá hạn Buyer không xác nhận ⇒ **tự hoàn** VIN cho Buyer.
+* Mỗi **ví** (mua/bán) phải **đăng ký 1 lần**: phí **0.001 VIN**.
+* **Thuế theo sản phẩm** (BPS); giải ngân sẽ chuyển **thuế** về ví thuế, **doanh thu** về ví doanh thu của Seller.
+* PII/ảnh/mô tả **không on-chain**; on-chain chỉ lưu **URI + hash** (IPFS) để kiểm chứng toàn vẹn.
 
-Thông tin định danh/ảnh/mô tả không on-chain; on-chain chỉ lưu URI + hash (IPFS) để kiểm chứng toàn vẹn.
+> **Ngoài phạm vi MVP** (dành cho bản sau): tranh chấp (dispute), platform fee theo đơn, mã giảm giá, shipping fee động, oracle tỷ giá có chữ ký, v.v.
 
-Ngoài phạm vi MVP (để phiên bản sau): tranh chấp (dispute), phí nền tảng theo đơn, mã giảm giá, shipping fee động, oracle tỷ giá có chữ ký, v.v.
+---
 
-2) Kiến trúc “No-Admin Keys”
+## 2) Kiến trúc “No-Admin Keys”
 
-REGISTRATION_FEE = 0.001 VIN (hằng số).
+* **REGISTRATION\_FEE** = `0.001 VIN` (**hằng số**).
+* **CONFIRM\_WINDOW** = `3 days` (**hằng số**).
+* **FEE\_RECIPIENT** = ví nhận phí đăng ký (thường là ví deploy) — **immutable** khi triển khai.
+* `register()` chuyển **phí trực tiếp** tới `FEE_RECIPIENT`.
+* **Không có** owner, không pause, không đổi cấu hình, không rescue.
+* Hợp đồng chỉ giữ **VIN ký quỹ** (escrow), theo dõi bằng `totalEscrowedVin`.
 
-CONFIRM_WINDOW = 3 days (hằng số).
+---
 
-FEE_RECIPIENT = ví nhận phí đăng ký (thường là ví deploy) — immutable khi triển khai.
+## 3) Vai trò
 
-register() chuyển phí trực tiếp tới FEE_RECIPIENT.
+* **Buyer (Người mua):** xem sản phẩm, đặt hàng (ký quỹ VIN), có thể hủy trước khi Seller đánh dấu “đã gửi”, xác nhận nhận hàng để giải ngân, hoặc được hoàn tự động khi quá hạn.
+* **Seller (Người bán):** đăng ký, cập nhật hồ sơ IPFS, tạo/cập nhật sản phẩm (giá USD, thuế BPS, tồn kho, ví doanh thu & ví thuế, URI+hash), giao hàng & bấm “đã gửi”.
+* **DApp:** tính số VIN off-chain theo thị trường, hiển thị & gọi hàm on-chain.
+* **(Không có Owner)**: không ai có quyền can thiệp vào escrow.
 
-Không có owner, không pause, không đổi cấu hình, không rescue.
+---
 
-Hợp đồng chỉ giữ VIN ký quỹ (escrow), theo dõi bằng totalEscrowedVin.
+## 4) Dữ liệu On-chain
 
-3) Vai trò
+### 4.1. Đăng ký
 
-Buyer (Người mua): xem sản phẩm, đặt hàng (ký quỹ VIN), có thể hủy trước khi Seller đánh dấu “đã gửi”, xác nhận nhận hàng để giải ngân, hoặc được hoàn tự động khi quá hạn.
+* `registered[address] → bool`.
 
-Seller (Người bán): đăng ký, cập nhật hồ sơ IPFS, tạo/cập nhật sản phẩm (giá USD, thuế BPS, tồn kho, ví doanh thu & ví thuế, URI+hash), giao hàng & bấm “đã gửi”.
+### 4.2. Hồ sơ người bán (neo off-chain)
 
-DApp: tính số VIN off-chain theo thị trường, hiển thị & gọi hàm on-chain.
+* `SellerProfile { profileURI (ipfs://…), profileHash (bytes32) }`.
 
-(Không có Owner): không ai có quyền can thiệp vào escrow.
+### 4.3. Sản phẩm (Listing)
 
-4) Dữ liệu On-chain
-4.1. Đăng ký
-
-registered[address] → bool.
-
-4.2. Hồ sơ người bán (neo off-chain)
-
-SellerProfile { profileURI (ipfs://…), profileHash (bytes32) }.
-
-4.3. Sản phẩm (Listing)
+```
 Listing {
   seller        (address)  // chủ listing (đã đăng ký)
   payoutWallet  (address)  // ví nhận doanh thu
@@ -70,8 +74,11 @@ Listing {
   productURI    (string)   // ipfs://… mô tả + hình ảnh
   productHash   (bytes32)  // hash nội dung
 }
+```
 
-4.4. Đơn hàng (Order, escrow)
+### 4.4. Đơn hàng (Order, escrow)
+
+```
 Order {
   listingId       (uint256)
   buyer           (address)
@@ -93,164 +100,156 @@ Order {
   status          (enum)      // None / Escrowed / Released / Refunded / Cancelled
   sellerMarked    (bool)      // Seller đã “đã gửi”
 }
+```
 
-4.5. Kế toán
+### 4.5. Kế toán
 
-totalEscrowedVin (uint256) — tổng VIN đang giữ hộ trong escrow.
+* `totalEscrowedVin (uint256)` — tổng VIN đang giữ hộ trong escrow (invariant).
 
-5) API Hợp đồng (tên hàm tiếng Anh)
-5.1. Đăng ký & Hồ sơ
+---
 
-register() — thu 0.001 VIN và chuyển thẳng FEE_RECIPIENT; set registered[msg.sender]=true.
+## 5) API Hợp đồng (tên hàm tiếng Anh)
 
-updateSellerProfile(string profileURI, bytes32 profileHash).
+### 5.1. Đăng ký & Hồ sơ
 
-5.2. Sản phẩm
+* `register()` — thu **0.001 VIN** và **chuyển thẳng** `FEE_RECIPIENT`; set `registered[msg.sender] = true`.
+* `updateSellerProfile(string profileURI, bytes32 profileHash)`.
 
-createListing(address payoutWallet, address taxWallet, uint16 taxBps, uint256 priceUsd6, uint256 inventory, bool active, string productURI, bytes32 productHash) returns (uint256 id)
+### 5.2. Sản phẩm
 
-updateListing(uint256 id, address payoutWallet, address taxWallet, uint16 taxBps, uint256 priceUsd6, uint256 inventory, bool active, string productURI, bytes32 productHash)
+* `createListing(address payoutWallet, address taxWallet, uint16 taxBps, uint256 priceUsd6, uint256 inventory, bool active, string productURI, bytes32 productHash) returns (uint256 id)`
+* `updateListing(uint256 id, address payoutWallet, address taxWallet, uint16 taxBps, uint256 priceUsd6, uint256 inventory, bool active, string productURI, bytes32 productHash)`
+* `setListingActive(uint256 id, bool active)`
+* `setInventory(uint256 id, uint256 newInventory)` (cho phép = 0)
 
-setListingActive(uint256 id, bool active)
+### 5.3. Đơn hàng & Escrow
 
-setInventory(uint256 id, uint256 newInventory) (cho phép = 0)
+* `placeOrder(uint256 listingId, uint256 qty, uint256 vinAmount, uint256 priceUsd6Unit, uint256 vinPerUnit, string contactURI, bytes32 contactHash) returns (uint256 orderId)`
+* `sellerMarkShipped(uint256 orderId)`
+* `buyerRelease(uint256 orderId)` — chia tiền: `tax = vinAmount * taxBps / 10_000` → `taxWallet`, phần còn lại → `payoutWallet`
+* `claimTimeoutRefund(uint256 orderId)` — sau `confirmDeadline` nếu vẫn `Escrowed` → hoàn 100% VIN cho Buyer (**permissionless**)
+* `buyerCancelBeforeShipped(uint256 orderId)` — Buyer hủy nếu `Escrowed` **và** `sellerMarked == false` (phục hồi tồn kho, hoàn VIN)
 
-5.3. Đơn hàng & Escrow
+### 5.4. View
 
-placeOrder(uint256 listingId, uint256 qty, uint256 vinAmount, uint256 priceUsd6Unit, uint256 vinPerUnit, string contactURI, bytes32 contactHash) returns (uint256 orderId)
+* `contractBalances() → (vinBalance, escrowedVin, withdrawableFeesVin=0)`
+* `getListing(uint256 id) → Listing`
+* `getOrder(uint256 orderId) → Order`
 
-sellerMarkShipped(uint256 orderId)
+> **Không có**: owner, pause, đổi cấu hình, withdraw fees, rescue ERC20.
 
-buyerRelease(uint256 orderId) — chia tiền: tax = vinAmount * taxBps / 10_000 → taxWallet, phần còn lại → payoutWallet
+---
 
-claimTimeoutRefund(uint256 orderId) — sau confirmDeadline nếu vẫn Escrowed → hoàn 100% VIN cho Buyer (permissionless)
+## 6) Luồng Nghiệp vụ
 
-buyerCancelBeforeShipped(uint256 orderId) — Buyer hủy nếu Escrowed và sellerMarked == false (phục hồi tồn kho, hoàn VIN)
+### 6.1. Đăng ký ví (Buyer hoặc Seller)
 
-5.4. View
+1. Kết nối ví → `approve(VIN, contract, 0.001 VIN)` → `register()`
+2. Từ giờ ví có thể **mua** hoặc **bán**.
 
-contractBalances() → (vinBalance, escrowedVin, withdrawableFeesVin=0)
+### 6.2. Seller tạo/cập nhật sản phẩm
 
-getListing(uint256 id) → Listing
+* Cập nhật hồ sơ: `updateSellerProfile(profileURI, profileHash)`
+* Tạo: khai `priceUsd6`, `inventory`, `taxBps`, `payoutWallet`, `taxWallet`, `productURI`+`productHash`, `active`
+* Chỉnh nhanh: `setListingActive`, `setInventory`
 
-getOrder(uint256 orderId) → Order
+### 6.3. Buyer đặt hàng (escrow)
 
-Không có: owner, pause, đổi cấu hình, withdraw fees, rescue ERC20.
+* DApp tính **VIN cần ký quỹ** off-chain:
 
-6) Luồng Nghiệp vụ
-6.1. Đăng ký ví
+  ```
+  totalUsd = priceUsd * qty
+  vinAmount = ceil( totalUsd / (VIN/USD thị trường) )
+  ```
+* Buyer: `approve(VIN, contract, vinAmount)` → `placeOrder(...)`
+* Hợp đồng: **giảm tồn kho**, giữ **VIN vào escrow**, đặt `confirmDeadline = now + CONFIRM_WINDOW`, phát `OrderPlaced`.
 
-Kết nối ví → approve(VIN, contract, 0.001 VIN) → register()
+### 6.4. Giao hàng & xác nhận
 
-Từ giờ ví có thể mua hoặc bán.
+* Seller giao hàng (off-chain), bấm `sellerMarkShipped(orderId)`
+* Buyer nhận & kiểm tra → nếu OK: `buyerRelease(orderId)` → hợp đồng **tách thuế & giải ngân**.
 
-6.2. Seller tạo/cập nhật sản phẩm
+### 6.5. Quá hạn không xác nhận
 
-Cập nhật hồ sơ: updateSellerProfile(profileURI, profileHash)
+* Sau `confirmDeadline` còn `Escrowed` → **ai cũng có thể gọi** `claimTimeoutRefund(orderId)` → **hoàn 100% VIN** cho Buyer.
 
-Tạo: khai priceUsd6, inventory, taxBps, payoutWallet, taxWallet, productURI+productHash, active
+### 6.6. Hủy trước khi Seller “đã gửi”
 
-Chỉnh nhanh: setListingActive, setInventory
+* `buyerCancelBeforeShipped(orderId)` → **hoàn VIN** + **phục hồi tồn kho**, trạng thái `Cancelled`.
 
-6.3. Buyer đặt hàng (escrow)
+#### Bảng trạng thái (state machine rút gọn)
 
-DApp tính VIN cần ký quỹ off-chain:
-vinAmount = ceil( (priceUsd × qty) / (VIN/USD thị trường) )
+| Trạng thái hiện tại | Điều kiện/Nút                                  | Trạng thái kế tiếp |
+| ------------------- | ---------------------------------------------- | ------------------ |
+| Escrowed            | Buyer **Hủy** (khi *chưa* `sellerMarked`)      | Cancelled          |
+| Escrowed            | Seller **Đã gửi** (`sellerMarkShipped`)        | Escrowed (flag on) |
+| Escrowed            | Buyer **Xác nhận nhận hàng** (`buyerRelease`)  | Released           |
+| Escrowed            | **Quá hạn** → ai cũng gọi `claimTimeoutRefund` | Refunded           |
 
-Buyer: approve(VIN, contract, vinAmount) → placeOrder(...)
+---
 
-Hợp đồng: giảm tồn kho, giữ VIN vào escrow, đặt confirmDeadline = now + CONFIRM_WINDOW, phát OrderPlaced.
+## 7) Đặc tả DApp (UI/UX)
 
-6.4. Giao hàng & xác nhận
+### 7.1. Nguyên tắc
 
-Seller giao hàng (off-chain), bấm sellerMarkShipped(orderId)
+* **Song ngữ VI/EN** (VI triển khai trước, chuyển đổi tức thì).
+* **Thời gian:** hiển thị **24h, dd/mm/yyyy, GMT+7**; on-chain dùng `block.timestamp`.
+* **Tiền tệ:**
 
-Buyer nhận & kiểm tra → nếu OK: buyerRelease(orderId) → hợp đồng tách thuế & giải ngân.
+  * **USD**: định dạng locale;
+  * **VIN**: rút gọn 18 decimals (ví dụ `123.456789 VIN`).
+* **Không lộ PII:** hồ sơ/ảnh/chi tiết lấy từ `profileURI/productURI`; **contactURI** của Buyer là link riêng (khuyến nghị **mã hóa** nếu nhạy cảm).
+* **Cảnh báo riêng tư cố định** trước khi upload contact lên IPFS.
 
-6.5. Quá hạn không xác nhận
+### 7.2. Điều hướng & Màn hình
 
-Sau confirmDeadline còn Escrowed → ai cũng có thể gọi claimTimeoutRefund(orderId) → hoàn 100% VIN cho Buyer.
+* **Trang chủ**: Thanh **tìm kiếm** + **bộ lọc** (sticky), danh sách sản phẩm — **List view** mặc định (1 cột); **Grid view** tùy chọn.
+* **Trang sản phẩm**: ảnh (carousel), mô tả, **giá USD**, **ước tính VIN** realtime, form số lượng, nút **Đặt mua** (thực thi `approve + placeOrder`), hiển thị chính sách/ghi chú từ metadata.
+* **Khu Buyer – Đơn hàng của tôi**: bảng orders (id, sản phẩm, qty, **trạng thái**, **VIN escrowed**, **đếm ngược deadline**, log `sellerMarked`), nút hành động hợp lệ theo trạng thái.
+* **Khu Seller – Bán hàng**: form hồ sơ, quản lý sản phẩm (Create/Update/Active/Inventory), danh sách orders của mình, nút **Đã gửi**.
 
-6.6. Hủy trước khi Seller “đã gửi”
+### 7.3. Trạng thái & Màu sắc
 
-buyerCancelBeforeShipped(orderId) → hoàn VIN + phục hồi tồn kho, trạng thái Cancelled.
+* **Escrowed** (vàng), **Shipped** (xanh dương nhạt — khi `sellerMarked`), **Released** (xanh lá), **Refunded** (xám), **Cancelled** (đỏ nhạt).
+* Tooltip giải thích ngắn từng trạng thái; ẩn nút không hợp lệ.
 
-7) Đặc tả DApp (UI/UX)
-7.1. Nguyên tắc
+---
 
-Song ngữ VI/EN, chuyển đổi tức thì; bản VI triển khai trước.
+## 8) Tìm kiếm kiểu “Google”
 
-Thời gian: hiển thị 24h, dd/mm/yyyy, GMT+7; on-chain dùng block.timestamp.
+### 8.1. Thanh tìm kiếm (full-text + typeahead)
 
-Tiền tệ:
+* Tìm **full-text** theo các trường từ **product metadata JSON**:
+  `title`, `summary`, `description`, `tags`, `sellerAlias`, `sku`.
+* **Gợi ý (typeahead)** theo lịch sử & từ khóa phổ biến.
+* **Toán tử cơ bản**:
 
-USD: hiển thị định dạng locale;
+  * `"cụm từ"`: tìm chính xác cụm,
+  * `-từ`: loại trừ,
+  * `từ1 từ2`: mặc định AND.
 
-VIN: rút gọn 18 decimals (ví dụ 123.456789 VIN).
+### 8.2. Bộ lọc (filters) & Sắp xếp
 
-Không lộ PII: hồ sơ/ảnh/chi tiết… lấy từ profileURI/productURI trên IPFS; contactURI của Buyer là link riêng/tùy chọn mã hóa.
+* **Giá USD** (min/max), **Thuế suất** (BPS), **Còn hàng** (inventory > 0), **Danh mục/Tags**, **Người bán** (địa chỉ ví/bí danh).
+* **Sắp xếp**: mới nhất, giá tăng/giảm, tồn kho nhiều.
 
-7.2. Điều hướng & Màn hình
+### 8.3. Kiến trúc tìm kiếm
 
-Trang chủ: Thanh tìm kiếm + bộ lọc (sticky), danh sách sản phẩm (List view mặc định 1 cột; Grid view tùy chọn).
+* **Client-side index** (MiniSearch/Lunr) đủ đến \~10k sản phẩm.
+* Quy mô lớn: khuyến khích cộng đồng chạy **Indexer/API mở**:
 
-Trang sản phẩm: ảnh (carousel), mô tả, giá USD, ước tính VIN realtime, form số lượng, nút Đặt mua (thực thi approve + placeOrder), hiển thị chính sách/ghi chú từ metadata.
+  1. Lắng nghe sự kiện on-chain `ListingCreated/Updated`,
+  2. Fetch `productURI` (IPFS JSON),
+  3. Cập nhật chỉ mục & phục vụ API public.
+* DApp ưu tiên API nếu có; **fallback** về index client-side khi không có API.
 
-Khu Buyer – Đơn hàng của tôi: bảng orders, trạng thái, đếm ngược deadline, nút Xác nhận nhận hàng, Hủy (nếu chưa shipped), Hoàn do quá hạn.
+---
 
-Khu Seller – Bán hàng: form hồ sơ, quản lý sản phẩm (Create/Update/Active/Inventory), danh sách orders của mình, nút Đã gửi.
+## 9) Lược đồ Metadata (IPFS)
 
-7.3. Trạng thái & Màu sắc
+### 9.1. `product.json` (gợi ý)
 
-Escrowed (vàng), Shipped (xanh dương nhạt — khi sellerMarked), Released (xanh lá), Refunded (xám), Cancelled (đỏ nhạt).
-
-Tooltip giải thích ngắn từng trạng thái.
-
-8) Tìm kiếm kiểu “Google” (cực kỳ quan trọng)
-8.1. Thanh tìm kiếm (search bar)
-
-Full-text theo: tiêu đề, tóm tắt, mô tả, tags, seller alias (từ product metadata JSON trên IPFS).
-
-Gợi ý (typeahead) theo lịch sử/từ khóa phổ biến.
-
-Toán tử cơ bản:
-
-"cụm từ": tìm chính xác cụm,
-
--từ : loại trừ,
-
-từ1 từ2: mặc định AND.
-
-8.2. Bộ lọc (filters)
-
-Phạm vi giá USD (min/max).
-
-Thuế suất (BPS range).
-
-Còn hàng (inventory > 0).
-
-Danh mục / tags (từ metadata).
-
-Người bán (địa chỉ ví hoặc bí danh off-chain).
-
-Sắp xếp: mới nhất, giá tăng/giảm, tồn kho nhiều.
-
-8.3. Kiến trúc tìm kiếm
-
-Client-side index (ví dụ: MiniSearch/Lunr) đủ đến ~10k sản phẩm.
-
-Quy mô lớn: khuyến khích cộng đồng chạy Indexer/API mở:
-
-Lắng nghe ListingCreated/Updated →
-
-Fetch productURI (JSON/IPFS) →
-
-Cập nhật chỉ mục & phục vụ API public.
-
-DApp ưu tiên API nếu có; fallback về index client-side khi không có API.
-
-9) Lược đồ Metadata (IPFS)
-9.1. product.json (gợi ý)
+```json
 {
   "title": "Classic Leather Wallet",
   "summary": "Genuine leather, 8 card slots.",
@@ -266,11 +265,13 @@ DApp ưu tiên API nếu có; fallback về index client-side khi không có API
   "returnPolicy": "7-day returns.",
   "extra": {}
 }
+```
 
+> **On-chain** chuẩn là `priceUsd6`. Trường `priceUSD/decimals` chỉ để UI hiển thị.
 
-On-chain chuẩn là priceUsd6. priceUSD/decimals chỉ để UI hiển thị.
+### 9.2. `seller-profile.json`
 
-9.2. seller-profile.json
+```json
 {
   "displayName": "Store ABC",
   "about": "Handmade leather goods.",
@@ -280,87 +281,84 @@ On-chain chuẩn là priceUsd6. priceUSD/decimals chỉ để UI hiển thị.
   },
   "proofs": ["business license link (optional)"]
 }
+```
 
-9.3. contact.json (Buyer)
+### 9.3. `contact.json` (Buyer)
+
+```json
 {
   "name": "Nguyen Van A",
   "phone": "+84-xxx-xxx",
   "address": "xx/yy/zz, ...",
   "notes": "Please call before delivery."
 }
+```
 
+> Khuyến nghị: dùng **link riêng khó đoán** hoặc **mã hóa** trước khi upload IPFS.
 
-Khuyến nghị: dùng link riêng khó đoán hoặc mã hóa trước khi upload IPFS.
+---
 
-10) Tính toán VIN & An toàn giao dịch
+## 10) Tính toán VIN & An toàn giao dịch
 
-DApp tự tính vinAmount off-chain (gợi ý: dùng VIC/USDT × 100 ≈ VIN/USD).
+* DApp tự tính `vinAmount` off-chain (gợi ý: **VIC/USDT × 100 ≈ VIN/USD**).
+* **Quy tắc làm tròn rõ ràng:**
 
-Hiển thị “ước tính VIN” + ghi chú có thể trượt do thị trường.
+  ```
+  vinAmount = ceil( totalUsd / (VIN/USD) )
+  ```
+* Hiển thị “**ước tính VIN**” + ghi chú có thể trượt do thị trường.
+* Seller nên xem `vinAmount` trong order trước khi giao; nếu bất thường, có thể không giao (đơn sẽ hoàn khi quá hạn).
 
-Seller nên xem vinAmount trong order trước khi giao; nếu bất thường, có thể không giao (đơn sẽ hoàn khi quá hạn).
+**Invariants kỹ thuật:**
 
-Invariants kỹ thuật:
+* `totalEscrowedVin` **tăng** khi `placeOrder` (sau `transferFrom`) và **giảm** khi `buyerRelease` / `claimTimeoutRefund` / `buyerCancelBeforeShipped`.
+* Không có đường rút VIN nào khác ngoài ba luồng trên.
+* Dùng `nonReentrant` + trình tự **checks-effects-interactions**.
 
-totalEscrowedVin tăng khi placeOrder (sau transferFrom) và giảm khi buyerRelease / claimTimeoutRefund / buyerCancelBeforeShipped.
+---
 
-Không có đường rút VIN nào khác ngoài ba luồng trên.
+## 11) Kiểm thử Tối thiểu (E2E)
 
-Dùng nonReentrant + trình tự checks-effects-interactions.
+1. **Đăng ký**: A (Seller), B (Buyer) — phí chuyển **thẳng** `FEE_RECIPIENT`.
+2. **Tạo sản phẩm**: tồn kho 10, `taxBps = 1000` (10%).
+3. **Đặt mua**: B mua `qty = 2`, `vinAmount` hợp lệ → `Escrowed`, tồn kho còn 8.
+4. **Giao & Giải ngân**: Seller `sellerMarkShipped`; Buyer `buyerRelease` → thuế → `taxWallet`, doanh thu → `payoutWallet`.
+5. **Timeout refund**: B đặt nhưng không xác nhận → sau hạn, **ai cũng gọi được** `claimTimeoutRefund` → VIN về B.
+6. **Hủy trước ship**: B đặt xong bấm hủy (chưa `sellerMarked`) → VIN về B, tồn kho phục hồi.
 
-11) Kiểm thử Tối thiểu (E2E)
+---
 
-Đăng ký: A (Seller), B (Buyer) — phí chuyển thẳng FEE_RECIPIENT.
+## 12) Triển khai & Verify (Checklist)
 
-Tạo sản phẩm: tồn kho 10, taxBps=1000 (10%).
+* **Triển khai** (constructor):
 
-Đặt mua: B mua qty=2, vinAmount hợp lệ → Escrowed, tồn kho còn 8.
+  * `vinToken = 0x941F63807401efCE8afe3C9d88d368bAA287Fac4`
+  * `feeRecipient = <ví nhận phí>` (thường là ví deploy)
+* **Verify** nguồn trên VicScan (Solidity `^0.8.24`, OpenZeppelin).
+* Lưu **ABI + địa chỉ** vào repo `/abi`.
+* DApp (ethers.js):
 
-Giao & Giải ngân: Seller sellerMarkShipped; Buyer buyerRelease → thuế → taxWallet, doanh thu → payoutWallet.
+  * Kiểm tra `registered`, `approve + register`.
+  * `approve + placeOrder`, `buyerRelease`, `sellerMarkShipped`, `claimTimeoutRefund`, `buyerCancelBeforeShipped`.
+  * Đồng hồ đếm đến `confirmDeadline` (**GMT+7**).
 
-Timeout refund: Buyer khác đặt nhưng không xác nhận → sau hạn, ai cũng gọi được claimTimeoutRefund → VIN về Buyer.
+---
 
-Hủy trước ship: Buyer đặt xong bấm hủy (chưa sellerMarked) → VIN về Buyer, tồn kho phục hồi.
+## 13) Quy ước UI/UX & Kỹ thuật Frontend
 
-12) Triển khai & Verify
+* **List view** mặc định (1 cột); **Grid view** 2–3 cột tùy chọn; responsive (ưu tiên mobile).
+* Màu trạng thái + tooltip; **ẩn nút** không hợp lệ theo trạng thái.
+* **Toast** cho mỗi hành động (approve/đặt/hủy/giải ngân/hoàn).
+* **Cache** metadata IPFS; retry/backoff; loading skeleton.
+* **Phân trang**: infinite scroll hoặc server-side paging (nếu dùng API).
+* **Giới hạn kỹ thuật**: khuyến nghị `productURI/profileURI` ≤ \~256 ký tự.
+* **A11y**: keyboard-friendly, aria-labels cho nút quan trọng.
 
-Triển khai (constructor):
+---
 
-vinToken = 0x941F63807401efCE8afe3C9d88d368bAA287Fac4
+## 14) Cấu trúc Repo (gợi ý)
 
-feeRecipient = <ví nhận phí> (thường là ví deploy)
-
-Verify hợp đồng trên VicScan (Solidity ^0.8.24, OpenZeppelin).
-
-Lưu ABI + địa chỉ vào repo /abi.
-
-DApp (ethers.js):
-
-Kiểm tra registered, approve + register
-
-approve + placeOrder, buyerRelease, sellerMarkShipped, claimTimeoutRefund, buyerCancelBeforeShipped
-
-Đồng hồ đếm đến confirmDeadline (hiển thị GMT+7).
-
-13) Quy ước UI/UX & Kỹ thuật Frontend
-
-List view mặc định (1 cột) để đọc mô tả dài; Grid view (2–3 cột) tùy chọn.
-
-Responsive: ưu tiên mobile trước; tối thiểu iPhone SE trở lên.
-
-Trạng thái có màu & tooltip; ẩn các nút không hợp lệ theo trạng thái.
-
-Toast/Snackbar cho mỗi hành động (approve/đặt/hủy/giải ngân/hoàn).
-
-Bộ nhớ tạm: cache metadata IPFS, retry nếu lỗi; loading skeleton.
-
-Phân trang: infinite scroll hoặc server-side paging (nếu dùng API).
-
-Bảo mật: cảnh báo người dùng trước khi đẩy thông tin liên hệ lên IPFS; khuyến nghị mã hóa nếu nhạy cảm.
-
-A11y: keyboard-friendly, aria-labels cho nút hành động quan trọng.
-
-14) Cấu trúc Repo (gợi ý)
+```
 /contracts
   Muaban.sol
 /abi
@@ -373,15 +371,17 @@ A11y: keyboard-friendly, aria-labels cho nút hành động quan trọng.
   mota.md
   README_VI.md
   README_EN.md
+```
 
-15) Lộ trình nâng cấp (ngoài MVP)
+---
 
-Dispute với trọng tài (đa chữ ký), partial shipment.
+## 15) Lộ trình nâng cấp (ngoài MVP)
 
-Platform fee theo đơn (bật/tắt).
+* **Dispute** với trọng tài (đa chữ ký), **partial shipment**.
+* **Platform fee** theo đơn (bật/tắt).
+* **Oracle VIN/USD có chữ ký** (nếu muốn cố định rate on-chain khi đặt).
+* **Voucher/mã giảm giá**, **flash sale**, **bundle**.
+* **Đánh giá Seller & điểm uy tín** (off-chain, chống spam).
 
-Oracle VIN/USD có chữ ký (nếu muốn cố định rate on-chain khi đặt).
+---
 
-Voucher/mã giảm giá, flash sale, bundle.
-
-Đánh giá Seller & điểm uy tín (off-chain, chống spam).
