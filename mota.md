@@ -5,7 +5,7 @@
 **muaban** là một nền tảng thương mại điện tử thuần on-chain trên mạng **Viction (VIC)**, không tên miền, không máy chủ.  
 Mọi giao dịch mua bán đều do **hợp đồng thông minh** điều khiển, không có trung gian, không ai có quyền can thiệp.  
 
-- **Đơn vị thanh toán:** Token **VIN** (ERC-20 trên mạng VIC).  
+- **Đơn vị thanh toán:** Token **VIN** (ERC-20 trên mạng VIC). Địa chỉ token VIN trên mạng VIC: 0x941F63807401efCE8afe3C9d88d368bAA287Fac4
 - **Giá niêm yết:** Tính bằng **USD** để người mua dễ hiểu; khi đặt mua, hệ thống sẽ quy đổi sang VIN theo tỷ giá **VIC/USDT trên Binance × 100**.  
 - **Cơ chế escrow:** Khi mua, VIN được khóa trong hợp đồng; chỉ khi người mua bấm “Đã nhận hàng” trong hạn thì VIN mới được giải ngân cho người bán.  
 - **Nguyên tắc Pre-Confirm:** Người bán chỉ giao hàng sau khi buyer bấm “Đã nhận hàng” và tx on-chain thành công.  
