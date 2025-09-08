@@ -4,35 +4,33 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <!-- Slogan/Title tiếng Việt -->
   <title>muaban — Thương mại thuần on-chain trên Viction</title>
 
-  <!-- Favicon & App Icon -->
   <link rel="icon" type="image/png" href="./logo.png" />
   <link rel="apple-touch-icon" href="./logo.png" />
 
-  <!-- SEO/OpenGraph (tiếng Việt) -->
-  <meta name="description" content="muaban: nền tảng thương mại thuần on-chain trên Viction. Mua/bán bằng VIN, ký quỹ (escrow), hoàn tiền khi quá hạn — minh bạch, không trung gian." />
+  <meta name="description" content="muaban: nền tảng thương mại thuần on-chain trên Viction. Mua/bán bằng VIN, ký quỹ (escrow), minh bạch, không trung gian." />
   <meta property="og:title" content="muaban — Thương mại thuần on-chain trên Viction" />
   <meta property="og:description" content="Mua/bán bằng VIN, escrow, Pre-Confirm, hoàn tiền khi quá hạn. Không máy chủ, không trung gian." />
   <meta property="og:image" content="./logo.png" />
 
-  <!-- Styles -->
   <link rel="stylesheet" href="./style.css" />
 
-  <!-- Ethers.js (v5) cho dApp EVM/VIC -->
+  <!-- Ethers.js -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" defer></script>
 
-  <!-- Cấu hình nền tảng cho app.js -->
+  <!-- Cấu hình -->
   <script>
     window.MUABAN_CONFIG = {
       MUABAN_ADDRESS: "0xe01e2213A899E9B3b1921673D2d13a227a8df638",
       VIN_TOKEN: "0x941F63807401efCE8afe3C9d88d368bAA287Fac4",
+
       VIC_CHAIN_ID_DEC: 88,
       VIC_CHAIN_ID_HEX: "0x58",
       VIC_NAME: "Viction Mainnet",
       VIC_SYMBOL: "VIC",
       VIC_DECIMALS: 18,
+
       BINANCE_VICUSDT: "https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT",
       MUABAN_ABI_PATH: "./Muaban_ABI.json",
       SITE_BASE: "https://vinecosystem.github.io/muaban"
@@ -42,49 +40,57 @@
   <!-- App logic -->
   <script src="./app.js" defer></script>
 
-  <!-- TÍNH GIÁ VIN THEO USD NGAY TRONG INDEX.HTML -->
+  <!-- TÍNH GIÁ (chỉ cho modal) -->
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      const vicEl = document.getElementById('vicPrice');
-      const vinUsdEl = document.getElementById('vinUsd');
       const dlgVicEl = document.getElementById('dlgVicPrice');
       const dlgVinUsdEl = document.getElementById('dlgVinUsd');
 
       const setValues = (vic, vinUsd) => {
         const vicTxt = isFinite(vic) ? Number(vic).toFixed(4) : '—';
         const vinTxt = isFinite(vinUsd) ? Number(vinUsd).toFixed(2) : '—';
-        if (vicEl) vicEl.textContent = vicTxt;
-        if (vinUsdEl) vinUsdEl.textContent = vinTxt;
         if (dlgVicEl) dlgVicEl.textContent = vicTxt;
         if (dlgVinUsdEl) dlgVinUsdEl.textContent = vinTxt;
       };
 
       try {
-        if (vicEl) vicEl.textContent = 'Loading...';
-        if (vinUsdEl) vinUsdEl.textContent = 'Loading...';
-        if (dlgVicEl) dlgVicEl.textContent = 'Loading...';
-        if (dlgVinUsdEl) dlgVinUsdEl.textContent = 'Loading...';
-
         const url = (window.MUABAN_CONFIG && window.MUABAN_CONFIG.BINANCE_VICUSDT)
           ? window.MUABAN_CONFIG.BINANCE_VICUSDT
           : "https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT";
-
         const res = await fetch(url, { cache: 'no-store' });
         const data = await res.json();
         const vic = parseFloat(data?.price);
         if (!isFinite(vic)) throw new Error('Invalid VIC price');
-
-        // VIN/USD = VIC/USDT × 100 (hiển thị 2 chữ số thập phân)
-        const vinUsd = vic * 100;
+        const vinUsd = vic * 100; // 1 VIN ≈ X.XX USD
         setValues(vic, vinUsd);
       } catch {
         setValues(NaN, NaN);
       }
     });
   </script>
+
+  <!-- Quan sát trạng thái kết nối để hiện 2 tab còn lại -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const walletInfo = document.getElementById('walletInfo');
+      const connEls = document.querySelectorAll('.only-when-connected');
+      const showOrHide = () => {
+        const connected = walletInfo && !walletInfo.classList.contains('hidden');
+        connEls.forEach(el => el.style.display = connected ? '' : 'none');
+        // Nếu đang ở tab bị ẩn, chuyển về Sản phẩm
+        const activeHidden = document.querySelector('.only-when-connected.tab.active');
+        if (activeHidden && !activeHidden.offsetParent) {
+          document.querySelector('.tab[data-tab="browse"]').click();
+        }
+      };
+      const mo = new MutationObserver(showOrHide);
+      if (walletInfo) mo.observe(walletInfo, { attributes: true, attributeFilter: ['class'] });
+      showOrHide();
+    });
+  </script>
 </head>
 <body>
-  <!-- Header / Nav -->
+  <!-- Header -->
   <header class="site-header">
     <div class="header-left">
       <img class="brand-logo" src="./logo.png" alt="muaban logo" />
@@ -95,13 +101,6 @@
     </div>
 
     <div class="header-right">
-      <!-- Chip hiển thị giá -->
-      <div class="price-chips">
-        <span id="chip-vic" class="chip muted">VIC/USDT: <b id="vicPrice">Loading...</b></span>
-        <span id="chip-vin" class="chip">1 VIN ≈ <b id="vinUsd">Loading...</b> USD</span>
-      </div>
-
-      <!-- Kết nối ví -->
       <div class="wallet-box">
         <button id="btnConnect" class="btn primary">Kết nối ví</button>
         <div id="walletInfo" class="wallet-info hidden">
@@ -114,19 +113,16 @@
     </div>
   </header>
 
-  <!-- (ĐÃ LOẠI BỎ PHẦN THÔNG BÁO DÀI DÒNG) -->
-
-  <!-- Tabs điều hướng -->
+  <!-- Tabs -->
   <nav class="tabs">
     <button class="tab active" data-tab="browse">🛒 Sản phẩm</button>
-    <button class="tab" data-tab="orders">📦 Đơn hàng của tôi</button>
-    <button class="tab" data-tab="sell">🧰 Bán hàng</button>
+    <button class="tab only-when-connected" data-tab="orders">📦 Đơn hàng của tôi</button>
+    <button class="tab only-when-connected" data-tab="sell">🧰 Bán hàng</button>
   </nav>
 
   <main>
-    <!-- ==================== TAB: BROWSE ==================== -->
+    <!-- ========== BROWSE ========== -->
     <section id="tab-browse" class="tab-panel active">
-      <!-- Tìm kiếm & lọc -->
       <div class="search-bar card">
         <div class="row">
           <label>
@@ -156,10 +152,8 @@
         </div>
       </div>
 
-      <!-- Danh sách sản phẩm -->
       <div id="productGrid" class="grid"></div>
 
-      <!-- Template thẻ sản phẩm -->
       <template id="tplProductCard">
         <article class="card product">
           <div class="p-img">
@@ -193,15 +187,14 @@
       </template>
     </section>
 
-    <!-- ==================== TAB: ORDERS ==================== -->
-    <section id="tab-orders" class="tab-panel">
+    <!-- ========== ORDERS (ẩn khi chưa kết nối) ========== -->
+    <section id="tab-orders" class="tab-panel only-when-connected">
       <div class="card">
         <h2>Đơn hàng của tôi</h2>
-        <p class="muted">Dữ liệu lấy từ sự kiện on-chain. Mỗi đơn hiển thị đếm ngược đến hạn chót; bật/tắt <b>Đã nhận hàng</b> / <b>Hoàn tiền</b> theo trạng thái.</p>
+        <p class="muted">Theo dõi đơn on-chain, xác nhận nhận hàng hoặc hoàn tiền khi đủ điều kiện.</p>
       </div>
       <div id="orderList" class="stack"></div>
 
-      <!-- Template thẻ đơn hàng -->
       <template id="tplOrderItem">
         <article class="card order">
           <header class="order-head">
@@ -232,9 +225,8 @@
       </template>
     </section>
 
-    <!-- ==================== TAB: SELL ==================== -->
-    <section id="tab-sell" class="tab-panel">
-      <!-- Đăng ký nền tảng 0.001 VIN -->
+    <!-- ========== SELL (ẩn khi chưa kết nối) ========== -->
+    <section id="tab-sell" class="tab-panel only-when-connected">
       <div class="card">
         <h2>Đăng ký nền tảng</h2>
         <div class="flex">
@@ -249,65 +241,51 @@
         </div>
       </div>
 
-      <!-- Tạo sản phẩm mới -->
       <div class="card">
         <h2>Đăng sản phẩm</h2>
         <form id="formCreate" class="form grid-2">
           <label>Tên hàng
             <input name="name" required maxlength="80" placeholder="VD: Trà sen Tây Hồ" />
           </label>
-
           <label>Ảnh (IPFS CID)
             <input name="imageCID" required placeholder="bafy..." />
           </label>
-
           <label>Mô tả (IPFS CID)
             <input name="descriptionCID" required placeholder="bafy..." />
           </label>
-
           <label>Giá (USD)
             <input name="priceUsd" type="number" min="0" step="0.01" required placeholder="VD: 12.50" />
           </label>
-
           <label>Phí ship (USD)
             <input name="shippingUsd" type="number" min="0" step="0.01" value="0" />
           </label>
-
           <label>Thuế (%)
             <input name="taxRate" type="number" min="0" max="100" step="0.01" value="0" />
           </label>
-
           <label>Thời hạn giao (ngày)
             <input name="deliveryDays" type="number" min="1" step="1" required placeholder="VD: 7" />
           </label>
-
           <label>Ví nhận doanh thu
             <input name="revenueWallet" required placeholder="0x..." />
           </label>
-
           <label>Ví thuế
             <input name="taxWallet" required placeholder="0x..." />
           </label>
-
           <label>Ví phí giao hàng (tuỳ chọn)
             <input name="shippingWallet" placeholder="0x... hoặc để trống" />
           </label>
-
           <label>Khoá public mã hoá (hex/base64)
             <textarea name="pubkey" rows="2" placeholder="Khoá để buyer mã hoá thông tin giao hàng"></textarea>
           </label>
-
           <label>Số lượng tồn kho
             <input name="stock" type="number" min="0" step="1" required />
           </label>
-
           <label>Trạng thái
             <select name="active">
               <option value="true">Hiển thị (đang bán)</option>
               <option value="false">Ẩn</option>
             </select>
           </label>
-
           <div class="form-actions">
             <button id="btnCreate" class="btn primary" type="submit">Đăng sản phẩm</button>
             <button id="btnClearCreate" class="btn ghost" type="button">Xoá biểu mẫu</button>
@@ -315,7 +293,6 @@
         </form>
       </div>
 
-      <!-- Sản phẩm của tôi -->
       <div class="card">
         <h2>Sản phẩm của tôi</h2>
         <div class="actions">
@@ -323,7 +300,6 @@
         </div>
         <div id="myProducts" class="stack"></div>
 
-        <!-- Template sản phẩm của tôi -->
         <template id="tplMyProduct">
           <article class="card my-product">
             <header class="mp-head">
@@ -361,7 +337,7 @@
     </section>
   </main>
 
-  <!-- ==================== MODAL: CHI TIẾT SẢN PHẨM ==================== -->
+  <!-- MODAL: CHI TIẾT SẢN PHẨM -->
   <dialog id="dlgProduct" class="modal">
     <form method="dialog" class="modal-box">
       <header class="modal-head">
@@ -382,7 +358,7 @@
 
         <div class="right">
           <div class="price-block">
-            <div class="muted">Tỷ giá hiện tại: VIC/USDT = <b id="dlgVicPrice">Loading...</b></div>
+            <div class="muted">VIC/USDT: <b id="dlgVicPrice">Loading...</b></div>
             <div class="muted">1 VIN ≈ <b id="dlgVinUsd">Loading...</b> USD</div>
             <hr />
             <div class="usd">Giá: <b id="dlgPriceUsd"></b> USD</div>
@@ -435,82 +411,22 @@
     </form>
   </dialog>
 
-  <!-- ==================== MODAL: SỬA SẢN PHẨM ==================== -->
-  <dialog id="dlgEditProduct" class="modal">
-    <form method="dialog" class="modal-box">
-      <header class="modal-head">
-        <h3>Cập nhật sản phẩm</h3>
-        <button class="btn icon" value="close" aria-label="Đóng">✕</button>
-      </header>
-
-      <div class="modal-body">
-        <form id="formEdit" class="form grid-2">
-          <input type="hidden" name="productId" />
-          <label>Giá (USD)
-            <input name="priceUsd" type="number" min="0" step="0.01" required />
-          </label>
-          <label>Ship (USD)
-            <input name="shippingUsd" type="number" min="0" step="0.01" />
-          </label>
-          <label>Thuế (%)
-            <input name="taxRate" type="number" min="0" max="100" step="0.01" />
-          </label>
-          <label>Thời hạn giao (ngày)
-            <input name="deliveryDays" type="number" min="1" step="1" />
-          </label>
-          <label>Ví doanh thu
-            <input name="revenueWallet" placeholder="0x..." />
-          </label>
-          <label>Ví thuế
-            <input name="taxWallet" placeholder="0x..." />
-          </label>
-          <label>Ví ship (tuỳ chọn)
-            <input name="shippingWallet" placeholder="0x..." />
-          </label>
-          <label>Tồn kho
-            <input name="stock" type="number" min="0" step="1" />
-          </label>
-          <label>Khoá public mã hoá (hex/base64)
-            <textarea name="pubkey" rows="2"></textarea>
-          </label>
-
-          <div class="form-actions">
-            <button id="btnDoUpdate" class="btn primary" type="button">Cập nhật</button>
-          </div>
-        </form>
-      </div>
-    </form>
-  </dialog>
-
   <!-- Footer -->
   <footer class="site-footer">
     <div>© <span id="year"></span> muaban · Viction (VIC)</div>
-    <div class="links">
-      <a href="https://vinecosystem.github.io/muaban" target="_blank" rel="noopener">GitHub Pages</a>
+    <!-- Thanh điều hướng cuối chân trang -->
+    <nav class="links">
+      <a id="openContract" href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638" target="_blank" rel="noopener">Hợp đồng</a>
       <span class="sep">·</span>
-      <a id="openAbi" href="./Muaban_ABI.json" target="_blank" rel="noopener">ABI</a>
+      <a id="openToken" href="https://vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank" rel="noopener">VIN token</a>
       <span class="sep">·</span>
-      <a id="openContract" href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638" target="_blank" rel="noopener">Xem hợp đồng</a>
-    </div>
+      <a href="#guide">Swap VIN/VIC</a>
+      <span class="sep">·</span>
+      <a href="#guide">Hướng dẫn</a>
+    </nav>
   </footer>
 
-  <!-- HƯỚNG DẪN GỌN (mở/thu gọn) -->
-  <section style="padding:12px 24px 40px;">
-    <details class="card" style="max-width:980px;margin:0 auto;">
-      <summary><b>Hướng dẫn sử dụng (gọn)</b></summary>
-      <div style="margin-top:10px" class="small">
-        <ol>
-          <li>Kết nối ví trên mạng <b>Viction (chainId 88)</b>.</li>
-          <li>Vào tab <b>Bán hàng</b> → <i>Đăng ký nền tảng</i> (0.001 VIN, chỉ một lần cho mỗi ví).</li>
-          <li>Đăng sản phẩm bằng USD; DApp sẽ tự quy đổi sang VIN theo <i>VIC/USDT × 100</i> khi đặt mua.</li>
-          <li>Người mua dùng <b>Approve</b> rồi <b>Mua (escrow)</b>; sau khi nhận hàng bấm <b>Đã nhận hàng</b>.</li>
-          <li>Nếu quá hạn và chưa nhận, có thể bấm <b>Hoàn tiền</b>.</li>
-        </ol>
-      </div>
-    </details>
-  </section>
-
-  <!-- ======= NO-JS fallback ======= -->
+    <!-- No-JS -->
   <noscript>
     <div class="notice warn">
       DApp cần JavaScript để hoạt động. Hãy bật JavaScript trong trình duyệt.
