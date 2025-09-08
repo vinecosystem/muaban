@@ -3,17 +3,15 @@ pragma solidity ^0.8.20;
 
 /**
  * Muaban — Pure on-chain commerce (Viction chain)
- * Key ideas:
+ * Key points:
  * - One-time platform registration fee in VIN (0.001 VIN per wallet).
  * - Products priced in USD; frontend converts to VIN using VIC/USDT * 100 at purchase time.
- * - Escrow-based orders. Buyer confirms receipt (within deadline) → funds released to seller/tax/shipping.
- * - Expired orders refundable to buyer.
- * - Post-expiry reviews (rating + scam flag) by the actual buyer of a refunded order.
+ * - Escrowed orders; buyer confirms receipt before funds are released to seller/tax/shipping.
+ * - Expired orders refundable to buyer; only refunded buyers can submit a post-expiry review.
  *
- * NOTE:
- * - No oracle integration: conversion performed off-chain. Contract recomputes amounts given vinPerUSD
- *   to ensure internal consistency at order time, but does not validate external FX.
- * - Public keys / ciphertexts are stored as bytes (seller provides public encrypt key; buyer provides ciphertext).
+ * NOTES:
+ * - No on-chain oracle: conversion is provided off-chain by the frontend.
+ * - Seller’s public encryption key and buyer’s shipping ciphertext are opaque byte blobs.
  */
 
 interface IERC20 {
@@ -37,9 +35,9 @@ abstract contract ReentrancyGuard {
     }
 }
 
-/** Minimal ownable pattern */
+/** Minimal Ownable */
 abstract contract Ownable {
-    event OwnershipTransferred(address indexed prevOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     address public owner;
     constructor() {
         owner = msg.sender;
@@ -55,47 +53,46 @@ abstract contract Ownable {
         owner = newOwner;
     }
 }
-/// ---------- Data structures, events, storage ----------
+/// ---------- Core contract ----------
 contract Muaban is ReentrancyGuard, Ownable {
-    // --- Core tokens & fees ---
-    IERC20 public immutable vin;                 // VIN token on VIC
-    uint256 public constant PLATFORM_FEE = 1e15; // 0.001 VIN (18 decimals)
+    // --- Core token & platform fee ---
+    IERC20 public immutable vin;                 // VIN token (18 decimals expected)
     uint8   public immutable vinDecimals;
+    uint256 public constant PLATFORM_FEE = 1e15; // 0.001 VIN (wei)
 
-    // Registration state: charged once per wallet
+    // One-time registration per wallet
     mapping(address => bool) public isRegistered;
 
     // --- Product model ---
     struct Product {
-        // immutable-ish identifiers
         uint256 productId;
         address seller;
 
-        // presentation / commercial terms
-        string  name;              // short name
-        string  descriptionCID;    // IPFS CID for long description
-        string  imageCID;          // IPFS CID for main image
+        // presentation & commercial terms
+        string  name;             // short name
+        string  descriptionCID;   // IPFS CID for long description
+        string  imageCID;         // IPFS CID for main image
 
-        uint256 priceUsdCents;     // price in USD cents (e.g., $12.34 => 1234)
-        uint256 shippingUsdCents;  // shipping fee in USD cents
-        uint16  taxRateBps;        // tax rate in basis points (e.g., 10% => 1000)
-        uint32  deliveryDaysMax;   // max delivery window in days
+        uint256 priceUsdCents;    // e.g., $12.34 => 1234
+        uint256 shippingUsdCents; // in USD cents
+        uint16  taxRateBps;       // basis points (10_000 = 100%)
+        uint32  deliveryDaysMax;  // max delivery window in days
 
         // revenue routing
         address revenueWallet;
         address taxWallet;
-        address shippingWallet;    // optional, can be zero
+        address shippingWallet;   // optional (can be zero)
 
         // encryption
-        bytes   sellerEncryptPubKey; // arbitrary bytes (e.g., X25519, secp256k1, etc.)
+        bytes   sellerEncryptPubKey; // opaque bytes (e.g., X25519 or secp256k1)
 
-        bool    active;            // listing status
+        bool    active;           // listing status
         uint64  createdAt;
         uint64  updatedAt;
-        uint256 stock;             // optional stock control (0 => out of stock)
+        uint256 stock;            // 0 => out of stock
     }
 
-    // Seller reputation / stats (lifetime; rolling windows computed off-chain from events)
+    // Lifetime seller stats (rolling windows computed off-chain from events)
     struct SellerStats {
         uint256 expiredRefundCount;
         uint256 scamCount;
@@ -113,26 +110,26 @@ contract Muaban is ReentrancyGuard, Ownable {
         address seller;
         uint256 quantity;
 
-        // amounts fixed at purchase time
-        uint256 vinAmountTotal; // total VIN escrowed (product + shipping + tax) for all quantity
+        // fixed at purchase time
+        uint256 vinAmountTotal; // escrowed total (revenue + shipping + tax)
         uint256 placedAt;       // timestamp
-        uint256 deadline;       // placedAt + deliveryDaysMax*1d
+        uint256 deadline;       // placedAt + deliveryDaysMax * 1 days
 
-        // encrypted shipping info (opaque blob produced client-side)
+        // buyer-encrypted shipping info (opaque blob)
         bytes shippingInfoCiphertext;
 
         OrderStatus status;
-        bool reviewed;          // true once a post-expiry review is submitted
+        bool reviewed;          // true once post-expiry review submitted
     }
 
     // --- Storage ---
     uint256 private _productSeq;
     uint256 private _orderSeq;
 
-    mapping(uint256 => Product) public products;     // productId => Product
-    mapping(uint256 => Order)   public orders;       // orderId => Order
-    mapping(address => uint256[]) public sellerProducts; // seller => productIds
-    mapping(address => SellerStats) public sellerStats;  // seller => stats
+    mapping(uint256 => Product) public products;          // productId => Product
+    mapping(uint256 => Order)   public orders;            // orderId   => Order
+    mapping(address => uint256[]) public sellerProducts;  // seller => productIds
+    mapping(address => SellerStats) public sellerStats;   // seller => stats
 
     // --- Events ---
     event RegistrationPaid(address indexed wallet, uint256 amount);
@@ -211,17 +208,16 @@ contract Muaban is ReentrancyGuard, Ownable {
         vinDecimals = vin.decimals();
         require(vinDecimals == 18, "VIN_DECIMALS_18_REQUIRED");
     }
-}
     /// ---------- Registration (one-time 0.001 VIN) ----------
     function payRegistration() external nonReentrant {
         require(!isRegistered[msg.sender], "ALREADY_REGISTERED");
-        // transferFrom requires prior approve( address(this), PLATFORM_FEE )
+        // Requires prior approve(address(this), PLATFORM_FEE)
         _pullVIN(msg.sender, owner, PLATFORM_FEE);
         isRegistered[msg.sender] = true;
         emit RegistrationPaid(msg.sender, PLATFORM_FEE);
     }
 
-    /// Utility to check registration for both buyers & sellers
+    /// Restrict actions to registered wallets (buyers or sellers)
     modifier onlyRegistered() {
         require(isRegistered[msg.sender], "NOT_REGISTERED");
         _;
@@ -351,25 +347,23 @@ contract Muaban is ReentrancyGuard, Ownable {
     /// Pull VIN from 'from' into 'to'
     function _pullVIN(address from, address to, uint256 amount) internal {
         require(amount > 0, "AMOUNT_ZERO");
-        // transferFrom requires prior approve
-        bool ok = vin.transferFrom(from, to, amount);
+        bool ok = vin.transferFrom(from, to, amount); // requires prior approve
         require(ok, "VIN_TRANSFER_FROM_FAIL");
     }
 
     /// Convert USD cents to VIN (wei) using vinPerUSD (wei per USD)
-    /// Protect seller by rounding up: ceil(usdCents * vinPerUSD / 100)
+    /// Ceil to protect seller: ceil(usdCents * vinPerUSD / 100)
     function _usdCentsToVin(uint256 usdCents, uint256 vinPerUSD) internal pure returns (uint256) {
         if (usdCents == 0) return 0;
         uint256 num = usdCents * vinPerUSD;
-        uint256 vinWei = (num + 99) / 100; // ceil division by 100
-        return vinWei;
+        return (num + 99) / 100; // ceil division by 100
     }
     /// ---------- Orders (escrow lifecycle) ----------
 
     /**
-     * @param productId       The product to buy
-     * @param quantity        Units to buy (>=1)
-     * @param vinPerUSD       VIN wei per 1 USD (computed off-chain using VIC/USDT * 100)
+     * @param productId  Product to buy
+     * @param quantity   Units to buy (>=1)
+     * @param vinPerUSD  VIN wei per 1 USD (from frontend: VIC/USDT * 100)
      * @param shippingInfoCiphertext_  Buyer-encrypted shipping info (opaque bytes)
      */
     function placeOrder(
@@ -389,7 +383,7 @@ contract Muaban is ReentrancyGuard, Ownable {
         // USD-cents math
         uint256 priceUsdCentsAll = p.priceUsdCents * quantity;
         uint256 shipUsdCents = p.shippingUsdCents;
-        // tax on price (not on shipping). ceil to protect seller.
+        // tax on price (not on shipping)
         uint256 taxUsdCents = (priceUsdCentsAll * p.taxRateBps + 9_999) / 10_000;
 
         // Convert each component to VIN (wei), ceil to protect seller
@@ -448,32 +442,26 @@ contract Muaban is ReentrancyGuard, Ownable {
 
         Product storage p = products[o.productId];
 
-        // Recompute distribution at order time proportions using USD params that are immutable in Product
-        // to ensure the routing is consistent with placeOrder calculation:
+        // Reconstruct proportions using USD components captured from Product
         uint256 priceUsdCentsAll = p.priceUsdCents * o.quantity;
         uint256 shipUsdCents = p.shippingUsdCents;
         uint256 taxUsdCents = (priceUsdCentsAll * p.taxRateBps + 9_999) / 10_000;
 
-        // We don't have vinPerUSD anymore; funds already escrowed in total.
-        // Split proportionally using ceiling components exactly like placeOrder,
-        // but ensure sum doesn't exceed escrow by clamping the remainder to revenue.
-        // To maintain exactness, recompute components by ratio of USD cents over total USD cents.
-        // Simpler & safe: pay components as min(component_estimate, remaining_escrow) in the order: tax, shipping, revenue.
-
         uint256 remaining = o.vinAmountTotal;
 
-        // Prefer to ensure tax and shipping are fully paid first
+        // pay tax first
         uint256 vinTax = _ceilShare(remaining, taxUsdCents, priceUsdCentsAll + shipUsdCents + taxUsdCents);
         if (vinTax > remaining) vinTax = remaining;
         remaining -= vinTax;
 
-        uint256 vinShip = _ceilShare(remaining, shipUsdCents, priceUsdCentsAll + shipUsdCents); // rebase denom without tax already removed
+        // then shipping
+        uint256 vinShip = _ceilShare(remaining, shipUsdCents, priceUsdCentsAll + shipUsdCents);
         if (vinShip > remaining) vinShip = remaining;
         remaining -= vinShip;
 
-        uint256 vinRev = remaining; // whatever remains goes to revenue
+        // revenue gets the rest
+        uint256 vinRev = remaining;
 
-        // Route funds
         _sendVIN(p.taxWallet, vinTax);
         address shippingDest = p.shippingWallet == address(0) ? p.revenueWallet : p.shippingWallet;
         _sendVIN(shippingDest, vinShip);
@@ -485,20 +473,18 @@ contract Muaban is ReentrancyGuard, Ownable {
     }
 
     /**
-     * Anyone can help the buyer trigger this, but only the buyer receives funds back.
-     * Refund allowed only after deadline and only if still PLACED.
+     * Anyone can trigger refund after deadline if the order is still PLACED.
+     * Funds go back to the buyer.
      */
     function refundIfExpired(uint256 orderId) external nonReentrant {
         Order storage o = orders[orderId];
         require(o.status == OrderStatus.PLACED, "NOT_REFUNDABLE");
         require(block.timestamp > o.deadline, "NOT_EXPIRED");
 
-        // Refund to buyer
         uint256 amt = o.vinAmountTotal;
         o.status = OrderStatus.REFUNDED;
         _sendVIN(o.buyer, amt);
 
-        // Stats
         sellerStats[o.seller].expiredRefundCount += 1;
 
         emit OrderRefunded(orderId, o.productId, o.buyer, o.seller, amt);
@@ -518,9 +504,7 @@ contract Muaban is ReentrancyGuard, Ownable {
         SellerStats storage s = sellerStats[o.seller];
         s.ratingSum += rating;
         s.ratingCount += 1;
-        if (scamFlag) {
-            s.scamCount += 1;
-        }
+        if (scamFlag) s.scamCount += 1;
         o.reviewed = true;
 
         emit Reviewed(orderId, o.seller, rating, scamFlag);
@@ -535,10 +519,7 @@ contract Muaban is ReentrancyGuard, Ownable {
         require(ok, "VIN_TRANSFER_FAIL");
     }
 
-    /**
-     * Returns ceil(remaining * numer / denom), safe for denom>0.
-     * If numer==0 returns 0.
-     */
+    /// ceil(remaining * numer / denom), denom>0
     function _ceilShare(uint256 remaining, uint256 numer, uint256 denom) internal pure returns (uint256) {
         if (numer == 0) return 0;
         require(denom > 0, "DENOM_ZERO");
@@ -552,7 +533,6 @@ contract Muaban is ReentrancyGuard, Ownable {
     /**
      * Quote VIN amounts for a product and quantity at a given vinPerUSD (wei per USD).
      * Returns (vinRevenue, vinShipping, vinTax, vinTotal).
-     * Frontend can use this to preview exact escrow required before approve/transferFrom.
      */
     function quoteVinForProduct(
         uint256 productId,
@@ -574,33 +554,29 @@ contract Muaban is ReentrancyGuard, Ownable {
         vinTotal = vinRevenue + vinShipping + vinTax;
     }
 
-    /// Return lightweight product view
+    /// Lightweight getters
     function getProduct(uint256 productId) external view returns (Product memory) {
         Product storage p = products[productId];
         require(p.seller != address(0), "PROD_NOT_FOUND");
         return p;
     }
 
-    /// Return order
     function getOrder(uint256 orderId) external view returns (Order memory) {
         Order storage o = orders[orderId];
         require(o.buyer != address(0), "ORDER_NOT_FOUND");
         return o;
     }
 
-    /// Convenience: whether an order is currently active (PLACED and not expired)
     function isOrderActive(uint256 orderId) external view returns (bool) {
         Order storage o = orders[orderId];
         if (o.status != OrderStatus.PLACED) return false;
         return block.timestamp <= o.deadline;
     }
 
-    /// Seller stats
     function getSellerStats(address sellerAddr) external view returns (SellerStats memory) {
         return sellerStats[sellerAddr];
     }
 
-    /// List productIds of a seller (for pagination do this off-chain with event indexing)
     function getSellerProductIds(address sellerAddr) external view returns (uint256[] memory) {
         return sellerProducts[sellerAddr];
     }
