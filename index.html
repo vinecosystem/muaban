@@ -23,25 +23,18 @@
   <!-- Ethers.js (v5) cho dApp EVM/VIC -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" defer></script>
 
-  <!-- Cấu hình nền tảng cho app.js (để cuối vẫn giữ) -->
+  <!-- Cấu hình nền tảng cho app.js -->
   <script>
     window.MUABAN_CONFIG = {
-      MUABAN_ADDRESS: "0xe01e2213A899E9B3b1921673D2d13a227a8df638", // Hợp đồng muaban
-      VIN_TOKEN: "0x941F63807401efCE8afe3C9d88d368bAA287Fac4",     // VIN (ERC20 trên VIC)
-
+      MUABAN_ADDRESS: "0xe01e2213A899E9B3b1921673D2d13a227a8df638",
+      VIN_TOKEN: "0x941F63807401efCE8afe3C9d88d368bAA287Fac4",
       VIC_CHAIN_ID_DEC: 88,
       VIC_CHAIN_ID_HEX: "0x58",
       VIC_NAME: "Viction Mainnet",
       VIC_SYMBOL: "VIC",
       VIC_DECIMALS: 18,
-
-      // API giá
       BINANCE_VICUSDT: "https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT",
-
-      // Tệp ABI
       MUABAN_ABI_PATH: "./Muaban_ABI.json",
-
-      // Link trang
       SITE_BASE: "https://vinecosystem.github.io/muaban"
     };
   </script>
@@ -51,19 +44,11 @@
 
   <!-- TÍNH GIÁ VIN THEO USD NGAY TRONG INDEX.HTML -->
   <script>
-    // Chạy sớm để cập nhật chip giá ngay cả khi app.js chưa tải xong
     document.addEventListener('DOMContentLoaded', async () => {
       const vicEl = document.getElementById('vicPrice');
       const vinUsdEl = document.getElementById('vinUsd');
       const dlgVicEl = document.getElementById('dlgVicPrice');
       const dlgVinUsdEl = document.getElementById('dlgVinUsd');
-
-      const showLoading = () => {
-        if (vicEl) vicEl.textContent = 'Loading...';
-        if (vinUsdEl) vinUsdEl.textContent = 'Loading...';
-        if (dlgVicEl) dlgVicEl.textContent = 'Loading...';
-        if (dlgVinUsdEl) dlgVinUsdEl.textContent = 'Loading...';
-      };
 
       const setValues = (vic, vinUsd) => {
         const vicTxt = isFinite(vic) ? Number(vic).toFixed(4) : '—';
@@ -75,7 +60,11 @@
       };
 
       try {
-        showLoading();
+        if (vicEl) vicEl.textContent = 'Loading...';
+        if (vinUsdEl) vinUsdEl.textContent = 'Loading...';
+        if (dlgVicEl) dlgVicEl.textContent = 'Loading...';
+        if (dlgVinUsdEl) dlgVinUsdEl.textContent = 'Loading...';
+
         const url = (window.MUABAN_CONFIG && window.MUABAN_CONFIG.BINANCE_VICUSDT)
           ? window.MUABAN_CONFIG.BINANCE_VICUSDT
           : "https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT";
@@ -85,10 +74,10 @@
         const vic = parseFloat(data?.price);
         if (!isFinite(vic)) throw new Error('Invalid VIC price');
 
-        // VIN/USD = VIC/USDT × 100 (lấy 2 số thập phân)
+        // VIN/USD = VIC/USDT × 100 (hiển thị 2 chữ số thập phân)
         const vinUsd = vic * 100;
         setValues(vic, vinUsd);
-      } catch (e) {
+      } catch {
         setValues(NaN, NaN);
       }
     });
@@ -125,10 +114,7 @@
     </div>
   </header>
 
-  <!-- Thông báo chung -->
-  <section id="globalNotice" class="notice info">
-    <strong>Nguyên tắc:</strong> Giá sản phẩm tính bằng <b>USD</b>. Khi đặt mua, DApp quy đổi sang <b>VIN</b> theo công thức <b>VIN/USD = VIC/USDT × 100</b>. VIN sẽ được <b>escrow</b> trong hợp đồng đến khi người mua bấm <b>“Đã nhận hàng”</b>. Quá hạn, người mua có thể <b>“Hoàn tiền”</b>. Phí nền tảng một lần/ ví: <b>0.001 VIN</b>.
-  </section>
+  <!-- (ĐÃ LOẠI BỎ PHẦN THÔNG BÁO DÀI DÒNG) -->
 
   <!-- Tabs điều hướng -->
   <nav class="tabs">
@@ -211,7 +197,7 @@
     <section id="tab-orders" class="tab-panel">
       <div class="card">
         <h2>Đơn hàng của tôi</h2>
-        <p class="muted">Dữ liệu lấy từ sự kiện on-chain. Mỗi đơn hiển thị đồng hồ đếm ngược đến hạn chót, bật/tắt nút <b>Đã nhận hàng</b> / <b>Hoàn tiền</b> theo trạng thái.</p>
+        <p class="muted">Dữ liệu lấy từ sự kiện on-chain. Mỗi đơn hiển thị đếm ngược đến hạn chót; bật/tắt <b>Đã nhận hàng</b> / <b>Hoàn tiền</b> theo trạng thái.</p>
       </div>
       <div id="orderList" class="stack"></div>
 
@@ -251,7 +237,6 @@
       <!-- Đăng ký nền tảng 0.001 VIN -->
       <div class="card">
         <h2>Đăng ký nền tảng</h2>
-        <p class="muted">Mỗi ví trả <b>0.001 VIN</b> (một lần duy nhất) để mở quyền <b>mua</b> và <b>bán</b> trên muaban.</p>
         <div class="flex">
           <div class="status-line">
             Trạng thái: <span id="regStatus" class="badge">Chưa kiểm tra</span>
@@ -309,7 +294,7 @@
           </label>
 
           <label>Khoá public mã hoá (hex/base64)
-            <textarea name="pubkey" rows="2" placeholder="Khoá mã hoá để buyer mã hoá thông tin giao hàng "></textarea>
+            <textarea name="pubkey" rows="2" placeholder="Khoá để buyer mã hoá thông tin giao hàng"></textarea>
           </label>
 
           <label>Số lượng tồn kho
@@ -497,9 +482,6 @@
     </form>
   </dialog>
 
-  <!-- Toast / Snackbar -->
-  <div id="toast" class="toast hidden"></div>
-
   <!-- Footer -->
   <footer class="site-footer">
     <div>© <span id="year"></span> muaban · Viction (VIC)</div>
@@ -511,6 +493,22 @@
       <a id="openContract" href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638" target="_blank" rel="noopener">Xem hợp đồng</a>
     </div>
   </footer>
+
+  <!-- HƯỚNG DẪN GỌN (mở/thu gọn) -->
+  <section style="padding:12px 24px 40px;">
+    <details class="card" style="max-width:980px;margin:0 auto;">
+      <summary><b>Hướng dẫn sử dụng (gọn)</b></summary>
+      <div style="margin-top:10px" class="small">
+        <ol>
+          <li>Kết nối ví trên mạng <b>Viction (chainId 88)</b>.</li>
+          <li>Vào tab <b>Bán hàng</b> → <i>Đăng ký nền tảng</i> (0.001 VIN, chỉ một lần cho mỗi ví).</li>
+          <li>Đăng sản phẩm bằng USD; DApp sẽ tự quy đổi sang VIN theo <i>VIC/USDT × 100</i> khi đặt mua.</li>
+          <li>Người mua dùng <b>Approve</b> rồi <b>Mua (escrow)</b>; sau khi nhận hàng bấm <b>Đã nhận hàng</b>.</li>
+          <li>Nếu quá hạn và chưa nhận, có thể bấm <b>Hoàn tiền</b>.</li>
+        </ol>
+      </div>
+    </details>
+  </section>
 
   <!-- ======= NO-JS fallback ======= -->
   <noscript>
