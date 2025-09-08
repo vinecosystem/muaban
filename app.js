@@ -581,6 +581,7 @@ const RO = {
 async function ensureReadonly(){
   if (RO.provider) return;
   const { ethers } = window.ethers || {};
+  const ethers = window.ethers;
   if (!ethers) return;
 
   // Ưu tiên dùng ethereum provider hiện có (không đòi quyền), fallback RPC public
