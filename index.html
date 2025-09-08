@@ -69,7 +69,7 @@
     });
   </script>
 
-  <!-- Quan sát trạng thái kết nối để hiện 2 tab còn lại -->
+  <!-- Hiện/ẩn tab dựa theo trạng thái kết nối -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const walletInfo = document.getElementById('walletInfo');
@@ -77,7 +77,6 @@
       const showOrHide = () => {
         const connected = walletInfo && !walletInfo.classList.contains('hidden');
         connEls.forEach(el => el.style.display = connected ? '' : 'none');
-        // Nếu đang ở tab bị ẩn, chuyển về Sản phẩm
         const activeHidden = document.querySelector('.only-when-connected.tab.active');
         if (activeHidden && !activeHidden.offsetParent) {
           document.querySelector('.tab[data-tab="browse"]').click();
@@ -414,19 +413,18 @@
   <!-- Footer -->
   <footer class="site-footer">
     <div>© <span id="year"></span> muaban · Viction (VIC)</div>
-    <!-- Thanh điều hướng cuối chân trang -->
     <nav class="links">
       <a id="openContract" href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638" target="_blank" rel="noopener">Hợp đồng</a>
       <span class="sep">·</span>
       <a id="openToken" href="https://vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank" rel="noopener">VIN token</a>
       <span class="sep">·</span>
-      <a href="#guide">Swap VIN/VIC</a>
+      <a href="https://your-swap-link" target="_blank" rel="noopener">Swap VIN/VIC</a>
       <span class="sep">·</span>
-      <a href="#guide">Hướng dẫn</a>
+      <a href="https://your-guide-link" target="_blank" rel="noopener">Hướng dẫn</a>
     </nav>
   </footer>
 
-    <!-- No-JS -->
+  <!-- No-JS -->
   <noscript>
     <div class="notice warn">
       DApp cần JavaScript để hoạt động. Hãy bật JavaScript trong trình duyệt.
