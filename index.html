@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- Slogan/Title tiếng Việt -->
+  <title>muaban — Thương mại thuần on-chain trên Viction</title>
+
+  <!-- Favicon & App Icon -->
+  <link rel="icon" type="image/png" href="./logo.png" />
+  <link rel="apple-touch-icon" href="./logo.png" />
+
+  <!-- SEO/OpenGraph (tiếng Việt) -->
+  <meta name="description" content="muaban: nền tảng thương mại thuần on-chain trên Viction. Mua/bán bằng VIN, ký quỹ (escrow), hoàn tiền khi quá hạn — minh bạch, không trung gian." />
+  <meta property="og:title" content="muaban — Thương mại thuần on-chain trên Viction" />
+  <meta property="og:description" content="Mua/bán bằng VIN, escrow, Pre-Confirm, hoàn tiền khi quá hạn. Không máy chủ, không trung gian." />
+  <meta property="og:image" content="./logo.png" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="./style.css" />
+
+  <!-- Ethers.js (v5) cho dApp EVM/VIC -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" defer></script>
+
+  <!-- Cấu hình nền tảng cho app.js (để cuối vẫn giữ) -->
+  <script>
+    window.MUABAN_CONFIG = {
+      MUABAN_ADDRESS: "0xe01e2213A899E9B3b1921673D2d13a227a8df638", // Hợp đồng muaban
+      VIN_TOKEN: "0x941F63807401efCE8afe3C9d88d368bAA287Fac4",     // VIN (ERC20 trên VIC)
+
+      VIC_CHAIN_ID_DEC: 88,
+      VIC_CHAIN_ID_HEX: "0x58",
+      VIC_NAME: "Viction Mainnet",
+      VIC_SYMBOL: "VIC",
+      VIC_DECIMALS: 18,
+
+      // API giá
+      BINANCE_VICUSDT: "https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT",
+
+      // Tệp ABI
+      MUABAN_ABI_PATH: "./Muaban_ABI.json",
+
+      // Link trang
+      SITE_BASE: "https://vinecosystem.github.io/muaban"
+    };
+  </script>
+
+  <!-- App logic -->
+  <script src="./app.js" defer></script>
+
+  <!-- TÍNH GIÁ VIN THEO USD NGAY TRONG INDEX.HTML -->
+  <script>
+    // Chạy sớm để cập nhật chip giá ngay cả khi app.js chưa tải xong
+    document.addEventListener('DOMContentLoaded', async () => {
+      const vicEl = document.getElementById('vicPrice');
+      const vinUsdEl = document.getElementById('vinUsd');
+      const dlgVicEl = document.getElementById('dlgVicPrice');
+      const dlgVinUsdEl = document.getElementById('dlgVinUsd');
+
+      const showLoading = () => {
+        if (vicEl) vicEl.textContent = 'Loading...';
+        if (vinUsdEl) vinUsdEl.textContent = 'Loading...';
+        if (dlgVicEl) dlgVicEl.textContent = 'Loading...';
+        if (dlgVinUsdEl) dlgVinUsdEl.textContent = 'Loading...';
+      };
+
+      const setValues = (vic, vinUsd) => {
+        const vicTxt = isFinite(vic) ? Number(vic).toFixed(4) : '—';
+        const vinTxt = isFinite(vinUsd) ? Number(vinUsd).toFixed(2) : '—';
+        if (vicEl) vicEl.textContent = vicTxt;
+        if (vinUsdEl) vinUsdEl.textContent = vinTxt;
+        if (dlgVicEl) dlgVicEl.textContent = vicTxt;
+        if (dlgVinUsdEl) dlgVinUsdEl.textContent = vinTxt;
+      };
+
+      try {
+        showLoading();
+        const url = (window.MUABAN_CONFIG && window.MUABAN_CONFIG.BINANCE_VICUSDT)
+          ? window.MUABAN_CONFIG.BINANCE_VICUSDT
+          : "https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT";
+
+        const res = await fetch(url, { cache: 'no-store' });
+        const data = await res.json();
+        const vic = parseFloat(data?.price);
+        if (!isFinite(vic)) throw new Error('Invalid VIC price');
+
+        // VIN/USD = VIC/USDT × 100 (lấy 2 số thập phân)
+        const vinUsd = vic * 100;
+        setValues(vic, vinUsd);
+      } catch (e) {
+        setValues(NaN, NaN);
+      }
+    });
+  </script>
+</head>
+<body>
+  <!-- Header / Nav -->
+  <header class="site-header">
+    <div class="header-left">
+      <img class="brand-logo" src="./logo.png" alt="muaban logo" />
+      <div class="brand-titles">
+        <h1 class="brand">muaban</h1>
+        <p class="tagline">Thương mại thuần on-chain · Viction (VIC)</p>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- Chip hiển thị giá -->
+      <div class="price-chips">
+        <span id="chip-vic" class="chip muted">VIC/USDT: <b id="vicPrice">Loading...</b></span>
+        <span id="chip-vin" class="chip">1 VIN ≈ <b id="vinUsd">Loading...</b> USD</span>
+      </div>
+
+      <!-- Kết nối ví -->
+      <div class="wallet-box">
+        <button id="btnConnect" class="btn primary">Kết nối ví</button>
+        <div id="walletInfo" class="wallet-info hidden">
+          <span class="dot online" title="Đã kết nối"></span>
+          <span id="accountShort">0x…</span>
+          <span class="sep">·</span>
+          <span id="networkName">—</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Thông báo chung -->
+  <section id="globalNotice" class="notice info">
+    <strong>Nguyên tắc:</strong> Giá sản phẩm tính bằng <b>USD</b>. Khi đặt mua, DApp quy đổi sang <b>VIN</b> theo công thức <b>VIN/USD = VIC/USDT × 100</b>. VIN sẽ được <b>escrow</b> trong hợp đồng đến khi người mua bấm <b>“Đã nhận hàng”</b>. Quá hạn, người mua có thể <b>“Hoàn tiền”</b>. Phí nền tảng một lần/ ví: <b>0.001 VIN</b>.
+  </section>
+
+  <!-- Tabs điều hướng -->
+  <nav class="tabs">
+    <button class="tab active" data-tab="browse">🛒 Sản phẩm</button>
+    <button class="tab" data-tab="orders">📦 Đơn hàng của tôi</button>
+    <button class="tab" data-tab="sell">🧰 Bán hàng</button>
+  </nav>
+
+  <main>
+    <!-- ==================== TAB: BROWSE ==================== -->
+    <section id="tab-browse" class="tab-panel active">
+      <!-- Tìm kiếm & lọc -->
+      <div class="search-bar card">
+        <div class="row">
+          <label>
+            Tìm theo tên
+            <input id="searchKeyword" type="text" placeholder="VD: Trà sen, Bánh cốm, Phòng khách sạn…" />
+          </label>
+          <label>
+            Ví người bán
+            <input id="searchSeller" type="text" placeholder="0x… (không bắt buộc)" />
+          </label>
+          <label>
+            Khoảng giá (USD)
+            <div class="price-range">
+              <input id="priceMin" type="number" min="0" step="1" placeholder="Min" />
+              <span>—</span>
+              <input id="priceMax" type="number" min="0" step="1" placeholder="Max" />
+            </div>
+          </label>
+          <label class="checkbox">
+            <input id="filterInStock" type="checkbox" checked />
+            <span>Chỉ còn hàng</span>
+          </label>
+          <div class="actions">
+            <button id="btnSearch" class="btn">Tìm</button>
+            <button id="btnReset" class="btn ghost">Xoá lọc</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Danh sách sản phẩm -->
+      <div id="productGrid" class="grid"></div>
+
+      <!-- Template thẻ sản phẩm -->
+      <template id="tplProductCard">
+        <article class="card product">
+          <div class="p-img">
+            <img class="prod-img" alt="Ảnh sản phẩm" />
+          </div>
+          <div class="p-body">
+            <h3 class="prod-name"></h3>
+            <div class="prod-seller">
+              <span class="label">Người bán:</span>
+              <span class="seller-addr monospace"></span>
+            </div>
+            <div class="prod-prices">
+              <div class="usd">Giá: <b class="usd-val"></b> USD</div>
+              <div class="vin small muted">≈ <b class="vin-val"></b> VIN (tại thời điểm xem)</div>
+            </div>
+            <div class="prod-shiptax small">
+              <span>Ship: <b class="ship-usd"></b> USD</span>
+              <span class="sep">·</span>
+              <span>Thuế: <b class="tax-rate"></b>%</span>
+              <span class="sep">·</span>
+              <span>Tối đa <b class="delivery-days"></b> ngày</span>
+            </div>
+            <div class="prod-stock small">
+              <span>Tồn: <b class="stock"></b></span>
+            </div>
+          </div>
+          <div class="p-actions">
+            <button class="btn primary btn-view">Xem chi tiết</button>
+          </div>
+        </article>
+      </template>
+    </section>
+
+    <!-- ==================== TAB: ORDERS ==================== -->
+    <section id="tab-orders" class="tab-panel">
+      <div class="card">
+        <h2>Đơn hàng của tôi</h2>
+        <p class="muted">Dữ liệu lấy từ sự kiện on-chain. Mỗi đơn hiển thị đồng hồ đếm ngược đến hạn chót, bật/tắt nút <b>Đã nhận hàng</b> / <b>Hoàn tiền</b> theo trạng thái.</p>
+      </div>
+      <div id="orderList" class="stack"></div>
+
+      <!-- Template thẻ đơn hàng -->
+      <template id="tplOrderItem">
+        <article class="card order">
+          <header class="order-head">
+            <div class="left">
+              <div class="order-id">Đơn #<span class="oid"></span></div>
+              <div class="order-prod">SP: <span class="pid"></span> · SL: <span class="qty"></span></div>
+            </div>
+            <div class="right">
+              <span class="status badge">—</span>
+            </div>
+          </header>
+
+          <div class="order-body">
+            <div class="row">
+              <div>VIN đã escrow: <b class="vin-total monospace"></b></div>
+              <div>Đặt lúc: <span class="placed-at"></span></div>
+              <div>Hạn cuối: <span class="deadline"></span></div>
+              <div class="countdown">Còn lại: <span class="ticking"></span></div>
+            </div>
+          </div>
+
+          <footer class="order-actions">
+            <button class="btn success btn-confirm" disabled>Đã nhận hàng</button>
+            <button class="btn danger btn-refund" disabled>Hoàn tiền</button>
+            <a class="btn ghost btn-vicscan" target="_blank" rel="noopener">VicScan</a>
+          </footer>
+        </article>
+      </template>
+    </section>
+
+    <!-- ==================== TAB: SELL ==================== -->
+    <section id="tab-sell" class="tab-panel">
+      <!-- Đăng ký nền tảng 0.001 VIN -->
+      <div class="card">
+        <h2>Đăng ký nền tảng</h2>
+        <p class="muted">Mỗi ví trả <b>0.001 VIN</b> (một lần duy nhất) để mở quyền <b>mua</b> và <b>bán</b> trên muaban.</p>
+        <div class="flex">
+          <div class="status-line">
+            Trạng thái: <span id="regStatus" class="badge">Chưa kiểm tra</span>
+          </div>
+          <div class="actions">
+            <button id="btnCheckReg" class="btn">Kiểm tra</button>
+            <button id="btnApproveReg" class="btn ghost">Approve 0.001 VIN</button>
+            <button id="btnPayReg" class="btn primary">Trả phí 0.001 VIN</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tạo sản phẩm mới -->
+      <div class="card">
+        <h2>Đăng sản phẩm</h2>
+        <form id="formCreate" class="form grid-2">
+          <label>Tên hàng
+            <input name="name" required maxlength="80" placeholder="VD: Trà sen Tây Hồ" />
+          </label>
+
+          <label>Ảnh (IPFS CID)
+            <input name="imageCID" required placeholder="bafy..." />
+          </label>
+
+          <label>Mô tả (IPFS CID)
+            <input name="descriptionCID" required placeholder="bafy..." />
+          </label>
+
+          <label>Giá (USD)
+            <input name="priceUsd" type="number" min="0" step="0.01" required placeholder="VD: 12.50" />
+          </label>
+
+          <label>Phí ship (USD)
+            <input name="shippingUsd" type="number" min="0" step="0.01" value="0" />
+          </label>
+
+          <label>Thuế (%)
+            <input name="taxRate" type="number" min="0" max="100" step="0.01" value="0" />
+          </label>
+
+          <label>Thời hạn giao (ngày)
+            <input name="deliveryDays" type="number" min="1" step="1" required placeholder="VD: 7" />
+          </label>
+
+          <label>Ví nhận doanh thu
+            <input name="revenueWallet" required placeholder="0x..." />
+          </label>
+
+          <label>Ví thuế
+            <input name="taxWallet" required placeholder="0x..." />
+          </label>
+
+          <label>Ví phí giao hàng (tuỳ chọn)
+            <input name="shippingWallet" placeholder="0x... hoặc để trống" />
+          </label>
+
+          <label>Khoá public mã hoá (hex/base64)
+            <textarea name="pubkey" rows="2" placeholder="Khoá mã hoá để buyer mã hoá thông tin giao hàng "></textarea>
+          </label>
+
+          <label>Số lượng tồn kho
+            <input name="stock" type="number" min="0" step="1" required />
+          </label>
+
+          <label>Trạng thái
+            <select name="active">
+              <option value="true">Hiển thị (đang bán)</option>
+              <option value="false">Ẩn</option>
+            </select>
+          </label>
+
+          <div class="form-actions">
+            <button id="btnCreate" class="btn primary" type="submit">Đăng sản phẩm</button>
+            <button id="btnClearCreate" class="btn ghost" type="button">Xoá biểu mẫu</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Sản phẩm của tôi -->
+      <div class="card">
+        <h2>Sản phẩm của tôi</h2>
+        <div class="actions">
+          <button id="btnLoadMyProducts" class="btn">Tải danh sách</button>
+        </div>
+        <div id="myProducts" class="stack"></div>
+
+        <!-- Template sản phẩm của tôi -->
+        <template id="tplMyProduct">
+          <article class="card my-product">
+            <header class="mp-head">
+              <div class="left">
+                <h3 class="mp-name"></h3>
+                <div class="small muted">ID: <span class="mp-id monospace"></span> · Cập nhật: <span class="mp-updated"></span></div>
+              </div>
+              <div class="right">
+                <span class="mp-active badge">—</span>
+              </div>
+            </header>
+
+            <div class="mp-body">
+              <div class="row">
+                <div>Giá: <b class="mp-price"></b> USD</div>
+                <div>Ship: <b class="mp-ship"></b> USD</div>
+                <div>Thuế: <b class="mp-tax"></b>%</div>
+                <div>Tối đa: <b class="mp-deliv"></b> ngày</div>
+                <div>Tồn: <b class="mp-stock"></b></div>
+              </div>
+              <div class="row">
+                <div>Doanh thu: <span class="mp-revenue monospace"></span></div>
+                <div>Thuế: <span class="mp-taxWallet monospace"></span></div>
+                <div>Ship: <span class="mp-shipWallet monospace"></span></div>
+              </div>
+            </div>
+
+            <footer class="mp-actions">
+              <button class="btn ghost mp-toggle">Ẩn/Hiện</button>
+              <button class="btn mp-edit">Sửa giá & tồn kho</button>
+            </footer>
+          </article>
+        </template>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== MODAL: CHI TIẾT SẢN PHẨM ==================== -->
+  <dialog id="dlgProduct" class="modal">
+    <form method="dialog" class="modal-box">
+      <header class="modal-head">
+        <h3 id="dlgProdName">Chi tiết sản phẩm</h3>
+        <button class="btn icon" value="close" aria-label="Đóng">✕</button>
+      </header>
+
+      <div class="modal-body prod-detail">
+        <div class="left">
+          <img id="dlgProdImg" alt="Ảnh sản phẩm" />
+          <div class="small muted">
+            Mô tả (IPFS): <a id="dlgDescLink" href="#" target="_blank" rel="noopener">mở</a>
+          </div>
+          <div class="small muted">
+            Người bán: <span id="dlgSeller" class="monospace"></span>
+          </div>
+        </div>
+
+        <div class="right">
+          <div class="price-block">
+            <div class="muted">Tỷ giá hiện tại: VIC/USDT = <b id="dlgVicPrice">Loading...</b></div>
+            <div class="muted">1 VIN ≈ <b id="dlgVinUsd">Loading...</b> USD</div>
+            <hr />
+            <div class="usd">Giá: <b id="dlgPriceUsd"></b> USD</div>
+            <div class="usd">Ship: <b id="dlgShipUsd"></b> USD</div>
+            <div class="usd">Thuế: <b id="dlgTaxRate"></b>%</div>
+            <div class="muted">Tối đa <b id="dlgDelivDays"></b> ngày</div>
+            <div class="muted">Tồn kho: <b id="dlgStock"></b></div>
+          </div>
+
+          <div class="buy-form">
+            <label>Số lượng
+              <input id="buyQty" type="number" min="1" value="1" />
+            </label>
+
+            <fieldset class="ship-info">
+              <legend>Thông tin giao hàng (mã hoá cục bộ)</legend>
+              <label>Tên người nhận
+                <input id="shipName" placeholder="Nguyễn Văn A" />
+              </label>
+              <label>Số điện thoại
+                <input id="shipPhone" placeholder="09xx xxx xxx" />
+              </label>
+              <label>Địa chỉ
+                <textarea id="shipAddr" rows="2" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"></textarea>
+              </label>
+              <label>Ghi chú (tuỳ chọn)
+                <textarea id="shipNote" rows="2" placeholder="VD: giao giờ hành chính"></textarea>
+              </label>
+            </fieldset>
+
+            <div class="quote card">
+              <div>Ước tính VIN cần thanh toán</div>
+              <div class="muted small">(Quote từ hợp đồng tại thời điểm đặt; số cuối cùng có thể chênh nhẹ do làm tròn.)</div>
+              <div class="quote-rows">
+                <div>Hàng: <b id="qRev">—</b> VIN</div>
+                <div>Ship: <b id="qShip">—</b> VIN</div>
+                <div>Thuế: <b id="qTax">—</b> VIN</div>
+                <div class="sum">Tổng: <b id="qTotal">—</b> VIN</div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="btnApproveBuy" class="btn ghost">Approve VIN</button>
+              <button id="btnPlaceOrder" class="btn primary">Mua (escrow)</button>
+            </div>
+            <div id="buyStatus" class="small muted"></div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ==================== MODAL: SỬA SẢN PHẨM ==================== -->
+  <dialog id="dlgEditProduct" class="modal">
+    <form method="dialog" class="modal-box">
+      <header class="modal-head">
+        <h3>Cập nhật sản phẩm</h3>
+        <button class="btn icon" value="close" aria-label="Đóng">✕</button>
+      </header>
+
+      <div class="modal-body">
+        <form id="formEdit" class="form grid-2">
+          <input type="hidden" name="productId" />
+          <label>Giá (USD)
+            <input name="priceUsd" type="number" min="0" step="0.01" required />
+          </label>
+          <label>Ship (USD)
+            <input name="shippingUsd" type="number" min="0" step="0.01" />
+          </label>
+          <label>Thuế (%)
+            <input name="taxRate" type="number" min="0" max="100" step="0.01" />
+          </label>
+          <label>Thời hạn giao (ngày)
+            <input name="deliveryDays" type="number" min="1" step="1" />
+          </label>
+          <label>Ví doanh thu
+            <input name="revenueWallet" placeholder="0x..." />
+          </label>
+          <label>Ví thuế
+            <input name="taxWallet" placeholder="0x..." />
+          </label>
+          <label>Ví ship (tuỳ chọn)
+            <input name="shippingWallet" placeholder="0x..." />
+          </label>
+          <label>Tồn kho
+            <input name="stock" type="number" min="0" step="1" />
+          </label>
+          <label>Khoá public mã hoá (hex/base64)
+            <textarea name="pubkey" rows="2"></textarea>
+          </label>
+
+          <div class="form-actions">
+            <button id="btnDoUpdate" class="btn primary" type="button">Cập nhật</button>
+          </div>
+        </form>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Toast / Snackbar -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div>© <span id="year"></span> muaban · Viction (VIC)</div>
+    <div class="links">
+      <a href="https://vinecosystem.github.io/muaban" target="_blank" rel="noopener">GitHub Pages</a>
+      <span class="sep">·</span>
+      <a id="openAbi" href="./Muaban_ABI.json" target="_blank" rel="noopener">ABI</a>
+      <span class="sep">·</span>
+      <a id="openContract" href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638" target="_blank" rel="noopener">Xem hợp đồng</a>
+    </div>
+  </footer>
+
+  <!-- ======= NO-JS fallback ======= -->
+  <noscript>
+    <div class="notice warn">
+      DApp cần JavaScript để hoạt động. Hãy bật JavaScript trong trình duyệt.
+    </div>
+  </noscript>
+</body>
+</html>
