@@ -11,7 +11,7 @@
 
   <meta name="description" content="muaban: nền tảng thương mại thuần on-chain trên Viction. Mua/bán bằng VIN, ký quỹ (escrow), minh bạch, không trung gian." />
   <meta property="og:title" content="muaban — Thương mại thuần on-chain trên Viction" />
-  <meta property="og:description" content="Mua/bán bằng VIN, escrow, Pre-Confirm, hoàn tiền khi quá hạn. Không máy chủ, không trung gian." />
+  <meta property="og:description" content="Mua/bán bằng VIN. Niêm yết giá theo USD. Escrow an toàn, hoàn tiền nếu quá hạn." />
   <meta property="og:image" content="./logo.png" />
 
   <link rel="stylesheet" href="./style.css" />
@@ -40,17 +40,20 @@
   <!-- App logic -->
   <script src="./app.js" defer></script>
 
-  <!-- TÍNH GIÁ (chỉ cho modal) -->
+  <!-- TÍNH “1 VIN ≈ X.XX USD” (header + modal) -->
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      const dlgVicEl = document.getElementById('dlgVicPrice');
+      const vinUsdHeaderEl = document.getElementById('vinUsdHeader');
       const dlgVinUsdEl = document.getElementById('dlgVinUsd');
+      // phần tử VIC bị ẩn nhưng giữ để tương thích app.js
+      const dlgVicEl = document.getElementById('dlgVicPrice');
 
       const setValues = (vic, vinUsd) => {
-        const vicTxt = isFinite(vic) ? Number(vic).toFixed(4) : '—';
         const vinTxt = isFinite(vinUsd) ? Number(vinUsd).toFixed(2) : '—';
-        if (dlgVicEl) dlgVicEl.textContent = vicTxt;
+        if (vinUsdHeaderEl) vinUsdHeaderEl.textContent = vinTxt;
         if (dlgVinUsdEl) dlgVinUsdEl.textContent = vinTxt;
+        // cập nhật VIC (ẩn) để không lỗi app.js
+        if (dlgVicEl) dlgVicEl.textContent = isFinite(vic) ? Number(vic).toFixed(4) : '—';
       };
 
       try {
@@ -95,11 +98,14 @@
       <img class="brand-logo" src="./logo.png" alt="muaban logo" />
       <div class="brand-titles">
         <h1 class="brand">muaban</h1>
-        <p class="tagline">Thương mại thuần on-chain · Viction (VIC)</p>
+        <p class="tagline">Thương mại thuần on-chain · Viction</p>
       </div>
     </div>
 
     <div class="header-right">
+      <!-- Chỉ hiển thị VIN/USD (không VIC) -->
+      <div class="chip" id="vinUsdChip">1 VIN ≈ <b id="vinUsdHeader">Loading...</b> USD</div>
+
       <div class="wallet-box">
         <button id="btnConnect" class="btn primary">Kết nối ví</button>
         <div id="walletInfo" class="wallet-info hidden">
@@ -357,7 +363,8 @@
 
         <div class="right">
           <div class="price-block">
-            <div class="muted">VIC/USDT: <b id="dlgVicPrice">Loading...</b></div>
+            <!-- Giữ VIC ẩn để tương thích app.js, nhưng không hiển thị cho người dùng -->
+            <div class="muted" style="display:none" aria-hidden="true">VIC/USDT: <b id="dlgVicPrice">—</b></div>
             <div class="muted">1 VIN ≈ <b id="dlgVinUsd">Loading...</b> USD</div>
             <hr />
             <div class="usd">Giá: <b id="dlgPriceUsd"></b> USD</div>
@@ -410,9 +417,8 @@
     </form>
   </dialog>
 
-  <!-- Footer -->
+  <!-- Footer (chỉ các link cần thiết) -->
   <footer class="site-footer">
-    <div>© <span id="year"></span> muaban · Viction (VIC)</div>
     <nav class="links">
       <a id="openContract" href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638" target="_blank" rel="noopener">Hợp đồng</a>
       <span class="sep">·</span>
