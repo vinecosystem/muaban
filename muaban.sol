@@ -1,504 +1,607 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.20;
 
 /**
- * Muaban — Escrow Commerce (MVP, no-admin keys)
+ * Muaban — Pure on-chain commerce (Viction chain)
+ * Key ideas:
+ * - One-time platform registration fee in VIN (0.001 VIN per wallet).
+ * - Products priced in USD; frontend converts to VIN using VIC/USDT * 100 at purchase time.
+ * - Escrow-based orders. Buyer confirms receipt (within deadline) → funds released to seller/tax/shipping.
+ * - Expired orders refundable to buyer.
+ * - Post-expiry reviews (rating + scam flag) by the actual buyer of a refunded order.
  *
- * - Listings priced in USD-6 (1 USD = 1_000_000)
- * - Payments in VIN (ERC-20, 18 decimals)
- * - VIN token address is hardcoded for Viction Mainnet
- * - No on-chain FX: dApp computes exact VIN off-chain
- * - One-time registration fee per wallet: 0.001 VIN
- *      -> transferred directly to FEE_RECIPIENT
- * - Escrow flow:
- *      Buyer deposits VIN into contract when placing an order (escrow).
- *      Seller marks shipped (off-chain logistics).
- *      Buyer confirms receipt -> contract releases VIN (tax -> taxWallet, remainder -> payoutWallet).
- *      If buyer does not confirm by deadline -> anyone can trigger auto-refund back to buyer.
- * - Seller profile & product metadata live on IPFS/Pinata; contract stores only URI + content hash.
- *
- * Security:
- * - No owner / no pause / no mutable config / no rescue.
- * - Reentrancy guarded on token-moving functions.
- * - Accounting via totalEscrowedVin to separate user escrow from anything else.
+ * NOTE:
+ * - No oracle integration: conversion performed off-chain. Contract recomputes amounts given vinPerUSD
+ *   to ensure internal consistency at order time, but does not validate external FX.
+ * - Public keys / ciphertexts are stored as bytes (seller provides public encrypt key; buyer provides ciphertext).
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-
-contract Muaban is ReentrancyGuard {
-    using SafeERC20 for IERC20;
-
-    // ===== Hardcoded VIN (Viction Mainnet) =====
-    // VIN token: 0x941F63807401efCE8afe3C9d88d368bAA287Fac4
-    IERC20 public constant VIN = IERC20(0x941F63807401efCE8afe3C9d88d368bAA287Fac4);
-
-    // ===== Immutable fee recipient =====
-    address public immutable FEE_RECIPIENT;      // wallet receiving registration fees
-
-    // ===== Constants =====
-    uint256 public constant REGISTRATION_FEE = 1e15; // 0.001 VIN (VIN has 18 decimals)
-    uint256 public constant CONFIRM_WINDOW   = 3 days;
-
-    // ===== Registration =====
-    mapping(address => bool) public registered;
-
-    // ===== Data Types =====
-
-    /// @notice Off-chain seller profile anchor (PII kept in IPFS/Pinata)
-    struct SellerProfile {
-        string  profileURI;   // ipfs://... seller profile (private link or encrypted)
-        bytes32 profileHash;  // keccak256/sha256 hash of profile content for integrity check
-    }
-
-    /// @notice Listing entry
-    struct Listing {
-        address seller;        // listing owner (must be registered)
-        address payoutWallet;  // seller revenue wallet
-        address taxWallet;     // seller tax wallet (for compliance)
-        uint16  taxBps;        // tax in basis points (10_000 = 100%)
-        uint256 priceUsd6;     // unit price in USD-6 (e.g., 10 USD = 10_000_000)
-        uint256 inventory;     // available quantity
-        bool    active;        // listing enabled?
-        string  productURI;    // ipfs://... product media/description
-        bytes32 productHash;   // hash of product content
-    }
-
-    /// @notice Order lifecycle
-    enum OrderStatus { None, Escrowed, Released, Refunded, Cancelled }
-
-    /// @notice Order stored on-chain (escrow)
-    struct Order {
-        uint256 listingId;
-        address buyer;
-        address seller;         // snapshot
-        address payoutWallet;   // snapshot
-        address taxWallet;      // snapshot
-        uint16  taxBps;         // snapshot
-        uint256 qty;
-        uint256 vinAmount;      // exact VIN escrowed (computed off-chain)
-        uint256 createdAt;
-        uint256 confirmDeadline;   // createdAt + CONFIRM_WINDOW
-
-        // Transparency-only snapshots (not used for math):
-        uint256 priceUsd6Unit;  // USD-6 unit price at order placement
-        uint256 vinPerUnit;     // VIN per unit (off-chain computed)
-        string  contactURI;     // ipfs://... buyer contact (private/encrypted)
-        bytes32 contactHash;    // integrity check
-
-        OrderStatus status;
-        bool    sellerMarked;   // seller marked "shipped/sent"
-    }
-
-    // ===== Storage =====
-    mapping(address => SellerProfile) public sellerProfiles;
-
-    mapping(uint256 => Listing) public listings;
-    uint256 public nextListingId = 1;
-
-    mapping(uint256 => Order) public orders;
-    uint256 public nextOrderId = 1;
-
-    // Tracks all VIN currently held in escrow across orders.
-    uint256 public totalEscrowedVin;
-
-    // ===== Events =====
-    event Registered(address indexed wallet, uint256 fee);
-
-    event SellerProfileUpdated(address indexed seller, string profileURI, bytes32 profileHash);
-
-    event ListingCreated(
-        uint256 indexed id,
-        address indexed seller,
-        address payoutWallet,
-        address taxWallet,
-        uint16  taxBps,
-        uint256 priceUsd6,
-        uint256 inventory,
-        bool    active,
-        string  productURI,
-        bytes32 productHash
-    );
-
-    event ListingUpdated(
-        uint256 indexed id,
-        address payoutWallet,
-        address taxWallet,
-        uint16  taxBps,
-        uint256 priceUsd6,
-        uint256 inventory,
-        bool    active,
-        string  productURI,
-        bytes32 productHash
-    );
-
-    // NEW: granular, gas-friendly events for quick toggles
-    event ListingActiveChanged(uint256 indexed id, bool active);
-    event InventoryUpdated(uint256 indexed id, uint256 inventory);
-
-    // NOTE: contactURI removed from event to reduce metadata exposure in logs
-    event OrderPlaced(
-        uint256 indexed orderId,
-        uint256 indexed listingId,
-        address indexed buyer,
-        address seller,
-        uint256 qty,
-        uint256 priceUsd6Unit,
-        uint256 vinPerUnit,
-        uint256 vinAmount,
-        uint256 createdAt,
-        uint256 confirmDeadline,
-        bytes32 contactHash
-    );
-
-    event SellerMarked(uint256 indexed orderId, address indexed seller, uint256 at);
-    event OrderReleased(uint256 indexed orderId, address indexed buyer, address indexed seller, uint256 vinToSeller, uint256 vinTax);
-    event OrderRefunded(uint256 indexed orderId, address indexed buyer, uint256 vinAmount);
-    event OrderCancelled(uint256 indexed orderId, address indexed caller);
-
-    // ===== Errors =====
-    error AlreadyRegistered();
-    error NotRegistered();
-    error ZeroAddress();
-    error InvalidListing();
-    error Inactive();
-    error InsufficientInventory();
-    error InvalidQty();
-    error InvalidValue();
-    error NotBuyer();
-    error NotSeller();
-    error BadStatus();
-    error TooEarly();
-    error NothingToDo();
-
-    // ===== Constructor =====
-
-    /**
-     * @param feeRecipient  wallet receiving the one-time registration fees
-     */
-    constructor(address feeRecipient) {
-        if (feeRecipient == address(0)) revert ZeroAddress();
-        FEE_RECIPIENT = feeRecipient;
-    }
-
-    // ===== Registration =====
-
-/// @notice One-time registration for any wallet (buyer or seller)
-function register() external nonReentrant {
-    if (registered[msg.sender]) revert AlreadyRegistered();
-
-    // Transfer the fixed registration fee directly to the fee recipient
-    VIN.safeTransferFrom(msg.sender, FEE_RECIPIENT, REGISTRATION_FEE);
-
-    registered[msg.sender] = true;
-    emit Registered(msg.sender, REGISTRATION_FEE);
+interface IERC20 {
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address a) external view returns (uint256);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function approve(address spender, uint256 amt) external returns (bool);
+    function transfer(address to, uint256 amt) external returns (bool);
+    function transferFrom(address from, address to, uint256 amt) external returns (bool);
+    function decimals() external view returns (uint8);
 }
 
+/** Minimal non-reentrancy guard */
+abstract contract ReentrancyGuard {
+    uint256 private _guard;
+    modifier nonReentrant() {
+        require(_guard == 0, "REENTRANT");
+        _guard = 1;
+        _;
+        _guard = 0;
+    }
+}
 
-    // ===== Seller profile (PII kept off-chain; store URI + hash) =====
+/** Minimal ownable pattern */
+abstract contract Ownable {
+    event OwnershipTransferred(address indexed prevOwner, address indexed newOwner);
+    address public owner;
+    constructor() {
+        owner = msg.sender;
+        emit OwnershipTransferred(address(0), msg.sender);
+    }
+    modifier onlyOwner() {
+        require(msg.sender == owner, "ONLY_OWNER");
+        _;
+    }
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "ZERO_ADDR");
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+}
+/// ---------- Data structures, events, storage ----------
+contract Muaban is ReentrancyGuard, Ownable {
+    // --- Core tokens & fees ---
+    IERC20 public immutable vin;                 // VIN token on VIC
+    uint256 public constant PLATFORM_FEE = 1e15; // 0.001 VIN (18 decimals)
+    uint8   public immutable vinDecimals;
 
-    function updateSellerProfile(string calldata profileURI, bytes32 profileHash) external {
-        if (!registered[msg.sender]) revert NotRegistered();
-        sellerProfiles[msg.sender] = SellerProfile({
-            profileURI: profileURI,
-            profileHash: profileHash
-        });
-        emit SellerProfileUpdated(msg.sender, profileURI, profileHash);
+    // Registration state: charged once per wallet
+    mapping(address => bool) public isRegistered;
+
+    // --- Product model ---
+    struct Product {
+        // immutable-ish identifiers
+        uint256 productId;
+        address seller;
+
+        // presentation / commercial terms
+        string  name;              // short name
+        string  descriptionCID;    // IPFS CID for long description
+        string  imageCID;          // IPFS CID for main image
+
+        uint256 priceUsdCents;     // price in USD cents (e.g., $12.34 => 1234)
+        uint256 shippingUsdCents;  // shipping fee in USD cents
+        uint16  taxRateBps;        // tax rate in basis points (e.g., 10% => 1000)
+        uint32  deliveryDaysMax;   // max delivery window in days
+
+        // revenue routing
+        address revenueWallet;
+        address taxWallet;
+        address shippingWallet;    // optional, can be zero
+
+        // encryption
+        bytes   sellerEncryptPubKey; // arbitrary bytes (e.g., X25519, secp256k1, etc.)
+
+        bool    active;            // listing status
+        uint64  createdAt;
+        uint64  updatedAt;
+        uint256 stock;             // optional stock control (0 => out of stock)
     }
 
-    // ===== Listings =====
+    // Seller reputation / stats (lifetime; rolling windows computed off-chain from events)
+    struct SellerStats {
+        uint256 expiredRefundCount;
+        uint256 scamCount;
+        uint256 ratingSum;   // sum of ratings (1..5)
+        uint256 ratingCount; // number of ratings
+    }
 
-    /**
-     * @dev Create a new listing. Inventory must be > 0 on creation.
-     */
-    function createListing(
-        address payoutWallet,
+    // --- Order model ---
+    enum OrderStatus { NONE, PLACED, RELEASED, REFUNDED }
+
+    struct Order {
+        uint256 orderId;
+        uint256 productId;
+        address buyer;
+        address seller;
+        uint256 quantity;
+
+        // amounts fixed at purchase time
+        uint256 vinAmountTotal; // total VIN escrowed (product + shipping + tax) for all quantity
+        uint256 placedAt;       // timestamp
+        uint256 deadline;       // placedAt + deliveryDaysMax*1d
+
+        // encrypted shipping info (opaque blob produced client-side)
+        bytes shippingInfoCiphertext;
+
+        OrderStatus status;
+        bool reviewed;          // true once a post-expiry review is submitted
+    }
+
+    // --- Storage ---
+    uint256 private _productSeq;
+    uint256 private _orderSeq;
+
+    mapping(uint256 => Product) public products;     // productId => Product
+    mapping(uint256 => Order)   public orders;       // orderId => Order
+    mapping(address => uint256[]) public sellerProducts; // seller => productIds
+    mapping(address => SellerStats) public sellerStats;  // seller => stats
+
+    // --- Events ---
+    event RegistrationPaid(address indexed wallet, uint256 amount);
+
+    event ProductCreated(
+        uint256 indexed productId,
+        address indexed seller,
+        string  name,
+        string  descriptionCID,
+        string  imageCID,
+        uint256 priceUsdCents,
+        uint256 shippingUsdCents,
+        uint16  taxRateBps,
+        uint32  deliveryDaysMax,
+        address revenueWallet,
         address taxWallet,
-        uint16  taxBps,
-        uint256 priceUsd6,
-        uint256 inventory,
-        bool    active,
-        string calldata productURI,
-        bytes32 productHash
-    ) external returns (uint256 id) {
-        if (!registered[msg.sender]) revert NotRegistered();
-        if (payoutWallet == address(0) || taxWallet == address(0)) revert ZeroAddress();
-        if (taxBps > 10_000) revert InvalidValue();   // >100%
-        if (priceUsd6 == 0) revert InvalidValue();
-        if (inventory == 0) revert InvalidValue();
+        address shippingWallet,
+        bytes   sellerEncryptPubKey,
+        uint256 stock
+    );
 
-        id = nextListingId++;
+    event ProductUpdated(
+        uint256 indexed productId,
+        uint256 priceUsdCents,
+        uint256 shippingUsdCents,
+        uint16  taxRateBps,
+        uint32  deliveryDaysMax,
+        address revenueWallet,
+        address taxWallet,
+        address shippingWallet,
+        uint256 stock,
+        bytes   sellerEncryptPubKey
+    );
 
-        listings[id] = Listing({
-            seller:        msg.sender,
-            payoutWallet:  payoutWallet,
-            taxWallet:     taxWallet,
-            taxBps:        taxBps,
-            priceUsd6:     priceUsd6,
-            inventory:     inventory,
-            active:        active,
-            productURI:    productURI,
-            productHash:   productHash
+    event ProductStatusChanged(uint256 indexed productId, bool active);
+
+    event OrderPlaced(
+        uint256 indexed orderId,
+        uint256 indexed productId,
+        address indexed buyer,
+        address seller,
+        uint256 quantity,
+        uint256 vinAmountTotal,
+        uint256 placedAt,
+        uint256 deadline,
+        bytes   shippingInfoCiphertext
+    );
+
+    event OrderReleased(
+        uint256 indexed orderId,
+        uint256 indexed productId,
+        address indexed buyer,
+        address seller,
+        uint256 vinAmountTotal
+    );
+
+    event OrderRefunded(
+        uint256 indexed orderId,
+        uint256 indexed productId,
+        address indexed buyer,
+        address seller,
+        uint256 vinAmountTotal
+    );
+
+    event Reviewed(
+        uint256 indexed orderId,
+        address indexed seller,
+        uint8   rating,     // 1..5
+        bool    scamFlag
+    );
+
+    // --- Constructor ---
+    constructor(address vinToken) {
+        require(vinToken != address(0), "VIN_ZERO");
+        vin = IERC20(vinToken);
+        vinDecimals = vin.decimals();
+        require(vinDecimals == 18, "VIN_DECIMALS_18_REQUIRED");
+    }
+}
+    /// ---------- Registration (one-time 0.001 VIN) ----------
+    function payRegistration() external nonReentrant {
+        require(!isRegistered[msg.sender], "ALREADY_REGISTERED");
+        // transferFrom requires prior approve( address(this), PLATFORM_FEE )
+        _pullVIN(msg.sender, owner, PLATFORM_FEE);
+        isRegistered[msg.sender] = true;
+        emit RegistrationPaid(msg.sender, PLATFORM_FEE);
+    }
+
+    /// Utility to check registration for both buyers & sellers
+    modifier onlyRegistered() {
+        require(isRegistered[msg.sender], "NOT_REGISTERED");
+        _;
+    }
+
+    /// ---------- Product management ----------
+    function createProduct(
+        string calldata name_,
+        string calldata descriptionCID_,
+        string calldata imageCID_,
+        uint256 priceUsdCents_,
+        uint256 shippingUsdCents_,
+        uint16  taxRateBps_,
+        uint32  deliveryDaysMax_,
+        address revenueWallet_,
+        address taxWallet_,
+        address shippingWallet_,
+        bytes   calldata sellerEncryptPubKey_,
+        uint256 stock_,
+        bool    active_
+    ) external onlyRegistered nonReentrant returns (uint256 productId) {
+        require(bytes(name_).length > 0, "NAME_REQ");
+        require(priceUsdCents_ > 0, "PRICE_REQ");
+        require(taxRateBps_ <= 10_000, "TAX_BPS_MAX");
+        require(deliveryDaysMax_ > 0, "DELIV_DAYS_REQ");
+        require(revenueWallet_ != address(0), "REV_WALLET_ZERO");
+        require(taxWallet_ != address(0), "TAX_WALLET_ZERO");
+        // shippingWallet_ may be zero (optional)
+
+        productId = ++_productSeq;
+
+        products[productId] = Product({
+            productId: productId,
+            seller: msg.sender,
+            name: name_,
+            descriptionCID: descriptionCID_,
+            imageCID: imageCID_,
+            priceUsdCents: priceUsdCents_,
+            shippingUsdCents: shippingUsdCents_,
+            taxRateBps: taxRateBps_,
+            deliveryDaysMax: deliveryDaysMax_,
+            revenueWallet: revenueWallet_,
+            taxWallet: taxWallet_,
+            shippingWallet: shippingWallet_,
+            sellerEncryptPubKey: sellerEncryptPubKey_,
+            active: active_,
+            createdAt: uint64(block.timestamp),
+            updatedAt: uint64(block.timestamp),
+            stock: stock_
         });
 
-        emit ListingCreated(
-            id,
+        sellerProducts[msg.sender].push(productId);
+
+        emit ProductCreated(
+            productId,
             msg.sender,
-            payoutWallet,
-            taxWallet,
-            taxBps,
-            priceUsd6,
-            inventory,
-            active,
-            productURI,
-            productHash
+            name_,
+            descriptionCID_,
+            imageCID_,
+            priceUsdCents_,
+            shippingUsdCents_,
+            taxRateBps_,
+            deliveryDaysMax_,
+            revenueWallet_,
+            taxWallet_,
+            shippingWallet_,
+            sellerEncryptPubKey_,
+            stock_
         );
     }
 
-    /**
-     * @dev Update a listing. Allows inventory to be set to any value (including 0).
-     */
-    function updateListing(
-        uint256 id,
-        address payoutWallet,
-        address taxWallet,
-        uint16  taxBps,
-        uint256 priceUsd6,
-        uint256 inventory,
-        bool    active,
-        string calldata productURI,
-        bytes32 productHash
-    ) external {
-        Listing storage L = listings[id];
-        if (L.seller == address(0)) revert InvalidListing();
-        if (msg.sender != L.seller) revert NotSeller();
+    function updateProduct(
+        uint256 productId,
+        uint256 priceUsdCents_,
+        uint256 shippingUsdCents_,
+        uint16  taxRateBps_,
+        uint32  deliveryDaysMax_,
+        address revenueWallet_,
+        address taxWallet_,
+        address shippingWallet_,
+        uint256 stock_,
+        bytes   calldata sellerEncryptPubKey_
+    ) external onlyRegistered nonReentrant {
+        Product storage p = products[productId];
+        require(p.seller != address(0), "PROD_NOT_FOUND");
+        require(p.seller == msg.sender, "NOT_SELLER");
+        require(taxRateBps_ <= 10_000, "TAX_BPS_MAX");
+        require(deliveryDaysMax_ > 0, "DELIV_DAYS_REQ");
+        require(revenueWallet_ != address(0), "REV_WALLET_ZERO");
+        require(taxWallet_ != address(0), "TAX_WALLET_ZERO");
 
-        if (payoutWallet == address(0) || taxWallet == address(0)) revert ZeroAddress();
-        if (taxBps > 10_000) revert InvalidValue();     // >100%
-        if (priceUsd6 == 0) revert InvalidValue();
+        p.priceUsdCents = priceUsdCents_;
+        p.shippingUsdCents = shippingUsdCents_;
+        p.taxRateBps = taxRateBps_;
+        p.deliveryDaysMax = deliveryDaysMax_;
+        p.revenueWallet = revenueWallet_;
+        p.taxWallet = taxWallet_;
+        p.shippingWallet = shippingWallet_;
+        p.stock = stock_;
+        p.sellerEncryptPubKey = sellerEncryptPubKey_;
+        p.updatedAt = uint64(block.timestamp);
 
-        L.payoutWallet = payoutWallet;
-        L.taxWallet    = taxWallet;
-        L.taxBps       = taxBps;
-        L.priceUsd6    = priceUsd6;
-        L.inventory    = inventory; // zero allowed here; seller may also use setInventory()
-        L.active       = active;
-        L.productURI   = productURI;
-        L.productHash  = productHash;
-
-        emit ListingUpdated(
-            id,
-            payoutWallet,
-            taxWallet,
-            taxBps,
-            priceUsd6,
-            inventory,
-            active,
-            productURI,
-            productHash
+        emit ProductUpdated(
+            productId,
+            priceUsdCents_,
+            shippingUsdCents_,
+            taxRateBps_,
+            deliveryDaysMax_,
+            revenueWallet_,
+            taxWallet_,
+            shippingWallet_,
+            stock_,
+            sellerEncryptPubKey_
         );
     }
 
-    /// @notice Toggle active flag without touching other fields.
-    function setListingActive(uint256 id, bool active) external {
-        Listing storage L = listings[id];
-        if (L.seller == address(0)) revert InvalidListing();
-        if (msg.sender != L.seller) revert NotSeller();
-        L.active = active;
-        emit ListingActiveChanged(id, active);
+    function setProductActive(uint256 productId, bool active_) external onlyRegistered {
+        Product storage p = products[productId];
+        require(p.seller != address(0), "PROD_NOT_FOUND");
+        require(p.seller == msg.sender, "NOT_SELLER");
+        p.active = active_;
+        p.updatedAt = uint64(block.timestamp);
+        emit ProductStatusChanged(productId, active_);
     }
 
-    /// @notice Adjust inventory (allows zero to effectively pause via stock).
-    function setInventory(uint256 id, uint256 newInventory) external {
-        Listing storage L = listings[id];
-        if (L.seller == address(0)) revert InvalidListing();
-        if (msg.sender != L.seller) revert NotSeller();
-        L.inventory = newInventory;
-        emit InventoryUpdated(id, newInventory);
+    /// ---------- Internal helpers ----------
+    /// Pull VIN from 'from' into 'to'
+    function _pullVIN(address from, address to, uint256 amount) internal {
+        require(amount > 0, "AMOUNT_ZERO");
+        // transferFrom requires prior approve
+        bool ok = vin.transferFrom(from, to, amount);
+        require(ok, "VIN_TRANSFER_FROM_FAIL");
     }
 
-    // ===== Orders & Escrow =====
+    /// Convert USD cents to VIN (wei) using vinPerUSD (wei per USD)
+    /// Protect seller by rounding up: ceil(usdCents * vinPerUSD / 100)
+    function _usdCentsToVin(uint256 usdCents, uint256 vinPerUSD) internal pure returns (uint256) {
+        if (usdCents == 0) return 0;
+        uint256 num = usdCents * vinPerUSD;
+        uint256 vinWei = (num + 99) / 100; // ceil division by 100
+        return vinWei;
+    }
+    /// ---------- Orders (escrow lifecycle) ----------
 
     /**
-     * Buyer places an order:
-     * - Buyer and listing's seller must be registered.
-     * - Transfers exact VIN from buyer to the contract (escrow).
-     * - Decreases inventory immediately.
-     * - Sets confirm deadline = now + CONFIRM_WINDOW.
-     *
-     * @param listingId     target listing
-     * @param qty           quantity to buy (must be > 0 and <= inventory)
-     * @param vinAmount     exact VIN escrowed (computed off-chain)
-     * @param priceUsd6Unit snapshot USD-6 unit price (for transparency/log only)
-     * @param vinPerUnit    snapshot VIN per unit (off-chain; for log only)
-     * @param contactURI    ipfs://... buyer contact info (private/limited access)
-     * @param contactHash   keccak256/sha256 of the contact content (integrity check)
+     * @param productId       The product to buy
+     * @param quantity        Units to buy (>=1)
+     * @param vinPerUSD       VIN wei per 1 USD (computed off-chain using VIC/USDT * 100)
+     * @param shippingInfoCiphertext_  Buyer-encrypted shipping info (opaque bytes)
      */
     function placeOrder(
-        uint256 listingId,
-        uint256 qty,
-        uint256 vinAmount,
-        uint256 priceUsd6Unit,
-        uint256 vinPerUnit,
-        string calldata contactURI,
-        bytes32 contactHash
-    ) external nonReentrant returns (uint256 orderId) {
-        if (!registered[msg.sender]) revert NotRegistered();
-        if (qty == 0) revert InvalidQty();
-        if (vinAmount == 0) revert InvalidValue();
+        uint256 productId,
+        uint256 quantity,
+        uint256 vinPerUSD,
+        bytes calldata shippingInfoCiphertext_
+    ) external onlyRegistered nonReentrant returns (uint256 orderId) {
+        require(quantity >= 1, "QTY_MIN_1");
+        require(vinPerUSD > 0, "VIN_PER_USD_REQ");
 
-        Listing storage L = listings[listingId];
-        if (L.seller == address(0)) revert InvalidListing();
-        if (!L.active) revert Inactive();
-        if (!registered[L.seller]) revert NotRegistered();
-        if (qty > L.inventory) revert InsufficientInventory();
+        Product storage p = products[productId];
+        require(p.seller != address(0), "PROD_NOT_FOUND");
+        require(p.active, "PROD_INACTIVE");
+        require(p.stock >= quantity, "INSUFFICIENT_STOCK");
 
-        // Transfer VIN from buyer to escrow
-        VIN.safeTransferFrom(msg.sender, address(this), vinAmount);
-        totalEscrowedVin += vinAmount;
+        // USD-cents math
+        uint256 priceUsdCentsAll = p.priceUsdCents * quantity;
+        uint256 shipUsdCents = p.shippingUsdCents;
+        // tax on price (not on shipping). ceil to protect seller.
+        uint256 taxUsdCents = (priceUsdCentsAll * p.taxRateBps + 9_999) / 10_000;
 
-        // Decrease inventory
-        L.inventory -= qty;
+        // Convert each component to VIN (wei), ceil to protect seller
+        uint256 vinRevenue = _usdCentsToVin(priceUsdCentsAll, vinPerUSD);
+        uint256 vinShipping = _usdCentsToVin(shipUsdCents, vinPerUSD);
+        uint256 vinTax = _usdCentsToVin(taxUsdCents, vinPerUSD);
+        uint256 vinTotal = vinRevenue + vinShipping + vinTax;
+        require(vinTotal > 0, "VIN_TOTAL_ZERO");
+
+        // Pull VIN from buyer into escrow (this contract)
+        _pullVIN(msg.sender, address(this), vinTotal);
+
+        // Stock control
+        p.stock -= quantity;
 
         // Create order
-        orderId = nextOrderId++;
+        orderId = ++_orderSeq;
+        uint256 placedAt = block.timestamp;
+        uint256 deadline = placedAt + uint256(p.deliveryDaysMax) * 1 days;
+
         orders[orderId] = Order({
-            listingId:        listingId,
-            buyer:            msg.sender,
-            seller:           L.seller,
-            payoutWallet:     L.payoutWallet,
-            taxWallet:        L.taxWallet,
-            taxBps:           L.taxBps,
-            qty:              qty,
-            vinAmount:        vinAmount,
-            createdAt:        block.timestamp,
-            confirmDeadline:  block.timestamp + CONFIRM_WINDOW,
-            priceUsd6Unit:    priceUsd6Unit,
-            vinPerUnit:       vinPerUnit,
-            contactURI:       contactURI,
-            contactHash:      contactHash,
-            status:           OrderStatus.Escrowed,
-            sellerMarked:     false
+            orderId: orderId,
+            productId: productId,
+            buyer: msg.sender,
+            seller: p.seller,
+            quantity: quantity,
+            vinAmountTotal: vinTotal,
+            placedAt: placedAt,
+            deadline: deadline,
+            shippingInfoCiphertext: shippingInfoCiphertext_,
+            status: OrderStatus.PLACED,
+            reviewed: false
         });
 
-        // Emit without contactURI to reduce metadata exposure in logs
         emit OrderPlaced(
             orderId,
-            listingId,
+            productId,
             msg.sender,
-            L.seller,
-            qty,
-            priceUsd6Unit,
-            vinPerUnit,
-            vinAmount,
-            block.timestamp,
-            block.timestamp + CONFIRM_WINDOW,
-            contactHash
+            p.seller,
+            quantity,
+            vinTotal,
+            placedAt,
+            deadline,
+            shippingInfoCiphertext_
         );
     }
 
     /**
-     * @notice Seller marks the order as "shipped/sent".
-     *         Procedural only; used for UX & state tracking (no funds move).
+     * Buyer confirms receipt within deadline → release escrow to seller/tax/shipping wallets.
      */
-    function sellerMarkShipped(uint256 orderId) external {
-        Order storage O = orders[orderId];
-        if (O.status != OrderStatus.Escrowed) revert BadStatus();
-        if (msg.sender != O.seller) revert NotSeller();
-        if (O.sellerMarked) revert NothingToDo();
+    function confirmReceipt(uint256 orderId) external onlyRegistered nonReentrant {
+        Order storage o = orders[orderId];
+        require(o.status == OrderStatus.PLACED, "NOT_PLACED");
+        require(o.buyer == msg.sender, "NOT_BUYER");
+        require(block.timestamp <= o.deadline, "EXPIRED");
 
-        O.sellerMarked = true;
-        emit SellerMarked(orderId, msg.sender, block.timestamp);
+        Product storage p = products[o.productId];
+
+        // Recompute distribution at order time proportions using USD params that are immutable in Product
+        // to ensure the routing is consistent with placeOrder calculation:
+        uint256 priceUsdCentsAll = p.priceUsdCents * o.quantity;
+        uint256 shipUsdCents = p.shippingUsdCents;
+        uint256 taxUsdCents = (priceUsdCentsAll * p.taxRateBps + 9_999) / 10_000;
+
+        // We don't have vinPerUSD anymore; funds already escrowed in total.
+        // Split proportionally using ceiling components exactly like placeOrder,
+        // but ensure sum doesn't exceed escrow by clamping the remainder to revenue.
+        // To maintain exactness, recompute components by ratio of USD cents over total USD cents.
+        // Simpler & safe: pay components as min(component_estimate, remaining_escrow) in the order: tax, shipping, revenue.
+
+        uint256 remaining = o.vinAmountTotal;
+
+        // Prefer to ensure tax and shipping are fully paid first
+        uint256 vinTax = _ceilShare(remaining, taxUsdCents, priceUsdCentsAll + shipUsdCents + taxUsdCents);
+        if (vinTax > remaining) vinTax = remaining;
+        remaining -= vinTax;
+
+        uint256 vinShip = _ceilShare(remaining, shipUsdCents, priceUsdCentsAll + shipUsdCents); // rebase denom without tax already removed
+        if (vinShip > remaining) vinShip = remaining;
+        remaining -= vinShip;
+
+        uint256 vinRev = remaining; // whatever remains goes to revenue
+
+        // Route funds
+        _sendVIN(p.taxWallet, vinTax);
+        address shippingDest = p.shippingWallet == address(0) ? p.revenueWallet : p.shippingWallet;
+        _sendVIN(shippingDest, vinShip);
+        _sendVIN(p.revenueWallet, vinRev);
+
+        o.status = OrderStatus.RELEASED;
+
+        emit OrderReleased(orderId, o.productId, o.buyer, o.seller, o.vinAmountTotal);
     }
 
     /**
-     * @notice Buyer confirms receipt -> release funds to seller & tax wallet.
+     * Anyone can help the buyer trigger this, but only the buyer receives funds back.
+     * Refund allowed only after deadline and only if still PLACED.
      */
-    function buyerRelease(uint256 orderId) external nonReentrant {
-        Order storage O = orders[orderId];
-        if (O.status != OrderStatus.Escrowed) revert BadStatus();
-        if (msg.sender != O.buyer) revert NotBuyer();
+    function refundIfExpired(uint256 orderId) external nonReentrant {
+        Order storage o = orders[orderId];
+        require(o.status == OrderStatus.PLACED, "NOT_REFUNDABLE");
+        require(block.timestamp > o.deadline, "NOT_EXPIRED");
 
-        // Compute tax & revenue
-        uint256 vinTax = (O.vinAmount * O.taxBps) / 10_000;
-        uint256 vinSeller = O.vinAmount - vinTax;
+        // Refund to buyer
+        uint256 amt = o.vinAmountTotal;
+        o.status = OrderStatus.REFUNDED;
+        _sendVIN(o.buyer, amt);
 
-        // Update status first (checks-effects-interactions)
-        O.status = OrderStatus.Released;
-        totalEscrowedVin -= O.vinAmount;
+        // Stats
+        sellerStats[o.seller].expiredRefundCount += 1;
 
-        // Payouts
-        if (vinTax > 0) {
-            VIN.safeTransfer(O.taxWallet, vinTax);
+        emit OrderRefunded(orderId, o.productId, o.buyer, o.seller, amt);
+    }
+
+    /**
+     * Post-expiry review: only allowed if the order was refunded due to expiry.
+     * rating: 1..5, scamFlag: true/false
+     */
+    function reviewAfterRefund(uint256 orderId, uint8 rating, bool scamFlag) external onlyRegistered {
+        Order storage o = orders[orderId];
+        require(o.status == OrderStatus.REFUNDED, "ORDER_NOT_REFUNDED");
+        require(o.buyer == msg.sender, "NOT_BUYER");
+        require(!o.reviewed, "ALREADY_REVIEWED");
+        require(rating >= 1 && rating <= 5, "RATING_1_TO_5");
+
+        SellerStats storage s = sellerStats[o.seller];
+        s.ratingSum += rating;
+        s.ratingCount += 1;
+        if (scamFlag) {
+            s.scamCount += 1;
         }
-        VIN.safeTransfer(O.payoutWallet, vinSeller);
+        o.reviewed = true;
 
-        emit OrderReleased(orderId, O.buyer, O.seller, vinSeller, vinTax);
+        emit Reviewed(orderId, o.seller, rating, scamFlag);
+    }
+
+    /// ---------- Internal payout helpers ----------
+
+    function _sendVIN(address to, uint256 amount) internal {
+        if (amount == 0) return;
+        require(to != address(0), "DEST_ZERO");
+        bool ok = vin.transfer(to, amount);
+        require(ok, "VIN_TRANSFER_FAIL");
     }
 
     /**
-     * @notice Timeout refund (permissionless):
-     *         Anyone can call after confirmDeadline if still Escrowed.
-     *         Refunds full VIN to buyer; status -> Refunded.
+     * Returns ceil(remaining * numer / denom), safe for denom>0.
+     * If numer==0 returns 0.
      */
-    function claimTimeoutRefund(uint256 orderId) external nonReentrant {
-        Order storage O = orders[orderId];
-        if (O.status != OrderStatus.Escrowed) revert BadStatus();
-        if (block.timestamp <= O.confirmDeadline) revert TooEarly();
-
-        O.status = OrderStatus.Refunded;
-        totalEscrowedVin -= O.vinAmount;
-        VIN.safeTransfer(O.buyer, O.vinAmount);
-
-        emit OrderRefunded(orderId, O.buyer, O.vinAmount);
+    function _ceilShare(uint256 remaining, uint256 numer, uint256 denom) internal pure returns (uint256) {
+        if (numer == 0) return 0;
+        require(denom > 0, "DENOM_ZERO");
+        unchecked {
+            uint256 x = remaining * numer;
+            return (x + denom - 1) / denom;
+        }
     }
+    /// ---------- View helpers ----------
 
     /**
-     * @notice Buyer cancels the order before seller has marked shipped.
-     *         Status must be Escrowed and sellerMarked == false.
-     *         Refund VIN to buyer and restock inventory.
+     * Quote VIN amounts for a product and quantity at a given vinPerUSD (wei per USD).
+     * Returns (vinRevenue, vinShipping, vinTax, vinTotal).
+     * Frontend can use this to preview exact escrow required before approve/transferFrom.
      */
-    function buyerCancelBeforeShipped(uint256 orderId) external nonReentrant {
-        Order storage O = orders[orderId];
-        if (O.status != OrderStatus.Escrowed) revert BadStatus();
-        if (msg.sender != O.buyer) revert NotBuyer();
-        if (O.sellerMarked) revert TooEarly(); // already marked shipped -> cannot cancel
+    function quoteVinForProduct(
+        uint256 productId,
+        uint256 quantity,
+        uint256 vinPerUSD
+    ) external view returns (uint256 vinRevenue, uint256 vinShipping, uint256 vinTax, uint256 vinTotal) {
+        require(quantity >= 1, "QTY_MIN_1");
+        require(vinPerUSD > 0, "VIN_PER_USD_REQ");
+        Product storage p = products[productId];
+        require(p.seller != address(0), "PROD_NOT_FOUND");
 
-        // Restock inventory
-        Listing storage L = listings[O.listingId];
-        if (L.seller == address(0)) revert InvalidListing();
-        L.inventory += O.qty;
+        uint256 priceUsdCentsAll = p.priceUsdCents * quantity;
+        uint256 shipUsdCents = p.shippingUsdCents;
+        uint256 taxUsdCents = (priceUsdCentsAll * p.taxRateBps + 9_999) / 10_000;
 
-        // Refund & close
-        O.status = OrderStatus.Cancelled;
-        totalEscrowedVin -= O.vinAmount;
-        VIN.safeTransfer(O.buyer, O.vinAmount);
-
-        emit OrderCancelled(orderId, msg.sender);
+        vinRevenue = _usdCentsToVin(priceUsdCentsAll, vinPerUSD);
+        vinShipping = _usdCentsToVin(shipUsdCents, vinPerUSD);
+        vinTax = _usdCentsToVin(taxUsdCents, vinPerUSD);
+        vinTotal = vinRevenue + vinShipping + vinTax;
     }
 
-    // ===== Views =====
-
-    /// @notice Quick read of balances for transparency.
-    function contractBalances()
-        external
-        view
-        returns (uint256 vinBalance, uint256 escrowedVin, uint256 withdrawableFeesVin)
-    {
-        vinBalance = VIN.balanceOf(address(this));
-        escrowedVin = totalEscrowedVin;
-        withdrawableFeesVin = 0; // fees go directly to FEE_RECIPIENT; contract holds only escrow
+    /// Return lightweight product view
+    function getProduct(uint256 productId) external view returns (Product memory) {
+        Product storage p = products[productId];
+        require(p.seller != address(0), "PROD_NOT_FOUND");
+        return p;
     }
 
-    /// @notice Return full listing struct
-    function getListing(uint256 id) external view returns (Listing memory) {
-        if (listings[id].seller == address(0)) revert InvalidListing();
-        return listings[id];
-    }
-
-    /// @notice Return full order struct
+    /// Return order
     function getOrder(uint256 orderId) external view returns (Order memory) {
-        return orders[orderId];
+        Order storage o = orders[orderId];
+        require(o.buyer != address(0), "ORDER_NOT_FOUND");
+        return o;
+    }
+
+    /// Convenience: whether an order is currently active (PLACED and not expired)
+    function isOrderActive(uint256 orderId) external view returns (bool) {
+        Order storage o = orders[orderId];
+        if (o.status != OrderStatus.PLACED) return false;
+        return block.timestamp <= o.deadline;
+    }
+
+    /// Seller stats
+    function getSellerStats(address sellerAddr) external view returns (SellerStats memory) {
+        return sellerStats[sellerAddr];
+    }
+
+    /// List productIds of a seller (for pagination do this off-chain with event indexing)
+    function getSellerProductIds(address sellerAddr) external view returns (uint256[] memory) {
+        return sellerProducts[sellerAddr];
     }
 }
