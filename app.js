@@ -270,6 +270,7 @@ const ERC20_ABI = [
 
 /** ====== 3) Ethers & App state ====== */
 const { ethers } = window.ethers || {};
+const ethers = window.ethers;
 const app = {
   provider: null,
   signer: null,
