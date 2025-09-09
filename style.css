@@ -1,4 +1,4 @@
-/* Basic Reset */
+/* Cấu trúc cơ bản */
 *,
 *::before,
 *::after {
@@ -8,7 +8,7 @@
 }
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #f4f7fc;
   color: #333;
   height: 100%;
@@ -16,7 +16,7 @@ body {
   flex-direction: column;
 }
 
-/* Container for the entire page */
+/* Container tổng thể */
 .container {
   width: 100%;
   max-width: 1200px;
@@ -24,14 +24,15 @@ body {
   padding: 0 1rem;
 }
 
-/* Header Styles */
+/* Header */
 .site-header {
-  background-color: #1a202c;
+  background-color: #4CAF50;
   padding: 20px 0;
-  color: #fff;
+  color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .site-header .logo {
@@ -57,15 +58,15 @@ body {
 
 .site-header .price-chip {
   font-size: 1rem;
-  background-color: #fff;
-  color: #333;
+  background-color: white;
+  color: #4CAF50;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
 }
 
-/* Button Styles */
+/* Các nút */
 button {
-  padding: 10px 15px;
+  padding: 12px 20px;
   border-radius: 5px;
   font-size: 1rem;
   border: none;
@@ -87,13 +88,7 @@ button:hover {
   opacity: 0.9;
 }
 
-/* Main Section */
-main {
-  flex-grow: 1;
-  padding: 20px;
-}
-
-/* Wallet Info */
+/* Wallet Bar */
 #walletBar {
   background-color: #fff;
   padding: 20px;
@@ -113,8 +108,8 @@ main {
 }
 
 #btnRegister, #btnCreateProduct {
-  padding: 10px 20px;
-  font-size: 1rem;
+  padding: 12px 25px;
+  font-size: 1.1rem;
   background-color: #4CAF50;
   color: white;
   border-radius: 5px;
@@ -125,7 +120,7 @@ main {
   display: none;
 }
 
-/* Market Section */
+/* Phần thị trường (Market) */
 #marketSection {
   background-color: #fff;
   padding: 20px;
@@ -144,14 +139,14 @@ main {
 }
 
 input[type="search"] {
-  padding: 10px;
+  padding: 12px 20px;
   border: 1px solid #ddd;
   border-radius: 5px;
   width: 80%;
 }
 
 button#btnReload {
-  padding: 10px 20px;
+  padding: 12px 20px;
   background-color: #4CAF50;
   color: white;
   border-radius: 5px;
@@ -202,11 +197,11 @@ button#btnReload {
   margin-top: 15px;
   background-color: #4CAF50;
   color: white;
-  padding: 10px;
+  padding: 12px 25px;
   border-radius: 5px;
 }
 
-/* Modal Styles */
+/* Modal */
 .modal {
   position: fixed;
   top: 0;
@@ -245,18 +240,18 @@ button#btnReload {
 
 input[type="number"], input[type="text"], input[type="search"], input[type="email"], input[type="password"], input[type="date"] {
   width: 100%;
-  padding: 10px;
+  padding: 12px 20px;
   margin-bottom: 15px;
   border: 1px solid #ddd;
   border-radius: 5px;
 }
 
 label {
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: #333;
 }
 
-/* Responsive Styles */
+/* Responsive */
 @media (max-width: 768px) {
   .header-right {
     flex-direction: column;
