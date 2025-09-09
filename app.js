@@ -1,4 +1,4 @@
-/* muaban app.js — auto-connect + toggle disconnect + balances + register + escrow */
+/* muaban app.js — connect/disconnect, balances, registration, escrow */
 (() => {
   'use strict';
 
@@ -87,6 +87,17 @@
     }
   }
 
+  // ---------- Trạng thái UI ----------
+  function setConnectedUI(connected){
+    document.body.classList.toggle('connected', connected);
+    safeShow(ui.walletInfo, connected);
+    updateConnectButton(connected);
+  }
+  function setRegisteredUI(registered){
+    document.body.classList.toggle('registered', registered);
+    ui.btnRegister && ui.btnRegister.classList.toggle('hidden', !!registered);
+  }
+
   // ---------- Nút kết nối ↔ ngắt kết nối ----------
   function updateConnectButton(isConnected){
     if (!ui.btnConnect) return;
@@ -103,21 +114,22 @@
 
   function disconnectWallet(){
     try{
-      // Tắt auto-connect cho lần tải lại tiếp theo
+      // Tắt auto-connect cho lần tải sau (tuỳ chọn)
       sessionStorage.setItem('muaban:disable_autoconnect', '1');
     }catch{}
-    // Xoá UI/ state tối thiểu rồi reload
-    safeShow(ui.walletInfo, false);
+    // Reset UI/state
     app.provider = null; app.signer = null; app.account = null;
-    updateConnectButton(false);
-    location.reload();
+    setConnectedUI(false);
+    safeText(ui.accountShort, '');
+    safeText(ui.accountFull,  '');
+    safeText(ui.vinBalance,   '—');
+    safeText(ui.vicBalance,   '—');
   }
 
   // ---------- Connect wallet (auto hoặc bấm nút) ----------
   async function connectWallet(){
     if (!window.ethereum || !ethers){
-      safeShow(ui.walletInfo, false);
-      updateConnectButton(false);
+      setConnectedUI(false);
       return;
     }
     app.provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
@@ -134,15 +146,20 @@
 
     try { app.vinDecimals = await app.contracts.vin.decimals(); } catch { app.vinDecimals = 18; }
 
-    // UI: hiển thị ví + số dư; KHÔNG hiển thị tên mạng để đỡ rối
-    safeShow(ui.walletInfo, true);
+    // UI: hiển thị ví + số dư; (không hiển thị tên mạng)
+    setConnectedUI(true);
     safeText(ui.accountShort, short(app.account));
     safeText(ui.accountFull,  app.account);
     safeHref(ui.linkAccount, `https://vicscan.xyz/address/${app.account}`);
     if (MUABAN_ADDRESS) safeHref(ui.linkMuaban, `https://vicscan.xyz/address/${MUABAN_ADDRESS}`);
-    if (VIN_TOKEN_ADDRESS) safeHref(ui.linkVin, `https://vicscan.xyz/token/${VIN_TOKEN_ADDRESS}`);
+    if (VIN_TOKEN_ADDRESS) safeHref(ui.linkVinToken, `https://vicscan.xyz/token/${VIN_TOKEN_ADDRESS}`);
 
-    updateConnectButton(true);
+    // Đồng bộ nav đáy (phòng trường hợp script trong index chưa chạy)
+    const navMap = [
+      ['navContract', `https://vicscan.xyz/address/${MUABAN_ADDRESS||''}`],
+      ['navVinToken', `https://vicscan.xyz/token/${VIN_TOKEN_ADDRESS||''}`],
+    ];
+    navMap.forEach(([id, href]) => { const el = $('#'+id); if (el && href.endsWith('/')) return; if (el) el.href = href; });
 
     // Listeners
     if (window.ethereum && window.ethereum.on){
@@ -153,7 +170,6 @@
 
     await Promise.all([refreshBalances(), refreshRegistrationUI()]);
 
-    // Sau khi kết nối thành công thì bật lại auto-connect cho lần sau
     try{ sessionStorage.removeItem('muaban:disable_autoconnect'); }catch{}
   }
 
@@ -177,10 +193,13 @@
     if (!app.contracts?.muaban || !app.account) return;
     try{
       const ok = await app.contracts.muaban.isRegistered(app.account);
-      ui.btnRegister && ui.btnRegister.classList.toggle('hidden', !!ok);
-      // Ẩn dòng mạng cho gọn; chỉ hiển thị trạng thái đăng ký nếu có phần tử
+      setRegisteredUI(!!ok);
       safeText(ui.statusLine, ok ? 'Đã đăng ký nền tảng.' : 'Chưa đăng ký. Phí đăng ký: 0.001 VIN');
-    }catch{}
+      // Ẩn/hiện toàn bộ nút hành động cần đăng ký
+      $$('.registered-only').forEach(el => el.classList.toggle('hidden', !ok));
+    }catch{
+      setRegisteredUI(false);
+    }
   }
 
   async function ensureAllowance(amount){
@@ -325,25 +344,44 @@
     }
   }
 
+  // ---------- Search (placeholder: lọc thẻ .product-card theo data-name) ----------
+  function attachSearch(){
+    const input = $('#searchInput');
+    const btn   = $('#btnSearch');
+    if (!input || !btn) return;
+
+    const run = () => {
+      const q = (input.value || '').trim().toLowerCase();
+      const cards = $$('.product-card');
+      if (!cards.length) return; // chưa triển khai danh sách
+      cards.forEach(card => {
+        const name = (card.getAttribute('data-name') || '').toLowerCase();
+        card.style.display = (!q || name.includes(q)) ? '' : 'none';
+      });
+    };
+    btn.addEventListener('click', run);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); });
+  }
+
   // ---------- Boot ----------
   document.addEventListener('DOMContentLoaded', ()=>{
     // Map UI
     ui = {
-      btnConnect  : $('#btnConnect'),
-      walletInfo  : $('#walletInfo'),
-      accountShort: $('#accountShort'),
-      accountFull : $('#accountFull'),   // hiển thị địa chỉ ví đầy đủ
-      vinBalance  : $('#vinBalance'),
-      vicBalance  : $('#vicBalance'),
-      btnRegister : $('#btnRegister'),
-      statusLine  : $('#statusLine'),
-      linkAccount : $('#linkAccount'),
-      linkMuaban  : $('#openContract') || $('#linkMuaban'),
-      linkVin     : $('#openToken')    || $('#linkVinToken'),
+      btnConnect   : $('#btnConnect'),
+      walletInfo   : $('#walletInfo'),
+      accountShort : $('#accountShort'),
+      accountFull  : $('#accountFull'),
+      vinBalance   : $('#vinBalance'),
+      vicBalance   : $('#vicBalance'),
+      btnRegister  : $('#btnRegister'),
+      statusLine   : $('#statusLine'),
+      linkAccount  : $('#linkAccount'),
+      linkMuaban   : $('#linkMuaban'),
+      linkVinToken : $('#linkVinToken'),
     };
 
-    // Ẩn box ví ban đầu
-    safeShow(ui.walletInfo, false);
+    // Ẩn thông tin ví ban đầu
+    setConnectedUI(false);
 
     // Chuẩn bị nút Connect/Disconnect
     updateConnectButton(false);
@@ -376,6 +414,9 @@
     $('#btnConfirm')?.addEventListener('click', confirmReceipt);
     $('#btnRefund')?.addEventListener('click', refundIfExpired);
 
+    // Search
+    attachSearch();
+
     // Auto-connect nếu không bị tắt ở phiên trước
     const disableAuto = sessionStorage.getItem('muaban:disable_autoconnect') === '1';
     if (!disableAuto){
@@ -383,9 +424,6 @@
         try{ await connectWallet(); }
         catch(err){ console.debug('Auto-connect skipped:', err?.message || err); }
       })();
-    } else {
-      // Hiển thị nút "Kết nối ví" để người dùng chủ động bật lại
-      updateConnectButton(false);
     }
   });
 
