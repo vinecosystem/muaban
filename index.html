@@ -7,36 +7,25 @@
   <meta name="theme-color" content="#0f172a" />
   <link rel="icon" href="logo.png" />
   <link rel="stylesheet" href="style.css" />
-  <style>
-    html, body { height:100%; }
-    body { display:flex; flex-direction:column; }
-    main { flex:1 0 auto; }
-    .hidden { display:none !important; }
-    .header-right { display:flex; align-items:center; gap:.5rem; }
-    .price-chip { padding:.3rem .6rem; border:1px solid #e2e8f0; border-radius:.5rem; background:#fff; font-variant-numeric:tabular-nums; }
-  </style>
 </head>
 <body>
   <!-- =================== HEADER =================== -->
-  <header class="site-header">
-    <div class="container nav">
-      <div class="brand">
-        <img src="logo.png" alt="VIN" class="logo" />
-        <div class="brand-text">
-          <h1 class="brand-title">muaban</h1>
-          <p class="brand-sub">on-chain commerce • Viction</p>
-        </div>
+  <header class="header container">
+    <div class="brand">
+      <img src="logo.png" alt="muaban" class="logo" />
+      <div class="brand-text">
+        <h1 class="brand-title">muaban</h1>
+        <p class="brand-sub">on-chain commerce • Viction</p>
       </div>
-      <div class="header-right">
-        <div class="price-chip">1 VIN = <span id="vinUsdTop">Loading…</span></div>
-        <button id="btnConnect" class="btn primary">Kết nối ví</button>
-        <button id="btnDisconnect" class="btn ghost hidden">Ngắt</button>
-      </div>
+    </div>
+    <div class="header-right">
+      <div class="price-chip">1 VIN = <span id="vinUsdTop">Loading…</span></div>
+      <button id="btnConnect" class="btn primary">Kết nối ví</button>
+      <button id="btnDisconnect" class="btn ghost hidden">Ngắt</button>
     </div>
   </header>
 
   <main class="container">
-
     <!-- =================== WALLET BAR (hiện sau khi kết nối) =================== -->
     <section id="walletBar" class="card hidden">
       <div class="wallet-row">
@@ -153,18 +142,14 @@
         </div>
       </div>
     </div>
-
-    <!-- =================== TOAST =================== -->
-    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
-
   </main>
 
   <!-- =================== FOOTER =================== -->
   <footer class="site-footer">
     <div class="container footer-inner" style="gap:.75rem; justify-content:space-between">
       <div class="footer-nav">
-        <a class="link" href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638" target="_blank" rel="noopener">Contract</a>
-        <a class="link" href="https://vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank" rel="noopener">VIN Token</a>
+        <a class="link" href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638" target="_blank" rel="noopener">Hợp đồng</a>
+        <a class="link" href="https://vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank" rel="noopener">Token VIN</a>
         <a class="link" href="https://frollswap.com" target="_blank" rel="noopener">Swap VIN/VIC</a>
         <a class="link" href="https://github.com/vinecosystem/muaban" target="_blank" rel="noopener">Hướng dẫn</a>
       </div>
