@@ -3,30 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Muaban — Giá cả tính theo USD thanh toán bằng VIN</title>
+  <title>muaban • Viction</title>
   <meta name="theme-color" content="#0f172a" />
   <link rel="icon" href="logo.png" />
   <link rel="stylesheet" href="style.css" />
   <style>
     html, body { height: 100%; }
-    body { display: flex; flex-direction: column; }
-    main { flex: 1 0 auto; }
-    .footer-nav { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center }
-    .footer-nav .link { opacity:.9; text-decoration:none }
-    .price-chip { padding:.25rem .5rem; border:1px solid #3b3f51; border-radius:.5rem; font-variant-numeric: tabular-nums; }
-    .muted { opacity:.7 }
+    body { display:flex; flex-direction:column; }
+    main { flex:1 0 auto; }
     .hidden { display:none !important; }
+    .footer-nav { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center }
+    .price-chip { padding:.25rem .5rem; border:1px solid #cbd5e1; border-radius:.5rem; font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
-  <!-- ================ HEADER ================ -->
+  <!-- =================== HEADER =================== -->
   <header class="site-header">
     <div class="container nav">
       <div class="brand">
         <img src="logo.png" alt="VIN" class="logo" />
         <div class="brand-text">
-          <h1 class="brand-title">Muaban</h1>
-          <p class="brand-sub">Pay with VIN · Viction</p>
+          <h1 class="brand-title">muaban</h1>
+          <p class="brand-sub">on-chain commerce • Viction</p>
         </div>
       </div>
       <div class="wallet-buttons">
@@ -37,7 +35,8 @@
   </header>
 
   <main class="container">
-    <!-- ================ THÔNG TIN VÍ ================ -->
+
+    <!-- =================== WALLET BAR =================== -->
     <section id="walletInfo" class="card hidden connected-only">
       <div class="wallet-row">
         <div class="wallet-col">
@@ -49,37 +48,47 @@
         </div>
       </div>
       <div class="wallet-actions">
-        <span id="statusLine" class="muted small">Đang kiểm tra trạng thái…</span>
+        <span id="statusLine" class="small muted"></span>
         <button id="btnRegister" class="btn">Đăng ký</button>
       </div>
     </section>
 
-    <!-- ================ SẢN PHẨM ================ -->
-    <section class="section">
-      <h2 class="section-title">Sản phẩm</h2>
+    <!-- =================== NAV TABS =================== -->
+    <nav id="appTabs" class="tabs card hidden connected-only">
+      <button id="tabBuy"   class="tab active">Mua hàng</button>
+      <button id="tabSell"  class="tab">Bán hàng</button>
+      <button id="tabOrders" class="tab">Đơn hàng</button>
+    </nav>
+
+    <!-- =================== BUY: MARKET =================== -->
+    <section id="buySection" class="section">
       <div class="filters">
         <input id="searchInput" type="search" class="input" placeholder="Tìm sản phẩm…" />
-        <select id="categorySelect" class="select">
-          <option value="">Tất cả danh mục</option>
-          <option value="hotel">Khách sạn</option>
-          <option value="food">Đồ ăn</option>
-          <option value="fashion">Thời trang</option>
-          <option value="other">Khác</option>
-        </select>
+        <input id="sellerFilter" type="search" class="input" placeholder="Lọc theo ví người bán (tuỳ chọn)" />
+        <input id="minPriceUsd" type="number" step="0.01" min="0" class="input" placeholder="Giá từ (USD)" />
+        <input id="maxPriceUsd" type="number" step="0.01" min="0" class="input" placeholder="đến (USD)" />
         <button id="btnReload" class="btn ghost">Tải lại</button>
       </div>
-      <div id="productList" class="grid"></div>
-      <p id="emptyProducts" class="muted" style="margin-top:.5rem;">Chưa có sản phẩm.</p>
 
+      <div id="productList" class="grid"></div>
+      <p id="emptyProducts" class="muted" style="margin:.5rem 0 0">Chưa có sản phẩm.</p>
+
+      <!-- Product Card Template -->
       <template id="tplProductCard">
         <article class="card product">
-          <div class="p-img-wrap"><img class="p-img" alt="" /></div>
+          <div class="p-img-wrap">
+            <img class="p-img" alt="" />
+          </div>
           <div class="p-body">
             <h3 class="p-title"></h3>
             <p class="p-desc"></p>
             <div class="p-meta">
               <span class="p-price"></span>
               <span class="p-tax"></span>
+              <span class="p-delivery"></span>
+            </div>
+            <div class="p-seller">
+              <a class="p-seller-addr mono" target="_blank" rel="noopener"></a>
             </div>
             <button class="btn buy-btn">Mua</button>
           </div>
@@ -87,7 +96,125 @@
       </template>
     </section>
 
-    <!-- ================ MODAL MUA HÀNG ================ -->
+    <!-- =================== SELL: DASHBOARD =================== -->
+    <section id="sellSection" class="section hidden connected-only">
+      <!-- Create Product -->
+      <article class="card">
+        <h2 class="section-title">Đăng sản phẩm</h2>
+        <form id="createProductForm" class="grid grid-2">
+          <label> Tên hàng
+            <input id="pName" class="input" required maxlength="64" />
+          </label>
+          <label> Ảnh (IPFS CID)
+            <input id="pImageCID" class="input" required />
+          </label>
+          <label> Mô tả (IPFS CID)
+            <input id="pDescCID" class="input" required />
+          </label>
+          <label> Giá (USD)
+            <input id="pPriceUsd" class="input" type="number" step="0.01" min="0.01" required />
+          </label>
+          <label> Phí ship (USD)
+            <input id="pShippingUsd" class="input" type="number" step="0.01" min="0" value="0" />
+          </label>
+          <label> Thuế (%)
+            <input id="pTaxPercent" class="input" type="number" step="0.01" min="0" max="100" value="0" />
+          </label>
+          <label> Thời hạn giao (ngày)
+            <input id="pDeliveryDays" class="input" type="number" min="1" required />
+          </label>
+          <label> Tồn kho
+            <input id="pStock" class="input" type="number" min="0" required />
+          </label>
+          <label> Ví doanh thu
+            <input id="pRevenueWallet" class="input mono" required />
+          </label>
+          <label> Ví thuế
+            <input id="pTaxWallet" class="input mono" required />
+          </label>
+          <label> Ví phí ship (tuỳ chọn)
+            <input id="pShippingWallet" class="input mono" placeholder="0x… hoặc để trống" />
+          </label>
+          <label> Khoá công khai mã hoá (bytes hex)
+            <input id="pSellerPubKey" class="input mono" required placeholder="0x…" />
+          </label>
+          <label class="row center">
+            <input id="pActive" type="checkbox" checked /> Đang bán
+          </label>
+          <div class="row end">
+            <button id="btnCreateProduct" class="btn primary" type="submit">Đăng sản phẩm</button>
+          </div>
+        </form>
+      </article>
+
+      <!-- My Products -->
+      <article class="card">
+        <h2 class="section-title">Sản phẩm của tôi</h2>
+        <div id="myProductsList" class="list"></div>
+        <p id="emptyMyProducts" class="muted">Chưa có sản phẩm.</p>
+
+        <template id="tplMyProductRow">
+          <div class="myprod-row">
+            <div class="mp-main">
+              <img class="mp-img" alt="" />
+              <div class="mp-text">
+                <div class="mp-title"></div>
+                <div class="mp-sub small muted"></div>
+              </div>
+            </div>
+            <div class="mp-actions">
+              <button class="btn ghost price-btn">Sửa giá</button>
+              <button class="btn ghost stock-btn">Sửa tồn</button>
+              <button class="btn ghost toggle-active-btn">Ẩn/Hiện</button>
+            </div>
+          </div>
+        </template>
+      </article>
+    </section>
+
+    <!-- =================== ORDERS =================== -->
+    <section id="ordersSection" class="section hidden connected-only">
+      <article class="card">
+        <h2 class="section-title">Đơn hàng của tôi (người mua)</h2>
+        <div id="buyerOrdersList" class="list"></div>
+        <p id="emptyBuyerOrders" class="muted">Chưa có đơn nào.</p>
+
+        <template id="tplOrderBuyerRow">
+          <div class="order-row">
+            <div class="or-main">
+              <div class="or-title"></div>
+              <div class="or-sub small muted"></div>
+            </div>
+            <div class="or-actions">
+              <button class="btn primary confirm-btn">Đã nhận hàng</button>
+              <button class="btn ghost danger refund-btn">Hoàn tiền</button>
+              <a class="link tx-link" target="_blank" rel="noopener">Tx</a>
+            </div>
+          </div>
+        </template>
+      </article>
+
+      <article class="card">
+        <h2 class="section-title">Đơn mới (người bán)</h2>
+        <div id="sellerOrdersList" class="list"></div>
+        <p id="emptySellerOrders" class="muted">Chưa có đơn nào.</p>
+
+        <template id="tplOrderSellerRow">
+          <div class="order-row">
+            <div class="or-main">
+              <div class="or-title"></div>
+              <div class="or-sub small muted"></div>
+            </div>
+            <div class="or-actions">
+              <button class="btn ghost shipinfo-btn">Xem địa chỉ giao</button>
+              <a class="link tx-link" target="_blank" rel="noopener">Tx</a>
+            </div>
+          </div>
+        </template>
+      </article>
+    </section>
+
+    <!-- =================== BUY MODAL =================== -->
     <div id="buyModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="buyTitle">
       <div class="modal-card">
         <div class="modal-head">
@@ -97,12 +224,28 @@
         <div class="modal-body">
           <div class="row"><label class="lbl">Sản phẩm</label><div id="buyName" class="val"></div></div>
           <div class="row"><label class="lbl">Giá (USD)</label><div id="buyPriceUsd" class="val"></div></div>
+          <div class="row"><label class="lbl">Phí ship (USD)</label><div id="buyShipUsd" class="val"></div></div>
           <div class="row"><label class="lbl">Thuế (%)</label><div id="buyTaxRate" class="val"></div></div>
           <div class="row"><label class="lbl">Số lượng</label><input id="buyQty" type="number" class="input" min="1" value="1" /></div>
           <hr />
           <div class="row"><label class="lbl">Tổng (USD)</label><div id="buyTotalUsd" class="val mono"></div></div>
           <div class="row"><label class="lbl">Thanh toán (VIN)</label><div id="buyTotalVin" class="val mono"></div></div>
-          <p class="muted small">* Tỷ giá lấy từ Binance: VIN = VIC × 100.</p>
+          <hr />
+          <h4>Thông tin giao hàng</h4>
+          <div class="grid grid-2">
+            <label> Họ tên
+              <input id="shipName" class="input" required />
+            </label>
+            <label> Số điện thoại
+              <input id="shipPhone" class="input" required />
+            </label>
+          </div>
+          <label> Địa chỉ giao hàng
+            <input id="shipAddress" class="input" required />
+          </label>
+          <label> Ghi chú
+            <input id="shipNote" class="input" />
+          </label>
         </div>
         <div class="modal-foot">
           <button id="buySubmit" class="btn primary">Xác nhận thanh toán</button>
@@ -111,37 +254,98 @@
       </div>
     </div>
 
+    <!-- =================== EDIT PRODUCT MODAL =================== -->
+    <div id="editModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3 id="editTitle">Cập nhật sản phẩm</h3>
+          <button id="editClose" class="icon-btn" aria-label="Đóng">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="grid grid-2">
+            <label> Giá (USD)
+              <input id="ePriceUsd" class="input" type="number" step="0.01" min="0.01" required />
+            </label>
+            <label> Phí ship (USD)
+              <input id="eShipUsd" class="input" type="number" step="0.01" min="0" />
+            </label>
+            <label> Thuế (%)
+              <input id="eTaxPercent" class="input" type="number" step="0.01" min="0" max="100" />
+            </label>
+            <label> Thời hạn giao (ngày)
+              <input id="eDeliveryDays" class="input" type="number" min="1" />
+            </label>
+            <label> Tồn kho
+              <input id="eStock" class="input" type="number" min="0" />
+            </label>
+            <label> Ví doanh thu
+              <input id="eRevenueWallet" class="input mono" />
+            </label>
+            <label> Ví thuế
+              <input id="eTaxWallet" class="input mono" />
+            </label>
+            <label> Ví phí ship (tuỳ chọn)
+              <input id="eShippingWallet" class="input mono" />
+            </label>
+            <label> Khoá công khai mã hoá (bytes hex)
+              <input id="eSellerPubKey" class="input mono" />
+            </label>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button id="editSubmit" class="btn primary">Cập nhật</button>
+          <button id="editCancel" class="btn ghost">Hủy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== SHIPPING INFO VIEWER =================== -->
+    <div id="shipInfoModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="shipInfoTitle">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3 id="shipInfoTitle">Thông tin giao hàng</h3>
+          <button id="shipInfoClose" class="icon-btn" aria-label="Đóng">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="row"><label class="lbl">Họ tên</label><div id="shipViewName" class="val"></div></div>
+          <div class="row"><label class="lbl">SĐT</label><div id="shipViewPhone" class="val"></div></div>
+          <div class="row"><label class="lbl">Địa chỉ</label><div id="shipViewAddress" class="val"></div></div>
+          <div class="row"><label class="lbl">Ghi chú</label><div id="shipViewNote" class="val"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== TOAST =================== -->
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
   </main>
 
-  <!-- ================ FOOTER ================ -->
+  <!-- =================== FOOTER =================== -->
   <footer class="site-footer">
     <div class="container footer-inner" style="gap:.75rem; justify-content:space-between">
       <div class="footer-nav">
-        <a class="link" href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638" target="_blank">Contract</a>
-        <a class="link" href="https://vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank">VIN Token</a>
-        <a class="link" href="https://frollswap.com" target="_blank">Swap VIN/VIC</a>
-        <a class="link" href="https://github.com/vinecosystem/muaban" target="_blank">Hướng dẫn</a>
+        <a class="link" href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638" target="_blank" rel="noopener">Contract</a>
+        <a class="link" href="https://vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank" rel="noopener">VIN Token</a>
+        <a class="link" href="https://frollswap.com" target="_blank" rel="noopener">Swap VIN/VIC</a>
+        <a class="link" href="https://github.com/vinecosystem/muaban" target="_blank" rel="noopener">Hướng dẫn</a>
       </div>
-      <div class="price-chip" id="vinUsdChip">1 VIN = <span id="vinUsd">Loading…</span></div>
-    </div>
-    <div class="container" style="margin-top:.25rem">
-      <span class="muted">Transparent · On-Chain · Viction</span>
+      <div class="price-chip">1 VIN = <span id="vinUsd">Loading…</span></div>
     </div>
   </footer>
 
-  <!-- app logic -->
+  <!-- App logic -->
   <script defer src="app.js"></script>
 
-  <!-- giá VIN theo USD = giá VIC × 100 -->
+  <!-- VIN/USD (VIN = VIC * 100) -->
   <script>
     async function fetchVinUsd() {
       const el = document.getElementById('vinUsd');
       try {
         const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT', { cache: 'no-store' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        const vicUsd = parseFloat(data.price);
+        const { price } = await res.json();
+        const vicUsd = parseFloat(price);
+        if (!isFinite(vicUsd) || vicUsd <= 0) throw new Error('Bad price');
         const vinUsd = vicUsd * 100;
         el.textContent = vinUsd.toFixed(4) + ' USD';
       } catch (e) {
