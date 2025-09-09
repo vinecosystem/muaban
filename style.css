@@ -112,6 +112,7 @@ b { font-weight: 700; }
   font-weight: 600;
 }
 
+/* -------------------- 4) Wallet Bar -------------------- */
 .wallet-box {
   display: grid;
   grid-auto-flow: row;
@@ -120,20 +121,50 @@ b { font-weight: 700; }
   gap: var(--space-2);
 }
 
-.account {
-  display: inline-flex;
+.wallet-row {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: var(--space-2);
-  padding: 7px 10px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  box-shadow: var(--shadow-1);
 }
-.account .balance { color: var(--muted); font-size: 13px; }
-#addr-short { font-family: var(--mono); background: var(--panel-2); padding: 4px 8px; border-radius: 999px; border: 1px solid var(--border); }
 
-/* -------------------- 4) Buttons -------------------- */
+.wallet-col {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.wallet-col.right {
+  justify-content: flex-end;
+}
+
+.wallet-balance {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.wallet-balance .badge {
+  background: var(--panel);
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.wallet-balance .badge:first-child {
+  margin-left: 0;
+}
+
+#accountShort {
+  background: var(--panel-2);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-family: var(--mono);
+  border: 1px solid var(--border);
+}
+
+/* -------------------- 5) Buttons -------------------- */
 .btn {
   appearance: none;
   border: 1px solid var(--border);
@@ -155,7 +186,7 @@ b { font-weight: 700; }
 .btn.ghost { background: transparent; }
 .btn.small { padding: 6px 10px; font-size: 12.5px; }
 
-/* -------------------- 5) Main / Cards -------------------- */
+/* -------------------- 6) Main / Cards -------------------- */
 main { flex: 1 0 auto; }   /* đẩy footer xuống đáy */
 .list {
   display: grid;
@@ -184,7 +215,7 @@ main { flex: 1 0 auto; }   /* đẩy footer xuống đáy */
 }
 .card-head .title { margin: 0; font-size: 18px; font-weight: 800; }
 
-/* -------------------- 6) Footer -------------------- */
+/* -------------------- 7) Footer -------------------- */
 footer.site-footer {
   background: var(--panel);
   padding: var(--space-6) 0;
