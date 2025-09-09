@@ -8,55 +8,47 @@
 html, body {
   height: 100%;
   font-family: 'Arial', sans-serif;
-  background-color: #f4f7fa;
+  background-color: white;
+  color: #333;
 }
 
 body {
   display: flex;
   flex-direction: column;
+  padding: 20px;
 }
 
 /* =================== HEADER =================== */
 .site-header {
-  background-color: #2b6cb0;
-  color: white;
-  padding: 20px 30px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  background-color: transparent;
+  text-align: center;
 }
 
-.nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.brand h1 {
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.price-chip {
-  padding: 8px 16px;
-  background-color: white;
-  border-radius: 50px;
-  font-size: 14px;
+.site-header h1 {
+  font-size: 32px;
+  font-weight: bold;
   color: #2b6cb0;
-  font-weight: 600;
+  margin-bottom: 10px;
 }
 
+.site-header p {
+  font-size: 16px;
+  color: #666;
+}
+
+/* =================== BUTTONS =================== */
 .btn {
-  padding: 10px 20px;
+  padding: 12px 20px;
   border: none;
   border-radius: 25px;
   font-weight: bold;
   cursor: pointer;
+  width: 100%;
+  max-width: 200px;
+  margin: 10px auto;
+  display: block;
+  font-size: 16px;
 }
 
 .primary {
@@ -70,39 +62,35 @@ body {
   color: #2b6cb0;
 }
 
-.hidden {
-  display: none !important;
+/* =================== WALLET INFO =================== */
+.wallet-info {
+  background-color: #f7fafc;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 20px;
+  text-align: center;
 }
 
-/* =================== MAIN CONTENT =================== */
-.container {
-  padding: 30px 20px;
-  flex-grow: 1;
+.wallet-info span {
+  font-size: 18px;
+  display: block;
+  margin: 5px 0;
+}
+
+/* =================== PRODUCT LIST =================== */
+#marketSection {
+  margin-top: 40px;
 }
 
 h2 {
-  font-size: 22px;
-  margin-bottom: 20px;
+  font-size: 24px;
   font-weight: 600;
-}
-
-.filters {
-  display: flex;
-  justify-content: space-between;
   margin-bottom: 20px;
-}
-
-.input {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  width: 100%;
-  max-width: 250px;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 20px;
 }
 
@@ -111,6 +99,7 @@ h2 {
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
 }
 
 .product img {
@@ -120,24 +109,14 @@ h2 {
 
 .p-title {
   font-size: 18px;
+  font-weight: bold;
   margin-top: 15px;
-  font-weight: 600;
-  color: #333;
-}
-
-.p-meta {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #777;
 }
 
 .p-price {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: bold;
   color: #2b6cb0;
-}
-
-.p-seller {
   margin-top: 10px;
 }
 
@@ -148,7 +127,7 @@ h2 {
   border: none;
   border-radius: 25px;
   cursor: pointer;
-  margin-top: 20px;
+  margin-top: 15px;
 }
 
 .buy-btn:hover {
@@ -172,8 +151,8 @@ h2 {
   background-color: white;
   padding: 30px;
   border-radius: 10px;
+  width: 80%;
   max-width: 500px;
-  width: 100%;
 }
 
 .modal-head {
@@ -191,7 +170,7 @@ h2 {
   cursor: pointer;
 }
 
-input, button {
+input {
   font-size: 16px;
   padding: 12px;
   border-radius: 8px;
@@ -200,7 +179,7 @@ input, button {
   margin-top: 10px;
 }
 
-input:focus, button:focus {
+input:focus {
   outline: none;
   border-color: #2b6cb0;
 }
@@ -219,15 +198,15 @@ button.ghost {
 
 /* =================== FOOTER =================== */
 footer {
-  background-color: #2b6cb0;
-  color: white;
+  background-color: transparent;
   padding: 20px;
   text-align: center;
   font-size: 14px;
+  margin-top: 20px;
 }
 
 footer a {
-  color: white;
+  color: #2b6cb0;
   text-decoration: none;
 }
 
@@ -237,18 +216,11 @@ footer a:hover {
 
 /* =================== RESPONSIVE DESIGN =================== */
 @media (max-width: 768px) {
-  .header-right {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .filters {
-    flex-direction: column;
-    gap: 10px;
-  }
-
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .btn {
+    width: auto;
   }
 }
