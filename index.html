@@ -7,7 +7,7 @@
   <link rel="icon" href="./logo.png" />
   <link rel="stylesheet" href="./style.css" />
 
-  <!-- Cấu hình dApp (điền đúng địa chỉ hợp đồng của bạn ở đây) -->
+  <!-- Cấu hình dApp -->
   <script>
     window.MUABAN_CONFIG = {
       MUABAN_ADDRESS: "0xe01e2213A899E9B3b1921673D2d13a227a8df638",
@@ -15,101 +15,117 @@
       VIC_CHAIN_ID_HEX: "0x58",
       VIC_NAME: "Viction Mainnet",
       MUABAN_ABI_PATH: "./Muaban_ABI.json",
-      // Binance symbols & liên kết SWAP (có thể đổi sau)
       VIC_SYMBOL: "VICUSDT",
       VIC_SYMBOL_FALLBACK: "TOMOUSDT",
       SWAP_URL: "#"
     };
   </script>
 
-  <!-- Ethers UMD + App -->
+  <!-- Ethers + App -->
   <script defer src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <script defer src="./app.js"></script>
 
-  <!-- Đồng bộ class body.connected/registered và giá VIN từ Binance -->
+  <!-- Đồng bộ UI + giá VIN; gắn nút Mua trên từng sản phẩm với khung đặt hàng -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      /* ===== A) Đồng bộ trạng thái kết nối/đăng ký để ẩn/hiện khối ===== */
-      const walletInfo = document.querySelector('#walletInfo');
-      const btnRegister = document.querySelector('#btnRegister');
-
+      /* ==== A) body.connected / body.registered ==== */
+      const walletInfo = document.getElementById('walletInfo');
+      const btnRegister = document.getElementById('btnRegister');
       const syncConnected = () => {
         const connected = walletInfo && !walletInfo.classList.contains('hidden');
         document.body.classList.toggle('connected', connected);
       };
       const syncRegistered = () => {
-        // Khi ví đã đăng ký, app.js sẽ ẩn nút #btnRegister -> coi như registered
         const registered = btnRegister && btnRegister.classList.contains('hidden');
         document.body.classList.toggle('registered', registered);
       };
-
       syncConnected(); syncRegistered();
-      if (walletInfo) new MutationObserver(syncConnected).observe(walletInfo, {attributes:true, attributeFilter:['class']});
-      if (btnRegister) new MutationObserver(syncRegistered).observe(btnRegister, {attributes:true, attributeFilter:['class']});
+      if (walletInfo) new MutationObserver(syncConnected).observe(walletInfo,{attributes:true,attributeFilter:['class']});
+      if (btnRegister) new MutationObserver(syncRegistered).observe(btnRegister,{attributes:true,attributeFilter:['class']});
 
-      /* ===== B) Giá VIN theo USD = VIC/USDT trên Binance × 100 ===== */
+      /* ==== B) Giá VIN theo USD = (VIC/USDT × 100) ==== */
+      const { VIC_SYMBOL, VIC_SYMBOL_FALLBACK, MUABAN_ADDRESS, VIN_TOKEN } = window.MUABAN_CONFIG || {};
       const elVinUsd = document.getElementById('vinUsd');
-      const { VIC_SYMBOL, VIC_SYMBOL_FALLBACK } = window.MUABAN_CONFIG || {};
-
-      function fmtUSD(x){
-        if (!isFinite(x)) return '—';
-        // hiển thị 2 chữ số thập phân, bỏ số 0 dư
-        const s = Number(x).toFixed(2);
-        return s.replace(/\.00$/, '.00');
-      }
+      window.__vinUsd = NaN;  // lưu để gợi ý vinPerUSD khi mua
 
       async function fetchBinance(symbol){
-        const url = 'https://api.binance.com/api/v3/ticker/price?symbol=' + symbol;
-        const r = await fetch(url, { cache: 'no-store' });
-        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol='+symbol, {cache:'no-store'});
+        if (!r.ok) throw new Error('HTTP '+r.status);
         const j = await r.json();
         return parseFloat(j.price);
       }
+      function fmt2(x){ return isFinite(x) ? Number(x).toFixed(2) : '—'; }
 
       async function updateVinUsd(){
         if (!elVinUsd) return;
         elVinUsd.textContent = 'Đang lấy giá…';
         try{
           let vic = NaN;
-          try {
-            vic = await fetchBinance(VIC_SYMBOL || 'VICUSDT');
-          } catch {
-            vic = await fetchBinance(VIC_SYMBOL_FALLBACK || 'TOMOUSDT');
-          }
-          const vin = vic * 100;
-          elVinUsd.textContent = '1 VIN ≈ ' + fmtUSD(vin) + ' USD';
+          try { vic = await fetchBinance(VIC_SYMBOL || 'VICUSDT'); }
+          catch { vic = await fetchBinance(VIC_SYMBOL_FALLBACK || 'TOMOUSDT'); }
+          const vinUsd = vic * 100;
+          window.__vinUsd = vinUsd;
+          elVinUsd.textContent = '1 VIN ≈ ' + fmt2(vinUsd) + ' USD';
         }catch(e){
           console.debug('VIN price fetch failed:', e);
           elVinUsd.textContent = '1 VIN ≈ — USD';
+          window.__vinUsd = NaN;
         }
       }
-
       updateVinUsd();
-      setInterval(updateVinUsd, 60_000); // làm mới mỗi 60 giây
+      setInterval(updateVinUsd, 60_000);
 
-      /* ===== C) Gán liên kết điều hướng đáy ===== */
-      const cfg = window.MUABAN_CONFIG || {};
-      const contractUrl = cfg.MUABAN_ADDRESS ? ('https://vicscan.xyz/address/' + cfg.MUABAN_ADDRESS) : '#';
-      const vinUrl = cfg.VIN_TOKEN ? ('https://vicscan.xyz/token/' + cfg.VIN_TOKEN) : '#';
-      const swapUrl = cfg.SWAP_URL || '#';
-      const guideUrl = './mota.md';
-
+      /* ==== C) Gán link điều hướng đáy ==== */
       const navs = {
-        navContract: contractUrl,
-        navVinToken: vinUrl,
-        navSwap: swapUrl,
-        navGuide: guideUrl
+        navContract: MUABAN_ADDRESS ? ('https://vicscan.xyz/address/' + MUABAN_ADDRESS) : '#',
+        navVinToken: VIN_TOKEN ? ('https://vicscan.xyz/token/' + VIN_TOKEN) : '#',
+        navSwap: (window.MUABAN_CONFIG.SWAP_URL || '#'),
+        navGuide: './mota.md'
       };
-      Object.entries(navs).forEach(([id, href]) => {
-        const el = document.getElementById(id);
-        if (el) el.href = href;
+      Object.entries(navs).forEach(([id, href]) => { const el=document.getElementById(id); if (el) el.href = href; });
+
+      /* ==== D) Khung đặt hàng theo sản phẩm ==== */
+      // Khi bấm nút "Mua" trên card: set productId + gợi ý vinPerUSD từ giá hiện tại
+      window.showBuyPanel = function(pid, name){
+        const panel = document.getElementById('buyPanel');
+        const pidInput = document.getElementById('productId');
+        const nameEl = document.getElementById('buyProductName');
+        const vinPerUSD = document.getElementById('vinPerUSD');
+        const qty = document.getElementById('quantity');
+
+        if (pidInput) pidInput.value = String(pid || 0);
+        if (nameEl) nameEl.textContent = name || ('Sản phẩm #' + pid);
+
+        // vinPerUSD = 1 / (VIN/USD). Nếu có giá, tự đề xuất ~6 chữ số thập phân
+        if (isFinite(window.__vinUsd) && window.__vinUsd > 0 && vinPerUSD){
+          const v = 1 / window.__vinUsd;
+          vinPerUSD.value = String(Math.max(0, v).toFixed(6)); // người dùng vẫn có thể sửa
+        }
+
+        if (qty) qty.value = '1';
+        panel?.classList.remove('hidden');
+        panel?.scrollIntoView({behavior:'smooth', block:'center'});
+      };
+
+      // đóng panel (ẩn đi)
+      window.hideBuyPanel = function(){
+        document.getElementById('buyPanel')?.classList.add('hidden');
+      };
+
+      // Demo: nếu bạn chưa có dữ liệu on-chain, card mẫu dưới đây vẫn bấm thử được
+      document.querySelectorAll('[data-buy]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const pid = btn.getAttribute('data-pid');
+          const name= btn.getAttribute('data-name');
+          window.showBuyPanel(pid, name);
+        });
       });
     });
   </script>
 </head>
 
 <body>
-  <!-- ======= HEADER (logo + slogan + giá VIN + kết nối ví) ======= -->
+  <!-- ======= HEADER ======= -->
   <header class="wrap header">
     <div class="brand">
       <img src="./logo.png" alt="muaban" class="logo" />
@@ -118,14 +134,13 @@
         <p class="slogan">mua bán thuần on-chain • không máy chủ</p>
       </div>
     </div>
-
     <div class="header-actions">
       <div class="vin-usd" id="vinUsd">1 VIN ≈ — USD</div>
       <button id="btnConnect" class="btn btn-primary">Kết nối ví</button>
     </div>
   </header>
 
-  <!-- ======= THÔNG TIN VÍ (chỉ hiện sau khi kết nối) ======= -->
+  <!-- ======= THÔNG TIN VÍ (gọn, không link thừa) ======= -->
   <section id="walletInfo" class="wrap card hidden connected-only">
     <div class="wallet-row">
       <div class="wallet-col">
@@ -147,16 +162,10 @@
     <div class="wallet-row actions">
       <span id="statusLine" class="muted small">Đang kiểm tra trạng thái đăng ký…</span>
       <button id="btnRegister" class="btn">Đăng ký (0.001 VIN)</button>
-      <div class="spacer"></div>
-      <a id="linkAccount" class="link-small" target="_blank" rel="noreferrer">VicScan (ví)</a>
-      <span class="dot">•</span>
-      <a id="linkMuaban" class="link-small" target="_blank" rel="noreferrer">VicScan (hợp đồng)</a>
-      <span class="dot">•</span>
-      <a id="linkVinToken" class="link-small" target="_blank" rel="noreferrer">VicScan (VIN)</a>
     </div>
   </section>
 
-  <!-- ======= TÌM KIẾM + SẢN PHẨM (luôn hiển thị) ======= -->
+  <!-- ======= TÌM KIẾM + SẢN PHẨM ======= -->
   <main class="wrap">
     <!-- Ô tìm kiếm -->
     <section class="search-row">
@@ -167,17 +176,44 @@
     <!-- Danh sách sản phẩm -->
     <section class="products">
       <h2 class="section-title">Sản phẩm</h2>
+
+      <!-- GRID sản phẩm: app.js (hoặc script riêng) có thể render động từ on-chain.
+           Ví dụ 1 card mẫu để test luồng:
+      -->
       <div id="productsList" class="grid">
-        <!-- Sau này sẽ render card từ on-chain; tạm thời placeholder -->
-        <div class="card muted">Sản phẩm sẽ hiển thị ở đây (đọc từ sự kiện on-chain).</div>
+        <article class="product-card" data-name="Áo thun VIN" data-id="1">
+          <img class="cover" src="https://picsum.photos/seed/vin1/600/400" alt="">
+          <div class="content">
+            <div class="name">Áo thun VIN</div>
+            <div class="muted small">Mã SP #1 • Giá hiển thị tham khảo</div>
+            <div class="row" style="display:flex; gap:8px; align-items:center;">
+              <button class="btn btn-primary" data-buy data-pid="1" data-name="Áo thun VIN">Mua</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Bạn có thể nhân bản card mẫu, chỉ cần đổi data-pid + data-name -->
+        <article class="product-card" data-name="Cốc VIN" data-id="2">
+          <img class="cover" src="https://picsum.photos/seed/vin2/600/400" alt="">
+          <div class="content">
+            <div class="name">Cốc VIN</div>
+            <div class="muted small">Mã SP #2 • Giá hiển thị tham khảo</div>
+            <div class="row" style="display:flex; gap:8px; align-items:center;">
+              <button class="btn btn-primary" data-buy data-pid="2" data-name="Cốc VIN">Mua</button>
+            </div>
+          </div>
+        </article>
       </div>
     </section>
 
-    <!-- ======= MUA / ESCROW (hiện sau khi đã kết nối; nút ẩn nếu chưa đăng ký) ======= -->
-    <section class="card connected-only">
-      <h3 class="section-subtitle">Đặt hàng (escrow)</h3>
+    <!-- ======= KHUNG ĐẶT HÀNG (theo sản phẩm) ======= -->
+    <!-- Chỉ hiện khi đã kết nối + đã đăng ký -->
+    <section id="buyPanel" class="card connected-only registered-only hidden">
+      <h3 class="section-subtitle">Đặt hàng: <span id="buyProductName" class="mono">—</span></h3>
+
       <div class="form-row">
-        <label>Mã SP <input id="productId" class="input w-100" type="number" min="1" value="1"></label>
+        <!-- productId ẩn/hiện đơn giản: vẫn là input number để copy/paste nhanh -->
+        <label>Mã SP <input id="productId" class="input w-100" type="number" min="1" value="0"></label>
         <label>Số lượng <input id="quantity" class="input w-100" type="number" min="1" value="1"></label>
         <label>vinPerUSD
           <input id="vinPerUSD" class="input wide" type="text" placeholder="VIN trên 1 USD (số thập phân hoặc wei)">
@@ -194,34 +230,36 @@
 
       <div class="btn-row">
         <button id="btnApproveBuy" class="btn">Approve VIN</button>
-        <button id="btnPlaceOrder" class="btn btn-primary registered-only">Mua (placeOrder)</button>
+        <button id="btnPlaceOrder" class="btn btn-primary">Mua (placeOrder)</button>
+        <button class="btn" onclick="hideBuyPanel()">Đóng</button>
       </div>
+
       <p class="hint muted small">
-        * “Mua” chỉ hiện khi ví đã đăng ký. Nếu chưa, bấm “Đăng ký (0.001 VIN)” ở phần ví.
+        * Hệ thống gợi ý sẵn <code>vinPerUSD</code> từ giá “1 VIN ≈ USD” hiện tại. Bạn có thể chỉnh nếu cần.
       </p>
     </section>
 
-    <!-- ======= QUẢN LÝ ĐƠN (buyer) — chỉ hiện khi đã kết nối ======= -->
-    <section class="card connected-only">
+    <!-- ======= QUẢN LÝ ĐƠN (buyer) — chỉ hiện khi đã đăng ký ======= -->
+    <section class="card connected-only registered-only">
       <h3 class="section-subtitle">Đơn hàng của tôi</h3>
       <div class="form-row">
         <label>Order ID <input id="orderId" class="input w-120" type="number" min="1" value="1"></label>
-        <button id="btnConfirm" class="btn btn-primary registered-only">Đã nhận hàng (giải ngân)</button>
-        <button id="btnRefund" class="btn registered-only">Hoàn tiền nếu quá hạn</button>
+        <button id="btnConfirm" class="btn btn-primary">Đã nhận hàng (giải ngân)</button>
+        <button id="btnRefund" class="btn">Hoàn tiền nếu quá hạn</button>
       </div>
       <p class="hint muted small">
         “Đã nhận hàng” chỉ bấm khi đơn chưa quá hạn; “Hoàn tiền” chỉ bấm khi đã quá hạn (đúng cơ chế escrow).
       </p>
     </section>
 
-    <!-- ======= KHU NGƯỜI BÁN (gian hàng) — sẵn sàng mở khi đã đăng ký ======= -->
+    <!-- ======= KHU NGƯỜI BÁN (sẽ mở sau) ======= -->
     <section class="card connected-only registered-only">
       <h3 class="section-subtitle">Gian hàng của tôi</h3>
       <p class="muted small">Sau khi hoàn tất đăng ký, công cụ tạo/cập nhật sản phẩm sẽ hiển thị ở đây.</p>
     </section>
   </main>
 
-  <!-- ======= NAV DƯỚI CÙNG (luôn cố định phía đáy) ======= -->
+  <!-- ======= NAV DƯỚI CÙNG (chỉ nơi duy nhất chứa link) ======= -->
   <nav class="bottom-nav">
     <a id="navContract"   href="#" target="_blank" rel="noreferrer">Hợp đồng</a>
     <a id="navVinToken"   href="#" target="_blank" rel="noreferrer">VIN token</a>
