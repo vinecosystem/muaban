@@ -156,27 +156,24 @@
     </div>
   </footer>
 
-  <!-- ethers + app -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <script defer src="app.js"></script>
-
-  <!-- VIN/USD (VIN = VIC × 100) hiển thị ở đầu -->
   <script>
-  async function fetchVinUsdTop() {
-    const el = document.getElementById('vinUsdTop');
-    try {
-      const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT', { cache: 'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const { price } = await res.json();
-      const vicUsd = parseFloat(price);
-      const vinUsd = vicUsd * 100;
-      el.textContent = isFinite(vinUsd) ? (vinUsd.toFixed(2) + ' USD') : 'N/A';  <!-- Đảm bảo hiển thị 2 số thập phân -->
-    } catch {
-      el.textContent = 'N/A';
+    async function fetchVinUsdTop() {
+      const el = document.getElementById('vinUsdTop');
+      try {
+        const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT', { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const { price } = await res.json();
+        const vicUsd = parseFloat(price);
+        const vinUsd = vicUsd * 100;
+        el.textContent = isFinite(vinUsd) ? (vinUsd.toFixed(2) + ' USD') : 'N/A';
+      } catch {
+        el.textContent = 'N/A';
+      }
     }
-  }
-  fetchVinUsdTop();
-  setInterval(fetchVinUsdTop, 60000);  <!-- Cập nhật mỗi phút -->
-</script>
+    fetchVinUsdTop();
+    setInterval(fetchVinUsdTop, 60000);
+  </script>
 </body>
 </html>
