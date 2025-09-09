@@ -1,183 +1,274 @@
-/* ========================================================================== 
-   style.css — muaban (Viction)
-   Giao diện gọn – rõ – mượt trên desktop & mobile
-   ========================================================================== */
-
-/* ---------- CSS Variables (palette) ---------- */
-:root{
-  --bg: #f8fafc;              /* Màu nền sáng cho nền của container */
-  --bg-card: #ffffff;         /* Nền sáng cho các thẻ */
-  --bg-soft: #f1f5f9;         /* Nền mềm mại cho các phần riêng biệt */
-
-  --text: #333333;            /* Màu chữ chính */
-  --text-dim: #64748b;        /* Màu chữ phụ */
-  --text-soft: #94a3b8;       /* Màu chữ mềm cho thông tin phụ */
-
-  --border: #e2e8f0;          /* Màu viền cho các phần tử */
-
-  --primary: #2563eb;         /* Màu chính cho các nút và highlights */
-  --primary-hover: #1d4ed8;   /* Màu khi hover trên nút chính */
-  --primary-press: #15803d;   /* Màu khi nhấn trên nút chính */
-
-  --accent: #10b981;          /* Màu nhấn mạnh cho các phần tử nổi bật */
-  --accent-hover: #34d399;    /* Màu khi hover trên các phần tử nhấn mạnh */
-  --accent-press: #059669;    /* Màu khi nhấn trên các phần tử nhấn mạnh */
-
-  --ring: rgba(56, 189, 248, .35); /* Màu viền cho focus state */
-  --shadow: 0 10px 30px rgba(2, 8, 23, .55); /* Đổ bóng cho các phần tử */
-  --soft-shadow: 0 6px 18px rgba(2, 8, 23, .35); /* Đổ bóng nhẹ cho các container */
+/* =================== GENERAL =================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-/* ---------- RESET & BASE ---------- */
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; height: 100%; }
-img { display: block; max-width: 100%; height: auto; }
-button { font: inherit; cursor: pointer; }
-input, button { outline: none; }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
+html, body {
+  height: 100%;
+  font-family: Arial, sans-serif;
+  background-color: #f7fafc;
+}
 
-/* ---------- BODY ---------- */
 body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
-  background: var(--bg);         /* Nền sáng đẹp mắt */
-  color: var(--text);            /* Chữ chính */
-  -webkit-font-smoothing: antialiased; /* Hiển thị mượt */
-  min-height: 100vh;             /* Đảm bảo body chiếm hết chiều cao */
+  display: flex;
+  flex-direction: column;
 }
 
-/* ---------- LAYOUT ---------- */
+/* =================== HEADER =================== */
+.site-header {
+  background-color: #1a202c;
+  padding: 1rem 2rem;
+  color: white;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand h1, .brand p {
+  margin: 0;
+  font-weight: bold;
+}
+
+.brand-title {
+  font-size: 1.5rem;
+}
+
+.brand-sub {
+  font-size: 0.875rem;
+  color: #a0aec0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.price-chip {
+  padding: 0.3rem 0.6rem;
+  background-color: #fff;
+  border-radius: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.primary {
+  background-color: #3182ce;
+  color: white;
+}
+
+.ghost {
+  background-color: transparent;
+  border: 1px solid #3182ce;
+  color: #3182ce;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.wallet-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.wallet-col {
+  flex: 1;
+  text-align: center;
+}
+
+.wallet-col.right {
+  text-align: right;
+}
+
+/* =================== MAIN CONTENT =================== */
 .container {
-  max-width: 1100px;             /* Chiều rộng tối đa của container */
-  margin: 0 auto;                /* Căn giữa */
-  padding: 0 1rem;
+  padding: 2rem;
+  flex-grow: 1;
+}
+
+.section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+}
+
+.input {
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  width: 100%;
+  font-size: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
 }
 
 .card {
-  background: var(--bg-card);   /* Nền của thẻ */
-  border-radius: .75rem;         /* Góc bo tròn */
-  padding: 1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.product .p-img-wrap {
+  text-align: center;
+}
+
+.p-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.p-body {
+  margin-top: 1rem;
+}
+
+.p-title {
+  font-size: 1.125rem;
+  font-weight: bold;
+  color: #2d3748;
+}
+
+.p-desc {
+  color: #718096;
+  margin: 0.5rem 0;
+}
+
+.p-meta {
+  font-size: 0.875rem;
+  color: #4a5568;
   margin-bottom: 1rem;
-  transition: transform 0.2s ease;
 }
 
-.card:hover {
-  transform: translateY(-5px);   /* Hiệu ứng hover trên card */
+.p-price {
+  font-weight: bold;
+  font-size: 1.25rem;
 }
 
-/* ---------- HEADER ---------- */
-.site-header {
-  background: var(--primary);   /* Màu nền header */
-  color: #fff;                  /* Màu chữ trắng */
-  padding: .75rem 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,.1);
-}
-.nav { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
-
-.brand { display: flex; align-items: center; gap: .6rem; }
-.logo { width: 40px; height: 40px; border-radius: .5rem; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
-.brand-title { font-size: 1.25rem; font-weight: 700; margin: 0; }
-.brand-sub { font-size: .85rem; opacity: .9; margin: .15rem 0 0; }
-
-.header-right { display: flex; align-items: center; gap: .5rem; }
-.price-chip {
-  display: inline-flex; align-items: center; gap: .35rem;
-  padding: .3rem .6rem; background: #ffffff; color: #0f172a;
-  border: 1px solid #e2e8f0; border-radius: .5rem; font-variant-numeric: tabular-nums;
+.p-tax, .p-delivery {
+  margin-left: 0.5rem;
 }
 
-/* ---------- BUTTONS ---------- */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: .52rem 1rem; border-radius: .55rem; border: 1px solid transparent;
-  font-weight: 600; transition: background .2s, color .2s, border-color .2s, transform .06s;
+.p-seller a {
+  font-weight: bold;
+  color: #3182ce;
+  text-decoration: none;
 }
-.btn:active { transform: translateY(1px); }
-.btn.primary { background: var(--primary); color: #fff; }
-.btn.primary:hover { background: var(--primary-hover); }
-.btn.primary:active { background: var(--primary-press); }
-.btn.ghost { background: #fff; border-color: #e2e8f0; color: var(--text); }
-.btn.ghost:hover { background: #f8fafc; }
 
-/* ---------- WALLET BAR ---------- */
-#walletBar .wallet-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .5rem; }
-#walletBar .wallet-col.right { text-align: right; }
-#walletBar .wallet-actions { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
-
-/* ---------- SEARCH (Đơn giản) ---------- */
-.filters {
-  display: flex; gap: .5rem; align-items: center; flex-wrap: nowrap;
-  background: #fff; padding: .5rem; border-radius: .75rem; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+.buy-btn {
+  background-color: #2b6cb0;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
 }
-.filters .input { flex: 1 1 auto; min-width: 8rem; }
 
-/* ---------- PRODUCT GRID ---------- */
-.grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.buy-btn.hidden {
+  display: none;
+}
 
-.product { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
-.p-img-wrap { position: relative; width: 100%; aspect-ratio: 4/3; overflow: hidden; }
-.p-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.002); transition: transform .35s ease; }
-.product:hover .p-img { transform: scale(1.03); }
-
-.p-body { padding: 1rem; }
-.p-title { font-size: 1.05rem; font-weight: 700; margin: 0 0 .35rem; }
-.p-desc  { font-size: .92rem; color: #64748b; margin-bottom: .6rem; min-height: 1.2rem; }
-.p-meta  { display: flex; flex-wrap: wrap; gap: .5rem .9rem; font-size: .9rem; margin-bottom: .75rem; }
-.p-price { font-weight: 700; }
-.p-seller { font-size: .85rem; color: #64748b; margin-bottom: .6rem; }
-.p-seller-addr { font-family: var(--mono, ui-monospace, Menlo, monospace); font-size: .8rem; word-break: break-all; }
-
-.product .btn { width: 100%; }
-
-/* ---------- MODALS ---------- */
+/* =================== MODALS =================== */
 .modal {
-  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-  background: rgba(2,6,23,.6); z-index: 50; padding: 1rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
 }
+
 .modal-card {
-  width: min(520px, 100%); max-height: 90vh; overflow: auto;
-  background: #fff; border-radius: .85rem; box-shadow: 0 8px 24px rgba(15,23,42,.16);
-  animation: pop .2s ease;
-}
-.modal-head, .modal-foot {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 1rem; border-bottom: 1px solid #e2e8f0;
-}
-.modal-foot { border-top: 1px solid #e2e8f0; border-bottom: 0; }
-.modal-body { padding: 1rem; }
-.icon-btn { background: transparent; border: 0; font-size: 1.35rem; line-height: 1; padding: .25rem; color: #64748b; }
-.icon-btn:hover { color: #0f172a; }
-.row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin: .55rem 0; }
-.lbl { font-weight: 600; }
-.val { text-align: right; }
-
-/* ---------- TOAST ---------- */
-.toast {
-  position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%);
-  background: #0f172a; color: #fff; padding: .6rem 1rem; border-radius: .55rem;
-  box-shadow: 0 8px 24px rgba(15,23,42,.22); z-index: 60; min-width: 220px; text-align: center;
+  background-color: white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  width: 80%;
+  max-width: 600px;
 }
 
-/* ---------- FOOTER ---------- */
-.site-footer { background: #f1f5f9; padding: .75rem 0; border-top: 1px solid #e2e8f0; }
-.footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
-.footer-nav { display: flex; gap: .9rem; flex-wrap: wrap; }
-.footer-nav .link { padding: .25rem .5rem; border-radius: .35rem; border: 1px solid transparent; }
-.footer-nav .link:hover { background: #fff; border-color: #e2e8f0; }
-
-/* ---------- ANIMATIONS & RESPONSIVE ---------------------- */
-@keyframes pop { from { opacity: 0; transform: translateY(6px) scale(.98);} to { opacity: 1; transform: translateY(0) scale(1);} }
-
-@media (max-width: 880px) {
-  .nav { flex-wrap: wrap; }
-  .brand-sub { display: none; }
-  .header-right { width: 100%; justify-content: flex-end; }
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-@media (max-width: 520px) {
-  #walletBar .wallet-row { flex-direction: column; align-items: flex-start; gap: .25rem; }
-  #walletBar .wallet-actions { flex-direction: column; align-items: flex-start; }
-  .filters { padding: .5rem; }
-  .filters .input { min-width: 0; }
+.modal-head h3 {
+  font-size: 1.5rem;
+}
+
+.icon-btn {
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  color: #2b6cb0;
+  cursor: pointer;
+}
+
+/* =================== FOOTER =================== */
+footer {
+  background-color: #2d3748;
+  padding: 1rem 0;
+  color: white;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+footer a {
+  color: #edf2f7;
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* =================== RESPONSIVE DESIGN =================== */
+@media (max-width: 768px) {
+  .nav {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .header-right {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .container {
+    padding: 1rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
