@@ -1,28 +1,33 @@
 /* ================== RESET & BASE ================== */
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing:border-box; margin:0; padding:0; }
 html, body { font-family: system-ui, -apple-system, sans-serif; background:#f8fafc; color:#0f172a; line-height:1.5; }
 a { color:inherit; text-decoration:none; }
 button { font:inherit; cursor:pointer; }
 img { max-width:100%; height:auto; display:block; }
+input, select { font:inherit; }
 
-/* Layout containers */
-.container { width:100%; max-width:1100px; margin:0 auto; padding:0 1rem; }
+/* Containers */
+.container { width:100%; max-width:1200px; margin:0 auto; padding:0 1rem; }
 .card { background:#fff; border-radius:.75rem; padding:1rem; box-shadow:0 1px 3px rgba(0,0,0,.1); margin-bottom:1rem; }
+.section { margin-bottom:2rem; }
+.section-title { font-size:1.2rem; font-weight:600; margin-bottom:1rem; }
 
 /* ================== HEADER ================== */
 .site-header { background:#0f172a; color:#fff; padding:.75rem 0; margin-bottom:1rem; }
 .nav { display:flex; align-items:center; justify-content:space-between; }
 .brand { display:flex; align-items:center; gap:.5rem; }
-.logo { width:36px; height:36px; border-radius:.5rem; }
-.brand-title { font-size:1.25rem; font-weight:600; }
+.logo { width:40px; height:40px; border-radius:.5rem; }
+.brand-title { font-size:1.3rem; font-weight:700; }
 .brand-sub { font-size:.8rem; opacity:.8; }
 
 /* ================== BUTTONS ================== */
-.btn { padding:.5rem 1rem; border:none; border-radius:.5rem; font-weight:500; transition:.2s; }
+.btn { padding:.45rem .9rem; border:none; border-radius:.5rem; font-weight:500; transition:.2s; }
 .btn.primary { background:#2563eb; color:#fff; }
 .btn.primary:hover { background:#1d4ed8; }
 .btn.ghost { background:transparent; border:1px solid #cbd5e1; color:#0f172a; }
 .btn.ghost:hover { background:#f1f5f9; }
+.btn.danger { border:1px solid #ef4444; color:#b91c1c; }
+.btn.danger:hover { background:#fee2e2; }
 
 /* ================== BADGES & LABELS ================== */
 .badge { display:inline-block; background:#f1f5f9; padding:.25rem .5rem; border-radius:.25rem; font-size:.85rem; }
@@ -35,24 +40,45 @@ img { max-width:100%; height:auto; display:block; }
 .wallet-col.right { text-align:right; }
 .wallet-actions { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
 
+/* ================== TABS ================== */
+.tabs { display:flex; border-bottom:1px solid #e2e8f0; margin-bottom:1rem; }
+.tab { flex:1; padding:.5rem; border:none; background:transparent; font-weight:500; text-align:center; cursor:pointer; }
+.tab.active { border-bottom:2px solid #2563eb; color:#2563eb; }
+
 /* ================== FILTERS ================== */
 .filters { display:flex; gap:.5rem; flex-wrap:wrap; margin:1rem 0; }
-.input, .select { padding:.4rem .6rem; border:1px solid #cbd5e1; border-radius:.4rem; font:inherit; }
+.input, .select { padding:.4rem .6rem; border:1px solid #cbd5e1; border-radius:.4rem; }
 .input:focus, .select:focus { outline:none; border-color:#2563eb; }
 
 /* ================== PRODUCT GRID ================== */
-.grid { display:grid; gap:1rem; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); }
+.grid { display:grid; gap:1rem; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); }
 .product { display:flex; flex-direction:column; }
 .p-img-wrap { border-radius:.5rem; overflow:hidden; margin-bottom:.5rem; }
 .p-title { font-weight:600; margin-bottom:.25rem; }
 .p-desc { font-size:.9rem; color:#475569; margin-bottom:.5rem; }
-.p-meta { display:flex; gap:1rem; font-size:.85rem; margin-bottom:.75rem; }
+.p-meta { display:flex; gap:.5rem; font-size:.85rem; margin-bottom:.5rem; flex-wrap:wrap; }
+.p-seller { font-size:.8rem; color:#475569; margin-bottom:.5rem; }
+.p-seller-addr { font-family:monospace; font-size:.75rem; }
+
+/* ================== MY PRODUCTS ================== */
+.myprod-row { display:flex; align-items:center; justify-content:space-between; padding:.5rem 0; border-bottom:1px solid #e5e7eb; }
+.mp-main { display:flex; align-items:center; gap:.5rem; }
+.mp-img { width:48px; height:48px; border-radius:.5rem; object-fit:cover; }
+.mp-title { font-weight:500; }
+.mp-sub { font-size:.8rem; }
+
+/* ================== ORDERS ================== */
+.order-row { display:flex; align-items:center; justify-content:space-between; padding:.5rem 0; border-bottom:1px solid #e5e7eb; }
+.or-main { flex:1; }
+.or-title { font-weight:500; }
+.or-sub { font-size:.8rem; }
+.or-actions { display:flex; gap:.25rem; }
 
 /* ================== MODAL ================== */
 .modal { position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; z-index:100; }
-.modal-card { background:#fff; border-radius:.75rem; width:100%; max-width:420px; padding:1rem; animation:fadeIn .25s ease; }
+.modal-card { background:#fff; border-radius:.75rem; width:100%; max-width:480px; padding:1rem; animation:fadeIn .25s ease; max-height:90vh; overflow:auto; }
 .modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:.75rem; }
-.icon-btn { background:none; border:none; font-size:1.25rem; line-height:1; cursor:pointer; }
+.icon-btn { background:none; border:none; font-size:1.25rem; cursor:pointer; }
 .modal-body .row { display:flex; justify-content:space-between; margin:.5rem 0; }
 .lbl { font-weight:500; }
 .val { text-align:right; }
@@ -67,11 +93,16 @@ img { max-width:100%; height:auto; display:block; }
 .footer-nav .link { font-size:.9rem; padding:.25rem .5rem; }
 .price-chip { font-weight:500; }
 
+/* ================== FORMS ================== */
+form.grid { display:grid; gap:1rem; }
+.grid-2 { grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
+label { display:flex; flex-direction:column; gap:.25rem; font-size:.9rem; }
+
 /* ================== ANIMATIONS ================== */
 @keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
 
 /* ================== RESPONSIVE ================== */
-@media (max-width:600px){
+@media (max-width:700px){
   .nav { flex-direction:column; gap:.5rem; }
   .wallet-actions { flex-direction:column; align-items:flex-start; }
   .filters { flex-direction:column; align-items:stretch; }
