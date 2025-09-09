@@ -88,47 +88,22 @@ body{
 .btn:active{ transform: translateY(1px) scale(.995); } /* Hiệu ứng khi nhấn */
 .btn:focus-visible{ box-shadow: 0 0 0 4px var(--ring); } /* Hiệu ứng focus */
 
-.primary{
-  background: linear-gradient(180deg, var(--primary), var(--primary-press)); /* Nền cho nút chính */
-  border-color: #0f2918;
-  color: #ecfdf5; /* Màu chữ cho nút chính */
-}
-.primary:hover{ background: linear-gradient(180deg, var(--primary-hover), var(--primary)); } /* Hiệu ứng hover cho nút chính */
-.primary:active{ background: linear-gradient(180deg, var(--primary-press), #0d5e2f); } /* Hiệu ứng khi nhấn nút chính */
-
 /* ---------- Footer ---------- */
 .footer{
   margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--border); /* Footer styling */
   color: var(--text-dim); text-align: center; /* Màu chữ và căn giữa */
 }
 .footer .links{
-  display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; /* Các link trong footer */
-}
-.footer .fine{ font-size: 12px; } /* Chữ nhỏ ở footer */
-
-/* ---------- Responsive ---------- */
-@media (max-width: 940px){
-  .container{ padding: 18px 14px 84px; } /* Điều chỉnh padding cho container */
-}
-@media (max-width: 780px){
-  .header{ flex-direction: column; align-items: flex-start; gap: 10px; } /* Đổi layout header cho màn hình nhỏ */
-  .wallet-box{ width: 100%; justify-content: space-between; } /* Điều chỉnh wallet box cho màn hình nhỏ */
-  .inline-input{ width: 100%; } /* Full width inline input */
+  display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap;
 }
 
-/* ---------- Buttons (custom) ---------- */
-#btn-connect{ font-size: 15px; padding: 13px 18px; }
-#btn-play{ font-size: 15px; padding: 13px 18px; }
-#btn-approve{ font-size: 14px; }
+@media (max-width: 768px) {
+  .container { padding: 22px 10px; }
+  .header { flex-direction: column; gap: 10px; text-align: center; }
+  .brand-text { margin-top: 10px; }
+}
 
-/* ---------- Table select ---------- */
-.custom-table{
-  display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; margin-bottom: 10px;
-}
-.custom-table input{
-  padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft); color: var(--text);
-  transition: box-shadow .15s ease, border-color .15s ease, background .2s ease;
-}
-.custom-table input:focus{
-  border-color: var(--accent); box-shadow: 0 0 0 4px var(--ring); /* Focus state */
+@media (max-width: 480px) {
+  .header { flex-direction: column; gap: 10px; }
+  .btn { width: 100%; }
 }
