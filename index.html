@@ -19,8 +19,11 @@
       </div>
     </div>
     <div class="header-right">
+      <!-- Hiển thị tỷ giá VIN theo USD -->
       <div class="price-chip">1 VIN = <span id="vinUsdTop">Loading…</span></div>
+      <!-- Nút kết nối ví -->
       <button id="btnConnect" class="btn primary">Kết nối ví</button>
+      <!-- Nút ngắt kết nối ví -->
       <button id="btnDisconnect" class="btn ghost hidden">Ngắt</button>
     </div>
   </header>
@@ -30,17 +33,23 @@
     <section id="walletBar" class="card hidden">
       <div class="wallet-row">
         <div class="wallet-col">
+          <!-- Hiển thị địa chỉ ví -->
           <a id="accountShort" class="badge mono" target="_blank" rel="noopener"></a>
         </div>
         <div class="wallet-col right">
-          <span id="vinBalance" class="badge">—</span>
-          <span id="vicBalance" class="badge">—</span>
+          <!-- Hiển thị số dư VIN và VIC -->
+          <div class="wallet-balance">
+            <span id="vinBalance" class="badge">— VIN</span>
+            <span id="vicBalance" class="badge">— VIC</span>
+          </div>
         </div>
       </div>
       <div class="wallet-actions">
         <span id="statusLine" class="small muted"></span>
         <div style="display:flex; gap:.5rem;">
+          <!-- Nút đăng ký (hiển thị sau khi kết nối ví thành công) -->
           <button id="btnRegister" class="btn hidden">Đăng ký</button>
+          <!-- Nút tạo sản phẩm (hiển thị sau khi đăng ký) -->
           <button id="btnCreateProduct" class="btn hidden">Tạo sản phẩm</button>
         </div>
       </div>
@@ -56,6 +65,7 @@
         <button id="btnReload" class="btn ghost">Tìm</button>
       </div>
 
+      <!-- Danh sách sản phẩm -->
       <div id="productList" class="grid"></div>
       <p id="emptyProducts" class="muted" style="margin-top:.5rem;">Chưa có sản phẩm.</p>
 
