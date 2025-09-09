@@ -1,258 +1,438 @@
 /* ========================================================================
-   style.css — muaban.vin dApp (Responsive Design)
+   style.css — muaban.vin dApp (Responsive Design, Inspired by Daugia.vin)
    ======================================================================== */
 
-/* ---------- Global Styles ---------- */
+/* -------------------- Reset & Global Variables -------------------- */
 *,
 *::before,
 *::after {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f7fafc;
-    color: #2d3748;
-    line-height: 1.6;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+:root {
+  /* Main colors */
+  --bg: #0c111b;            /* Main background */
+  --panel: #121826;         /* Card / panel background */
+  --panel-2: #0f1522;       /* Input background */
+  --text: #e8edf6;          /* Primary text color */
+  --muted: #9aa7bd;         /* Secondary text color */
+  --primary: #2dd4bf;       /* Highlight color */
+  --success: #22c55e;       /* Success color */
+  --warn: #f59e0b;          /* Warning color */
+  --danger: #ef4444;        /* Error color */
+  --border: #223049;        /* Border color */
+  --ring: rgba(45, 212, 191, .35); /* Focus ring color */
+
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 10px;
+
+  --shadow-1: 0 8px 24px rgba(0,0,0,.25);
+  --shadow-2: 0 14px 38px rgba(0,0,0,.28);
+
+  --maxw: 1120px;
+  --space-1: 6px;
+  --space-2: 10px;
+  --space-3: 14px;
+  --space-4: 18px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+
+  --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 
-/* ---------- Header Styles ---------- */
-header.container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background-color: #38a169;
-    color: white;
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f7f9ff;
+    --panel: #ffffff;
+    --panel-2: #f1f4fb;
+    --text: #0b1430;
+    --muted: #5f6e86;
+    --primary: #0ea5e9;
+    --success: #16a34a;
+    --warn: #d97706;
+    --danger: #dc2626;
+    --border: #dfe6f4;
+    --ring: rgba(14,165,233,.35);
+  }
 }
 
-header .brand {
-    display: flex;
-    align-items: center;
+/* -------------------- Body Layout -------------------- */
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  background: radial-gradient(1200px 700px at 60% -10%, rgba(45,212,191,.06), transparent 55%), var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  margin: 0;
 }
 
-header .brand .logo-img {
-    width: 40px;
-    height: 40px;
-    margin-right: 1rem;
+.container {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--space-5);
 }
 
-header .brand .logo {
-    font-size: 1.5rem;
-    font-weight: bold;
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
 }
 
-header .brand .slogan {
-    font-size: 0.9rem;
+b {
+  font-weight: 700;
 }
 
-header .vin-price {
-    display: flex;
-    gap: 0.5rem;
-    font-size: 1rem;
-    align-items: center;
+.hidden {
+  display: none !important;
 }
 
-header .wallet-box {
-    display: flex;
-    gap: 1rem;
+/* Focus ring */
+:where(button, [href], input, select, summary):focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--ring);
+  border-radius: var(--radius-sm);
 }
 
-header .actions-inline {
-    display: flex;
-    gap: 1rem;
+/* -------------------- Header Layout -------------------- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-6) 0 var(--space-4);
 }
 
-header .btn {
-    padding: 0.5rem 1rem;
-    background-color: #2f855a;
-    color: white;
-    border: none;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    font-size: 1rem;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
-header .btn.ghost {
-    background-color: transparent;
-    border: 1px solid #e2e8f0;
+.logo-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: block;
+  box-shadow: 0 2px 10px rgba(0,0,0,.35);
 }
 
-header .btn:hover {
-    background-color: #2c7a42;
+.brand-text .logo {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: .2px;
 }
 
-header .btn.ghost:hover {
-    background-color: #f7fafc;
+.brand-text .slogan {
+  margin: 2px 0 8px;
+  color: var(--muted);
+  font-size: 12.5px;
 }
 
-/* ---------- Search Bar Styles ---------- */
+.vin-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.wallet-box {
+  display: grid;
+  grid-auto-flow: row;
+  grid-auto-rows: min-content;
+  justify-items: end;
+  gap: var(--space-2);
+}
+
+.account {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 7px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow-1);
+}
+
+.account .balance {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+#addr-short {
+  font-family: var(--mono);
+  background: var(--panel-2);
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+
+/* -------------------- Buttons -------------------- */
+.btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  letter-spacing: .2px;
+  cursor: pointer;
+  transition: transform .04s ease, background .2s ease, border-color .2s ease, opacity .2s ease, filter .2s ease;
+  user-select: none;
+}
+
+.btn:hover {
+  filter: brightness(1.05);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn.primary {
+  background: linear-gradient(180deg, var(--primary), #1fb9a7);
+  color: #051311;
+  border-color: transparent;
+}
+
+.btn.success {
+  background: linear-gradient(180deg, var(--success), #199c49);
+  color: #03190c;
+  border-color: transparent;
+}
+
+.btn.warn {
+  background: linear-gradient(180deg, #fbbf24, var(--warn));
+  color: #1d1401;
+  border-color: transparent;
+}
+
+.btn.ghost {
+  background: transparent;
+}
+
+.btn.small {
+  padding: 6px 10px;
+  font-size: 12.5px;
+}
+
+/* -------------------- Search Bar -------------------- */
 .searchBar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    margin: 2rem 0;
+  display: grid;
+  grid-template-columns: 1fr 180px auto auto;
+  gap: var(--space-2);
+  padding: var(--space-3) 0 var(--space-5);
 }
 
 .searchBar input,
-.searchBar select,
-.searchBar button {
-    padding: 0.5rem;
-    font-size: 1rem;
-    border-radius: 0.375rem;
-    border: 1px solid #e2e8f0;
+.searchBar select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease;
 }
 
-.searchBar input:focus,
-.searchBar select:focus {
-    outline: none;
-    border-color: #38a169;
+.searchBar input::placeholder {
+  color: var(--muted);
 }
 
-/* ---------- Main Content Section Styles ---------- */
-main.container {
-    flex: 1;
-    padding: 2rem 1rem;
+/* -------------------- Main Content -------------------- */
+main {
+  flex: 1 0 auto;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--space-4);
+  padding-bottom: var(--space-6);
 }
 
 .card {
-    background-color: #fff;
-    border-radius: 0.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 1rem;
-    margin-bottom: 1rem;
+  background: linear-gradient(180deg, var(--panel), #0f1625);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+  transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
 }
 
-.card .card-head {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 1rem;
+.card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
+  border-color: #2b3a5a;
 }
 
-.card .title {
-    font-size: 1.25rem;
-    font-weight: 600;
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5) var(--space-3);
+  border-bottom: 1px solid var(--border);
 }
 
-.card .card-body {
-    display: none;
+.card-head .title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
 }
 
-.card .card-body.hidden {
-    display: block;
+.card-body {
+  padding: var(--space-5);
 }
 
-.card .actions-row {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-start;
-    margin-top: 1rem;
+.cols {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--space-4);
 }
 
-.card .btn {
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
-    background-color: #38a169;
-    color: white;
-    border: none;
-    border-radius: 0.375rem;
+.col {
+  background: var(--panel-2);
+  border: 1px dashed #1e2a44;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  min-height: 120px;
 }
 
-.card .btn.ghost {
-    background-color: transparent;
-    border: 1px solid #e2e8f0;
+.col.content .snippet {
+  color: var(--text);
+  white-space: pre-line;
+  line-height: 1.6;
 }
 
-.card .btn:hover {
-    background-color: #2f855a;
+.doc-links {
+  margin-top: var(--space-3);
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
-.card .btn.ghost:hover {
-    background-color: #f7fafc;
+.doc-links a {
+  font-weight: 700;
 }
 
-/* ---------- Footer Styles ---------- */
-footer.footer {
-    background-color: #0f172a;
-    color: white;
-    padding: 1.5rem 0;
+.col.info > div {
+  margin: 8px 0;
 }
 
-footer .container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.col.info b {
+  color: var(--muted);
+  font-weight: 700;
 }
 
-footer .links {
-    display: flex;
-    gap: 1rem;
+.leader {
+  font-family: var(--mono);
 }
 
-footer .links a {
-    color: #e2e8f0;
-    text-decoration: none;
-    font-size: 1rem;
+details.wl {
+  margin-top: 8px;
 }
 
-footer .links a:hover {
-    text-decoration: underline;
+details.wl > summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 700;
 }
 
-footer .disclaimer {
-    font-size: 0.875rem;
-    color: #a0aec0;
+.wlList {
+  margin-top: 8px;
+  font-family: var(--mono);
+  white-space: pre-wrap;
+  color: var(--muted);
+  background: #0d1422;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
 }
 
-/* ---------- Mobile Responsive Styles ---------- */
-@media (max-width: 768px) {
-    header.container {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    header .wallet-box {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .searchBar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .searchBar input,
-    .searchBar select,
-    .searchBar button {
-        width: 100%;
-    }
-
-    .card {
-        margin-bottom: 1rem;
-    }
-
-    footer .container {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+.actions-row {
+  margin-top: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
-/* ---------- Tooltip & Toast Styles ---------- */
-.toast {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #38a169;
-    color: white;
-    padding: 1rem 2rem;
-    border-radius: 0.5rem;
-    display: none;
-    font-size: 1rem;
+.status {
+  margin-top: var(--space-3);
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--muted);
 }
+
+/* -------------------- Dialog Styles -------------------- */
+dialog.dialog {
+  border: none;
+  padding: 0;
+  background: transparent;
+  width: auto;
+  max-width: 96vw;
+}
+
+dialog::backdrop {
+  background: rgba(2,8,23,.55);
+  backdrop-filter: blur(1px);
+}
+
+.dialog-card {
+  width: min(760px, 94vw);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
+  padding: var(--space-6);
+  color: var(--text);
+}
+
+.dialog-card h3 {
+  margin: 0 0 var(--space-4);
+  font-size: 18px;
+}
+
+/* -------------------- Footer Styles -------------------- */
+.footer {
+  margin-top: auto;
+  padding: var(--space-6) 0 var(--space-5);
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+}
+
+.footer .links {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+
+.footer .links a {
+  font-weight: 700;
+}
+
+.footer .disclaimer {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
