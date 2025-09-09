@@ -8,12 +8,13 @@
   <link rel="icon" href="logo.png" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    html, body { height: 100%; }
+    html, body { height:100%; }
     body { display:flex; flex-direction:column; }
     main { flex:1 0 auto; }
     .hidden { display:none !important; }
+    .header-right { display:flex; align-items:center; gap:.5rem; }
+    .price-chip { padding:.25rem .5rem; border:1px solid #cbd5e1; border-radius:.5rem; font-variant-numeric:tabular-nums; background:#fff; }
     .footer-nav { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center }
-    .price-chip { padding:.25rem .5rem; border:1px solid #cbd5e1; border-radius:.5rem; font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
@@ -27,7 +28,8 @@
           <p class="brand-sub">on-chain commerce • Viction</p>
         </div>
       </div>
-      <div class="wallet-buttons">
+      <div class="header-right">
+        <div class="price-chip">1 VIN = <span id="vinUsdTop">Loading…</span></div>
         <button id="btnConnect" class="btn primary">Kết nối ví</button>
         <button id="btnDisconnect" class="btn ghost hidden">Ngắt</button>
       </div>
@@ -36,8 +38,8 @@
 
   <main class="container">
 
-    <!-- =================== WALLET BAR =================== -->
-    <section id="walletInfo" class="card hidden connected-only">
+    <!-- =================== WALLET BAR (compact) =================== -->
+    <section id="walletBar" class="card hidden">
       <div class="wallet-row">
         <div class="wallet-col">
           <a id="accountShort" class="badge mono" target="_blank" rel="noopener"></a>
@@ -48,20 +50,20 @@
         </div>
       </div>
       <div class="wallet-actions">
-        <span id="statusLine" class="small muted"></span>
-        <button id="btnRegister" class="btn">Đăng ký</button>
+        <div class="left">
+          <span id="statusLine" class="small muted"></span>
+        </div>
+        <div class="right" style="display:flex; gap:.5rem;">
+          <button id="btnRegister" class="btn hidden">Đăng ký</button>
+          <button id="btnCreateProduct" class="btn hidden">Tạo sản phẩm</button>
+        </div>
       </div>
     </section>
 
-    <!-- =================== NAV TABS =================== -->
-    <nav id="appTabs" class="tabs card hidden connected-only">
-      <button id="tabBuy"   class="tab active">Mua hàng</button>
-      <button id="tabSell"  class="tab">Bán hàng</button>
-      <button id="tabOrders" class="tab">Đơn hàng</button>
-    </nav>
+    <!-- =================== MARKET (ai cũng xem được) =================== -->
+    <section id="marketSection" class="section">
+      <h2 class="section-title">Sản phẩm</h2>
 
-    <!-- =================== BUY: MARKET =================== -->
-    <section id="buySection" class="section">
       <div class="filters">
         <input id="searchInput" type="search" class="input" placeholder="Tìm sản phẩm…" />
         <input id="sellerFilter" type="search" class="input" placeholder="Lọc theo ví người bán (tuỳ chọn)" />
@@ -71,7 +73,7 @@
       </div>
 
       <div id="productList" class="grid"></div>
-      <p id="emptyProducts" class="muted" style="margin:.5rem 0 0">Chưa có sản phẩm.</p>
+      <p id="emptyProducts" class="muted" style="margin-top:.5rem;">Chưa có sản phẩm.</p>
 
       <!-- Product Card Template -->
       <template id="tplProductCard">
@@ -90,129 +92,69 @@
             <div class="p-seller">
               <a class="p-seller-addr mono" target="_blank" rel="noopener"></a>
             </div>
-            <button class="btn buy-btn">Mua</button>
+            <!-- Nút mua chỉ hiện khi ví đã đăng ký (app.js quyết định) -->
+            <button class="btn buy-btn hidden">Mua</button>
           </div>
         </article>
       </template>
     </section>
 
-    <!-- =================== SELL: DASHBOARD =================== -->
-    <section id="sellSection" class="section hidden connected-only">
-      <!-- Create Product -->
-      <article class="card">
-        <h2 class="section-title">Đăng sản phẩm</h2>
-        <form id="createProductForm" class="grid grid-2">
-          <label> Tên hàng
-            <input id="pName" class="input" required maxlength="64" />
-          </label>
-          <label> Ảnh (IPFS CID)
-            <input id="pImageCID" class="input" required />
-          </label>
-          <label> Mô tả (IPFS CID)
-            <input id="pDescCID" class="input" required />
-          </label>
-          <label> Giá (USD)
-            <input id="pPriceUsd" class="input" type="number" step="0.01" min="0.01" required />
-          </label>
-          <label> Phí ship (USD)
-            <input id="pShippingUsd" class="input" type="number" step="0.01" min="0" value="0" />
-          </label>
-          <label> Thuế (%)
-            <input id="pTaxPercent" class="input" type="number" step="0.01" min="0" max="100" value="0" />
-          </label>
-          <label> Thời hạn giao (ngày)
-            <input id="pDeliveryDays" class="input" type="number" min="1" required />
-          </label>
-          <label> Tồn kho
-            <input id="pStock" class="input" type="number" min="0" required />
-          </label>
-          <label> Ví doanh thu
-            <input id="pRevenueWallet" class="input mono" required />
-          </label>
-          <label> Ví thuế
-            <input id="pTaxWallet" class="input mono" required />
-          </label>
-          <label> Ví phí ship (tuỳ chọn)
-            <input id="pShippingWallet" class="input mono" placeholder="0x… hoặc để trống" />
-          </label>
-          <label> Khoá công khai mã hoá (bytes hex)
-            <input id="pSellerPubKey" class="input mono" required placeholder="0x…" />
-          </label>
-          <label class="row center">
-            <input id="pActive" type="checkbox" checked /> Đang bán
-          </label>
-          <div class="row end">
-            <button id="btnCreateProduct" class="btn primary" type="submit">Đăng sản phẩm</button>
-          </div>
-        </form>
-      </article>
-
-      <!-- My Products -->
-      <article class="card">
-        <h2 class="section-title">Sản phẩm của tôi</h2>
-        <div id="myProductsList" class="list"></div>
-        <p id="emptyMyProducts" class="muted">Chưa có sản phẩm.</p>
-
-        <template id="tplMyProductRow">
-          <div class="myprod-row">
-            <div class="mp-main">
-              <img class="mp-img" alt="" />
-              <div class="mp-text">
-                <div class="mp-title"></div>
-                <div class="mp-sub small muted"></div>
-              </div>
-            </div>
-            <div class="mp-actions">
-              <button class="btn ghost price-btn">Sửa giá</button>
-              <button class="btn ghost stock-btn">Sửa tồn</button>
-              <button class="btn ghost toggle-active-btn">Ẩn/Hiện</button>
-            </div>
-          </div>
-        </template>
-      </article>
-    </section>
-
-    <!-- =================== ORDERS =================== -->
-    <section id="ordersSection" class="section hidden connected-only">
-      <article class="card">
-        <h2 class="section-title">Đơn hàng của tôi (người mua)</h2>
-        <div id="buyerOrdersList" class="list"></div>
-        <p id="emptyBuyerOrders" class="muted">Chưa có đơn nào.</p>
-
-        <template id="tplOrderBuyerRow">
-          <div class="order-row">
-            <div class="or-main">
-              <div class="or-title"></div>
-              <div class="or-sub small muted"></div>
-            </div>
-            <div class="or-actions">
-              <button class="btn primary confirm-btn">Đã nhận hàng</button>
-              <button class="btn ghost danger refund-btn">Hoàn tiền</button>
-              <a class="link tx-link" target="_blank" rel="noopener">Tx</a>
-            </div>
-          </div>
-        </template>
-      </article>
-
-      <article class="card">
-        <h2 class="section-title">Đơn mới (người bán)</h2>
-        <div id="sellerOrdersList" class="list"></div>
-        <p id="emptySellerOrders" class="muted">Chưa có đơn nào.</p>
-
-        <template id="tplOrderSellerRow">
-          <div class="order-row">
-            <div class="or-main">
-              <div class="or-title"></div>
-              <div class="or-sub small muted"></div>
-            </div>
-            <div class="or-actions">
-              <button class="btn ghost shipinfo-btn">Xem địa chỉ giao</button>
-              <a class="link tx-link" target="_blank" rel="noopener">Tx</a>
-            </div>
-          </div>
-        </template>
-      </article>
-    </section>
+    <!-- =================== CREATE PRODUCT MODAL =================== -->
+    <div id="createModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="createTitle">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3 id="createTitle">Tạo sản phẩm</h3>
+          <button id="createClose" class="icon-btn" aria-label="Đóng">×</button>
+        </div>
+        <div class="modal-body">
+          <form id="createForm" class="grid grid-2">
+            <label>Tên hàng
+              <input id="pName" class="input" required maxlength="64" />
+            </label>
+            <label>Ảnh (IPFS CID)
+              <input id="pImageCID" class="input" required />
+            </label>
+            <label>Mô tả (IPFS CID)
+              <input id="pDescCID" class="input" required />
+            </label>
+            <label>Giá (USD)
+              <input id="pPriceUsd" class="input" type="number" step="0.01" min="0.01" required />
+            </label>
+            <label>Phí ship (USD)
+              <input id="pShippingUsd" class="input" type="number" step="0.01" min="0" value="0" />
+            </label>
+            <label>Thuế (%)
+              <input id="pTaxPercent" class="input" type="number" step="0.01" min="0" max="100" value="0" />
+            </label>
+            <label>Thời hạn giao (ngày)
+              <input id="pDeliveryDays" class="input" type="number" min="1" required />
+            </label>
+            <label>Tồn kho
+              <input id="pStock" class="input" type="number" min="0" required />
+            </label>
+            <label>Ví doanh thu
+              <input id="pRevenueWallet" class="input mono" required />
+            </label>
+            <label>Ví thuế
+              <input id="pTaxWallet" class="input mono" required />
+            </label>
+            <label>Ví phí ship (tuỳ chọn)
+              <input id="pShippingWallet" class="input mono" placeholder="0x… hoặc để trống" />
+            </label>
+            <label>Khoá công khai mã hoá (bytes hex)
+              <input id="pSellerPubKey" class="input mono" required placeholder="0x…" />
+            </label>
+            <label class="row center">
+              <input id="pActive" type="checkbox" checked /> Đang bán
+            </label>
+          </form>
+        </div>
+        <div class="modal-foot">
+          <button id="createSubmit" class="btn primary">Đăng sản phẩm</button>
+          <button id="createCancel" class="btn ghost">Hủy</button>
+        </div>
+      </div>
+    </div>
 
     <!-- =================== BUY MODAL =================== -->
     <div id="buyModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="buyTitle">
@@ -233,84 +175,23 @@
           <hr />
           <h4>Thông tin giao hàng</h4>
           <div class="grid grid-2">
-            <label> Họ tên
+            <label>Họ tên
               <input id="shipName" class="input" required />
             </label>
-            <label> Số điện thoại
+            <label>Số điện thoại
               <input id="shipPhone" class="input" required />
             </label>
           </div>
-          <label> Địa chỉ giao hàng
+          <label>Địa chỉ giao hàng
             <input id="shipAddress" class="input" required />
           </label>
-          <label> Ghi chú
+          <label>Ghi chú
             <input id="shipNote" class="input" />
           </label>
         </div>
         <div class="modal-foot">
           <button id="buySubmit" class="btn primary">Xác nhận thanh toán</button>
           <button id="buyCancel" class="btn ghost">Hủy</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- =================== EDIT PRODUCT MODAL =================== -->
-    <div id="editModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="editTitle">
-      <div class="modal-card">
-        <div class="modal-head">
-          <h3 id="editTitle">Cập nhật sản phẩm</h3>
-          <button id="editClose" class="icon-btn" aria-label="Đóng">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="grid grid-2">
-            <label> Giá (USD)
-              <input id="ePriceUsd" class="input" type="number" step="0.01" min="0.01" required />
-            </label>
-            <label> Phí ship (USD)
-              <input id="eShipUsd" class="input" type="number" step="0.01" min="0" />
-            </label>
-            <label> Thuế (%)
-              <input id="eTaxPercent" class="input" type="number" step="0.01" min="0" max="100" />
-            </label>
-            <label> Thời hạn giao (ngày)
-              <input id="eDeliveryDays" class="input" type="number" min="1" />
-            </label>
-            <label> Tồn kho
-              <input id="eStock" class="input" type="number" min="0" />
-            </label>
-            <label> Ví doanh thu
-              <input id="eRevenueWallet" class="input mono" />
-            </label>
-            <label> Ví thuế
-              <input id="eTaxWallet" class="input mono" />
-            </label>
-            <label> Ví phí ship (tuỳ chọn)
-              <input id="eShippingWallet" class="input mono" />
-            </label>
-            <label> Khoá công khai mã hoá (bytes hex)
-              <input id="eSellerPubKey" class="input mono" />
-            </label>
-          </div>
-        </div>
-        <div class="modal-foot">
-          <button id="editSubmit" class="btn primary">Cập nhật</button>
-          <button id="editCancel" class="btn ghost">Hủy</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- =================== SHIPPING INFO VIEWER =================== -->
-    <div id="shipInfoModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="shipInfoTitle">
-      <div class="modal-card">
-        <div class="modal-head">
-          <h3 id="shipInfoTitle">Thông tin giao hàng</h3>
-          <button id="shipInfoClose" class="icon-btn" aria-label="Đóng">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="row"><label class="lbl">Họ tên</label><div id="shipViewName" class="val"></div></div>
-          <div class="row"><label class="lbl">SĐT</label><div id="shipViewPhone" class="val"></div></div>
-          <div class="row"><label class="lbl">Địa chỉ</label><div id="shipViewAddress" class="val"></div></div>
-          <div class="row"><label class="lbl">Ghi chú</label><div id="shipViewNote" class="val"></div></div>
         </div>
       </div>
     </div>
@@ -326,35 +207,30 @@
       <div class="footer-nav">
         <a class="link" href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638" target="_blank" rel="noopener">Contract</a>
         <a class="link" href="https://vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank" rel="noopener">VIN Token</a>
-        <a class="link" href="https://frollswap.com" target="_blank" rel="noopener">Swap VIN/VIC</a>
+        <a class="link" href="https://frollswap.com" target="_blank">Swap VIN/VIC</a>
         <a class="link" href="https://github.com/vinecosystem/muaban" target="_blank" rel="noopener">Hướng dẫn</a>
       </div>
-      <div class="price-chip">1 VIN = <span id="vinUsd">Loading…</span></div>
     </div>
   </footer>
 
-  <!-- App logic -->
+  <!-- App -->
   <script defer src="app.js"></script>
 
-  <!-- VIN/USD (VIN = VIC * 100) -->
+  <!-- VIN/USD (VIN = VIC × 100) hiển thị ở đầu -->
   <script>
-    async function fetchVinUsd() {
-      const el = document.getElementById('vinUsd');
+    async function fetchVinUsdTop() {
+      const el = document.getElementById('vinUsdTop');
       try {
         const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT', { cache: 'no-store' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const { price } = await res.json();
         const vicUsd = parseFloat(price);
-        if (!isFinite(vicUsd) || vicUsd <= 0) throw new Error('Bad price');
         const vinUsd = vicUsd * 100;
-        el.textContent = vinUsd.toFixed(4) + ' USD';
-      } catch (e) {
-        el.textContent = 'N/A';
-        console.error('VIN/USD fetch error:', e);
-      }
+        el.textContent = isFinite(vinUsd) ? (vinUsd.toFixed(4) + ' USD') : 'N/A';
+      } catch (e) { el.textContent = 'N/A'; }
     }
-    fetchVinUsd();
-    setInterval(fetchVinUsd, 60000);
+    fetchVinUsdTop();
+    setInterval(fetchVinUsdTop, 60000);
   </script>
 </body>
 </html>
