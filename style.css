@@ -1,263 +1,134 @@
-/* Cấu trúc cơ bản */
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* =========================================================
+   Muaban — style.css (V2, optimized for ecommerce)
+   Professional color tone, highlighted buttons, smooth responsiveness
+   ========================================================= */
+
+/* ---------- CSS Variables (palette) ---------- */
+:root{
+  --bg: #0b0f18;              /* Nền chính cho container */
+  --bg-card: #1f2937;         /* Nền của các thẻ sản phẩm */
+  --bg-soft: #2d3748;         /* Nền mềm cho các phần đặc biệt */
+
+  --text: #e5e7eb;            /* Màu văn bản chính */
+  --text-dim: #94a3b8;        /* Màu văn bản phụ */
+  --text-soft: #cbd5e1;       /* Màu văn bản mềm cho thông tin thêm */
+
+  --border: #1f2937;          /* Màu viền cho các phần tử */
+
+  --primary: #16a34a;         /* Màu chính cho các nút và điểm nhấn */
+  --primary-hover: #22c55e;   /* Hiệu ứng hover cho nút chính */
+  --primary-press: #15803d;   /* Màu khi nhấn nút chính */
+
+  --accent: #0ea5e9;          /* Màu accent cho các yếu tố nổi bật */
+  --accent-hover: #38bdf8;    /* Hiệu ứng hover cho các yếu tố accent */
+  --accent-press: #0284c7;    /* Màu khi nhấn các yếu tố accent */
+
+  --ring: rgba(56, 189, 248, .35); /* Màu viền khi focus */
+  --shadow: 0 10px 30px rgba(2, 8, 23, .55); /* Màu bóng đổ mặc định */
+  --soft-shadow: 0 6px 18px rgba(2,8,23,.35); /* Bóng mờ cho các container */
 }
 
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f4f7fc;
-  color: #333;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+/* ---------- Reset ---------- */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+img { display: block; max-width: 100%; }
+button { font: inherit; }
+input, button { outline: none; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- Body ---------- */
+body{
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(135deg, #0a1223 0%, #05070d 50%, #04060b 100%); /* Màu nền gradient */
+  color: var(--text);                 /* Màu văn bản chính */
+  -webkit-font-smoothing: antialiased; /* Để văn bản mượt mà hơn */
+  min-height: 100vh;                  /* Đảm bảo body chiếm đầy đủ chiều cao */
 }
 
-/* Container tổng thể */
-.container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
+/* ---------- Layout ---------- */
+.container{
+  max-width: 1040px;                  /* Chiều rộng tối đa */
+  margin: 0 auto;                     /* Căn giữa container */
+  padding: 22px 16px 96px;            /* Padding cho container */
 }
 
-/* Header */
-.site-header {
-  background-color: #4CAF50;
-  padding: 20px 0;
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+.panel{
+  background: linear-gradient(180deg, rgba(17,24,39,.9), rgba(15,23,42,.92)); /* Nền gradient cho thẻ */
+  border: 1px solid var(--border);    /* Viền cho các thẻ */
+  border-radius: 18px;                /* Viền bo tròn */
+  padding: 18px;                      /* Padding cho bên trong */
+  margin: 16px 0;                     /* Khoảng cách giữa các thẻ */
+  box-shadow: var(--soft-shadow);     /* Bóng đổ mềm */
+  backdrop-filter: blur(6px);         /* Làm mờ nền phía sau thẻ */
 }
 
-.site-header .logo {
-  height: 50px;
-  width: auto;
+/* ---------- Header ---------- */
+.header{
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; /* Flex layout cho header */
+  padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 12px; /* Thêm border dưới header */
+}
+.brand{ display: flex; align-items: center; gap: 12px; } /* Layout flex cho phần thương hiệu */
+.logo{
+  width: 56px; height: 56px; border-radius: 14px; object-fit: contain; /* Style logo */
+  box-shadow: 0 8px 22px rgba(2,8,23,.55); /* Bóng đổ cho logo */
+}
+.brand-text h1{ margin-bottom: 2px; color: #e2e8f0; } /* Màu chữ cho tên thương hiệu */
+
+/* ---------- Buttons ---------- */
+.btn{
+  appearance: none; border: 1px solid var(--border);
+  padding: 12px 16px; border-radius: 12px; cursor: pointer;
+  font-weight: 900; letter-spacing: .02em;
+  background: linear-gradient(180deg, #0b1220, #090f1a); /* Nền mặc định cho nút */
+  color: var(--text); box-shadow: var(--shadow); /* Màu chữ và bóng */
+  transition: transform .05s ease, filter .15s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+}
+.btn:hover{ filter: brightness(1.03); } /* Hiệu ứng hover */
+.btn:active{ transform: translateY(1px) scale(.995); } /* Hiệu ứng khi nhấn */
+.btn:focus-visible{ box-shadow: 0 0 0 4px var(--ring); } /* Hiệu ứng focus */
+
+.primary{
+  background: linear-gradient(180deg, var(--primary), var(--primary-press)); /* Nền cho nút chính */
+  border-color: #0f2918;
+  color: #ecfdf5; /* Màu chữ cho nút chính */
+}
+.primary:hover{ background: linear-gradient(180deg, var(--primary-hover), var(--primary)); } /* Hiệu ứng hover cho nút chính */
+.primary:active{ background: linear-gradient(180deg, var(--primary-press), #0d5e2f); } /* Hiệu ứng khi nhấn nút chính */
+
+/* ---------- Footer ---------- */
+.footer{
+  margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--border); /* Footer styling */
+  color: var(--text-dim); text-align: center; /* Màu chữ và căn giữa */
+}
+.footer .links{
+  display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; /* Các link trong footer */
+}
+.footer .fine{ font-size: 12px; } /* Chữ nhỏ ở footer */
+
+/* ---------- Responsive ---------- */
+@media (max-width: 940px){
+  .container{ padding: 18px 14px 84px; } /* Điều chỉnh padding cho container */
+}
+@media (max-width: 780px){
+  .header{ flex-direction: column; align-items: flex-start; gap: 10px; } /* Đổi layout header cho màn hình nhỏ */
+  .wallet-box{ width: 100%; justify-content: space-between; } /* Điều chỉnh wallet box cho màn hình nhỏ */
+  .inline-input{ width: 100%; } /* Full width inline input */
 }
 
-.site-header .brand {
-  display: flex;
-  align-items: center;
-}
+/* ---------- Buttons (custom) ---------- */
+#btn-connect{ font-size: 15px; padding: 13px 18px; }
+#btn-play{ font-size: 15px; padding: 13px 18px; }
+#btn-approve{ font-size: 14px; }
 
-.site-header .brand-text h1 {
-  font-size: 2rem;
-  margin-left: 15px;
+/* ---------- Table select ---------- */
+.custom-table{
+  display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; margin-bottom: 10px;
 }
-
-.site-header .header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.custom-table input{
+  padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft); color: var(--text);
+  transition: box-shadow .15s ease, border-color .15s ease, background .2s ease;
 }
-
-.site-header .price-chip {
-  font-size: 1rem;
-  background-color: white;
-  color: #4CAF50;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-}
-
-/* Các nút */
-button {
-  padding: 12px 20px;
-  border-radius: 5px;
-  font-size: 1rem;
-  border: none;
-  cursor: pointer;
-}
-
-button.primary {
-  background-color: #4CAF50;
-  color: white;
-}
-
-button.ghost {
-  background-color: transparent;
-  border: 2px solid #4CAF50;
-  color: #4CAF50;
-}
-
-button:hover {
-  opacity: 0.9;
-}
-
-/* Wallet Bar */
-#walletBar {
-  background-color: #fff;
-  padding: 20px;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-#walletBar .wallet-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-#walletBar .wallet-col {
-  font-size: 1rem;
-}
-
-#btnRegister, #btnCreateProduct {
-  padding: 12px 25px;
-  font-size: 1.1rem;
-  background-color: #4CAF50;
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-#btnRegister.hidden, #btnCreateProduct.hidden {
-  display: none;
-}
-
-/* Phần thị trường (Market) */
-#marketSection {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-#marketSection .section-title {
-  font-size: 2rem;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-#marketSection .filters {
-  margin-bottom: 20px;
-}
-
-input[type="search"] {
-  padding: 12px 20px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  width: 80%;
-}
-
-button#btnReload {
-  padding: 12px 20px;
-  background-color: #4CAF50;
-  color: white;
-  border-radius: 5px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.card.product {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.card.product .p-img {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-  border-radius: 5px;
-}
-
-.card.product .p-body {
-  margin-top: 10px;
-}
-
-.card.product .p-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.card.product .p-price {
-  font-size: 1.25rem;
-  color: #4CAF50;
-  margin-top: 10px;
-}
-
-.card.product .p-seller {
-  font-size: 0.9rem;
-  color: #777;
-  margin-top: 15px;
-}
-
-.card.product .buy-btn {
-  margin-top: 15px;
-  background-color: #4CAF50;
-  color: white;
-  padding: 12px 25px;
-  border-radius: 5px;
-}
-
-/* Modal */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-card {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 80%;
-  max-width: 500px;
-}
-
-.modal-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-body {
-  margin-top: 20px;
-}
-
-.modal-foot {
-  margin-top: 20px;
-  display: flex;
-  justify-content: space-between;
-}
-
-input[type="number"], input[type="text"], input[type="search"], input[type="email"], input[type="password"], input[type="date"] {
-  width: 100%;
-  padding: 12px 20px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-label {
-  font-size: 1rem;
-  color: #333;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .header-right {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .site-header .price-chip {
-    margin-bottom: 10px;
-  }
+.custom-table input:focus{
+  border-color: var(--accent); box-shadow: 0 0 0 4px var(--ring); /* Focus state */
 }
