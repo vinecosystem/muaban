@@ -1,6 +1,6 @@
 /* ==========================================================================
    muaban.vin — style.css
-   Mục tiêu: ưa nhìn, dễ sử dụng, chuyên nghiệp, mượt mà trên desktop & mobile
+   Mục tiêu: Gọn gàng, khoa học, dễ sử dụng, mượt mà trên desktop & mobile
    ========================================================================== */
 
 /* -------------------- 1) Reset & Variables -------------------- */
@@ -66,7 +66,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;   /* sticky footer */
-  background: radial-gradient(1200px 700px at 60% -10%, rgba(45,212,191,.06), transparent 55%), var(--bg);
+  background: var(--bg);
   color: var(--text);
   font: 14px/1.55 var(--font);
   -webkit-font-smoothing: antialiased;
@@ -85,13 +85,6 @@ a:hover { text-decoration: underline; }
 b { font-weight: 700; }
 .hidden { display: none !important; }
 
-/* Focus ring thống nhất */
-:where(button, [href], input, select, summary):focus-visible {
-  outline: 0;
-  box-shadow: 0 0 0 3px var(--ring);
-  border-radius: var(--radius-sm);
-}
-
 /* -------------------- 3) Header -------------------- */
 .header {
   display: flex;
@@ -108,6 +101,7 @@ b { font-weight: 700; }
 }
 .brand-text .logo { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: .2px; }
 .brand-text .slogan { margin: 2px 0 8px; color: var(--muted); font-size: 12.5px; }
+
 .vin-price {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 10px;
@@ -190,43 +184,7 @@ main { flex: 1 0 auto; }   /* đẩy footer xuống đáy */
 }
 .card-head .title { margin: 0; font-size: 18px; font-weight: 800; }
 
-/* -------------------- 6) Dialog (Tạo cuộc đấu giá) -------------------- */
-dialog.dialog {
-  border: none; padding: 0;
-  background: transparent; width: auto; max-width: 96vw;
-}
-dialog::backdrop { background: rgba(2,8,23,.55); backdrop-filter: blur(1px); }
-
-.dialog-card {
-  width: min(760px, 94vw);
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-2);
-  padding: var(--space-6);
-  color: var(--text);
-}
-.dialog-card h3 { margin: 0 0 var(--space-4); font-size: 18px; }
-
-.dialog-card label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: var(--space-3);
-  font-size: 14px;
-}
-.dialog-card input {
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--panel-2);
-  color: var(--text);
-  outline: none;
-  transition: border-color .2s ease, box-shadow .2s ease;
-}
-.dialog-card input::placeholder { color: var(--muted); }
-
-/* -------------------- 7) Footer -------------------- */
+/* -------------------- 6) Footer -------------------- */
 footer.site-footer {
   background: var(--panel);
   padding: var(--space-6) 0;
