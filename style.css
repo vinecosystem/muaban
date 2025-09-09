@@ -1,28 +1,8 @@
 /* ============================================================
-   muaban dApp - style.css
-   Layout: Clean, Modern, Responsive
+   style.css — muaban dApp (Viction)
    ============================================================ */
 
-/* ---------- Root variables (palette and breakpoints) ---------- */
-:root {
-    --primary-color: #3b82f6;   /* Primary blue color */
-    --secondary-color: #10b981; /* Secondary green color */
-    --background-color: #f3f4f6; /* Light background color */
-    --card-background: #ffffff;  /* Card background color */
-    --text-color: #333333;       /* Text color */
-    --text-muted: #6b7280;       /* Muted text color */
-    --border-color: #e5e7eb;     /* Border color */
-    --button-hover: #1d4ed8;     /* Hover state for buttons */
-    --input-background: #ffffff; /* Input background */
-    --input-border: #d1d5db;     /* Input border */
-    --toast-background: #0f172a; /* Toast background color */
-    --modal-background: rgba(0, 0, 0, 0.5); /* Modal overlay */
-    --modal-card-background: #ffffff; /* Modal card background */
-    --border-radius: 0.375rem;   /* Border radius for all rounded elements */
-    --max-width: 1200px;         /* Maximum width for the container */
-}
-
-/* ---------- Global styles ---------- */
+/* ---------- Global Styles ---------- */
 *,
 *::before,
 *::after {
@@ -32,273 +12,272 @@
 }
 
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: var(--background-color);
-    color: var(--text-color);
+    font-family: Arial, sans-serif;
+    background-color: #f7fafc;
+    color: #2d3748;
     line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-a {
-    text-decoration: none;
-    color: inherit;
-}
-
-img {
-    max-width: 100%;
-    height: auto;
-}
-
-/* ---------- Layout Containers ---------- */
-.container {
-    width: 100%;
-    max-width: var(--max-width);
-    margin: 0 auto;
-    padding: 1rem;
-}
-
-/* ---------- Header ---------- */
+/* ---------- Header Styles ---------- */
 .site-header {
-    background-color: var(--primary-color);
+    background-color: #0f172a;
+    color: white;
     padding: 1rem 0;
-    color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.site-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .site-header .brand {
     display: flex;
     align-items: center;
-    gap: 1rem;
 }
 
 .site-header .brand .logo {
     width: 40px;
     height: 40px;
+    margin-right: 1rem;
 }
 
-.site-header .brand-text h1 {
+.site-header .brand .brand-title {
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: bold;
+}
+
+.site-header .brand .brand-sub {
+    font-size: 0.9rem;
+    color: #a0aec0;
 }
 
 .site-header .header-right {
     display: flex;
-    align-items: center;
     gap: 1rem;
+    align-items: center;
 }
 
-.site-header .header-right .price-chip {
-    background-color: var(--secondary-color);
-    color: white;
+.site-header .price-chip {
     padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    font-weight: bold;
+    background-color: #fff;
+    color: #2d3748;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
 }
 
 .site-header .btn {
-    background-color: var(--secondary-color);
-    color: white;
     padding: 0.5rem 1rem;
+    background-color: #38a169;
+    color: white;
     border: none;
-    border-radius: var(--border-radius);
+    border-radius: 0.375rem;
     cursor: pointer;
-    transition: background-color 0.3s;
+}
+
+.site-header .btn.ghost {
+    background-color: transparent;
+    border: 1px solid #e2e8f0;
 }
 
 .site-header .btn:hover {
-    background-color: var(--button-hover);
+    background-color: #2f855a;
 }
 
-/* ---------- Wallet Bar ---------- */
-#walletBar {
-    display: flex;
-    justify-content: space-between;
-    background-color: var(--card-background);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
+.site-header .btn.ghost:hover {
+    background-color: #f7fafc;
+}
+
+/* ---------- Main Section Styles ---------- */
+main.container {
+    flex: 1;
+    padding: 2rem 1rem;
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 1rem;
-    margin-top: 2rem;
+    margin-bottom: 1rem;
 }
 
-.wallet-row {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
+.hidden {
+    display: none;
 }
 
-.wallet-col {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.wallet-col.right {
-    justify-content: flex-end;
-}
-
-.wallet-col span {
-    font-weight: bold;
-}
-
-.wallet-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.wallet-actions .btn {
-    padding: 0.5rem 1rem;
-}
-
-.wallet-actions .small {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-}
-
-/* ---------- Search Bar ---------- */
-.filters {
-    display: flex;
-    gap: 0.5rem;
+.section {
     margin-bottom: 2rem;
 }
 
-.filters .input {
-    padding: 0.5rem 1rem;
-    border-radius: var(--border-radius);
-    border: 1px solid var(--input-border);
-    flex: 1;
-}
-
-.filters .btn.ghost {
-    background-color: transparent;
-    color: var(--primary-color);
-    border: 1px solid var(--primary-color);
-}
-
-.filters .btn.ghost:hover {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-/* ---------- Product Cards ---------- */
-.card {
-    background-color: var(--card-background);
-    padding: 1rem;
-    border-radius: var(--border-radius);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1.5rem;
-}
-
-.card .product {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.product .p-title {
-    font-weight: bold;
-    font-size: 1.25rem;
-}
-
-.product .p-price {
-    color: var(--primary-color);
-    font-size: 1.25rem;
+.section-title {
+    font-size: 1.75rem;
     font-weight: 600;
+    margin-bottom: 1rem;
 }
 
-.product .p-meta {
+.filters {
     display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.input {
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid #e2e8f0;
+    width: 100%;
+    font-size: 1rem;
+}
+
+.input:focus {
+    border-color: #38a169;
+    outline: none;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 1rem;
 }
 
-.product .btn.buy-btn {
-    background-color: var(--secondary-color);
-    color: white;
-    padding: 0.75rem;
-    border-radius: var(--border-radius);
-    cursor: pointer;
+.muted {
+    color: #a0aec0;
 }
 
-.product .btn.buy-btn.hidden {
-    display: none;
+.product {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    transition: transform 0.3s ease;
 }
 
-/* ---------- Modal Styling ---------- */
+.product:hover {
+    transform: translateY(-5px);
+}
+
+.p-img-wrap {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    border-radius: 0.5rem;
+}
+
+.p-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.p-meta {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+}
+
+.p-price,
+.p-tax,
+.p-delivery {
+    display: block;
+}
+
+.p-seller {
+    margin-top: 1rem;
+}
+
+.p-seller-addr {
+    color: #38a169;
+    text-decoration: none;
+}
+
+.p-seller-addr:hover {
+    text-decoration: underline;
+}
+
+/* ---------- Modal Styles ---------- */
 .modal {
-    display: none;
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    align-items: center;
+    right: 0;
+    bottom: 0;
+    display: flex;
     justify-content: center;
-    background-color: var(--modal-background);
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
 }
 
 .modal-card {
-    background-color: var(--modal-card-background);
+    background-color: white;
     padding: 2rem;
-    border-radius: var(--border-radius);
+    border-radius: 0.5rem;
     width: 100%;
-    max-width: 600px;
+    max-width: 500px;
 }
 
 .modal-head {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    margin-bottom: 1rem;
 }
 
-.modal-head h3 {
+.icon-btn {
     font-size: 1.5rem;
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+}
+
+.icon-btn:hover {
+    color: #333;
+}
+
+.modal-body {
+    margin-bottom: 1rem;
 }
 
 .modal-foot {
     display: flex;
     justify-content: space-between;
-    margin-top: 1rem;
 }
 
-.modal .btn.primary {
-    background-color: var(--primary-color);
+/* ---------- Footer Styles ---------- */
+.site-footer {
+    background-color: #0f172a;
     color: white;
+    padding: 1.5rem 0;
 }
 
-.modal .btn.ghost {
-    background-color: transparent;
-    color: var(--primary-color);
+.site-footer .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-/* ---------- Toasts ---------- */
+.footer-nav a {
+    color: #e2e8f0;
+    text-decoration: none;
+    margin-right: 1rem;
+}
+
+.footer-nav a:hover {
+    text-decoration: underline;
+}
+
+/* ---------- Toast Styles ---------- */
 .toast {
     position: fixed;
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background-color: var(--toast-background);
+    background-color: #38a169;
     color: white;
-    padding: 1rem;
-    border-radius: var(--border-radius);
-    font-weight: bold;
-    visibility: hidden;
-}
-
-.toast.hidden {
-    visibility: hidden;
-}
-
-/* ---------- Responsiveness (Mobile-first) ---------- */
-@media (max-width: 768px) {
-    .site-header .brand-text h1 {
-        font-size: 1.25rem;
-    }
-
-    .filters {
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .product .p-meta {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    display: none;
+    font-size: 1rem;
 }
