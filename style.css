@@ -20,34 +20,54 @@ body {
 
 /* =================== HEADER =================== */
 .site-header {
-  padding: 20px;
+  padding: 20px 30px;
   background-color: transparent;
-  text-align: center;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.site-header h1 {
-  font-size: 32px;
-  font-weight: bold;
+.site-header .brand {
+  display: flex;
+  align-items: center;
+}
+
+.site-header .brand h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-right: 10px;
   color: #2b6cb0;
-  margin-bottom: 10px;
 }
 
-.site-header p {
-  font-size: 16px;
+.site-header .brand p {
+  font-size: 14px;
   color: #666;
 }
 
-/* =================== BUTTONS =================== */
+.site-header .header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.price-chip {
+  padding: 8px 16px;
+  background-color: #fff;
+  border-radius: 50px;
+  font-size: 14px;
+  color: #2b6cb0;
+  font-weight: 600;
+}
+
 .btn {
-  padding: 12px 20px;
+  padding: 10px 20px;
   border: none;
   border-radius: 25px;
   font-weight: bold;
   cursor: pointer;
-  width: 100%;
-  max-width: 200px;
-  margin: 10px auto;
-  display: block;
+  width: auto;
   font-size: 16px;
 }
 
@@ -62,19 +82,45 @@ body {
   color: #2b6cb0;
 }
 
+.hidden {
+  display: none !important;
+}
+
 /* =================== WALLET INFO =================== */
 .wallet-info {
   background-color: #f7fafc;
   padding: 15px;
   border-radius: 10px;
   margin-top: 20px;
-  text-align: center;
+  text-align: left;
 }
 
 .wallet-info span {
-  font-size: 18px;
+  font-size: 16px;
   display: block;
   margin: 5px 0;
+}
+
+.wallet-info .badge {
+  font-size: 16px;
+  font-weight: bold;
+  padding: 8px 16px;
+  background-color: #2b6cb0;
+  color: white;
+  border-radius: 50px;
+  margin-right: 10px;
+}
+
+.wallet-info .wallet-actions {
+  margin-top: 10px;
+}
+
+.wallet-info button {
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  margin-top: 10px;
 }
 
 /* =================== PRODUCT LIST =================== */
@@ -86,6 +132,21 @@ h2 {
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 20px;
+}
+
+.filters {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 300px;
+  font-size: 14px;
 }
 
 .grid {
@@ -113,10 +174,20 @@ h2 {
   margin-top: 15px;
 }
 
+.p-meta {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #777;
+}
+
 .p-price {
   font-size: 20px;
   font-weight: bold;
   color: #2b6cb0;
+  margin-top: 10px;
+}
+
+.p-seller {
   margin-top: 10px;
 }
 
@@ -216,11 +287,32 @@ footer a:hover {
 
 /* =================== RESPONSIVE DESIGN =================== */
 @media (max-width: 768px) {
+  .site-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .header-right {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .filters {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .input {
+    width: 100%;
+  }
+
   .grid {
     grid-template-columns: 1fr;
   }
 
   .btn {
-    width: auto;
+    width: 100%;
   }
 }
