@@ -74,18 +74,18 @@ input, button{ color: inherit; }
 .mono{ font-family: var(--mono); }
 .spacer{ flex: 1; }
 
+/* App state toggles */
+.connected-only{ display: none; }
+.registered-only{ display: none; }
+body.connected .connected-only{ display: block; }
+body.registered .registered-only{ display: block; }
+
+/* ---- Layout ---- */
 .wrap{
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 var(--pad);
 }
-
-/* Show/Hide by app state */
-.connected-only{ display: none; }
-.registered-only{ display: none; }
-
-body.connected .connected-only{ display: block; }
-body.registered .registered-only{ display: block; }
 
 /* ---- Header ---- */
 .header{
@@ -95,7 +95,6 @@ body.registered .registered-only{ display: block; }
   gap: var(--gap);
   padding: 18px var(--pad);
 }
-
 .brand{ display: flex; align-items: center; gap: 12px; }
 .logo{ width: 40px; height: 40px; border-radius: 8px; box-shadow: var(--shadow); }
 .titles{ display:flex; flex-direction: column; }
@@ -111,6 +110,7 @@ body.registered .registered-only{ display: block; }
   background: var(--accent);
   border-radius: 10px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 /* ---- Buttons ---- */
@@ -158,6 +158,7 @@ body.registered .registered-only{ display: block; }
   padding: 16px;
   margin: 12px 0;
   box-shadow: var(--shadow);
+  animation: fadeup .22s ease both;
 }
 
 /* ---- Wallet panel ---- */
@@ -174,8 +175,6 @@ body.registered .registered-only{ display: block; }
   font-weight: 600; white-space: nowrap;
 }
 .actions{ margin-top: 10px; }
-.link-small{ font-size: 12px; color: var(--muted); }
-.dot{ padding: 0 4px; color: var(--muted); }
 
 /* ---- Search row ---- */
 .search-row{
@@ -184,14 +183,8 @@ body.registered .registered-only{ display: block; }
 }
 
 /* ---- Sections / Titles ---- */
-.section-title{
-  margin: 8px 0 6px 0;
-  font-size: 18px;
-}
-.section-subtitle{
-  margin: 0 0 10px 0;
-  font-size: 16px;
-}
+.section-title{ margin: 8px 0 6px 0; font-size: 18px; }
+.section-subtitle{ margin: 0 0 10px 0; font-size: 16px; }
 .small-top{ margin-top: 6px; }
 
 /* ---- Forms ---- */
@@ -209,7 +202,6 @@ body.registered .registered-only{ display: block; }
   gap: 14px;
 }
 
-/* Example product card (when you implement) */
 .product-card{
   border: 1px solid var(--border);
   background: var(--card);
@@ -217,11 +209,17 @@ body.registered .registered-only{ display: block; }
   overflow: hidden;
   box-shadow: var(--shadow);
   display:flex; flex-direction:column;
+  transition: transform .12s ease, box-shadow .12s ease;
 }
-.product-card .cover{ aspect-ratio: 4/3; object-fit: cover; }
+.product-card:hover{ transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,.08); }
+.product-card .cover{ aspect-ratio: 4/3; object-fit: cover; width: 100%; }
 .product-card .content{ padding: 12px; display:flex; flex-direction:column; gap:6px; }
 .product-card .name{ font-weight:600; }
 .product-card .price{ font-weight:700; }
+
+/* ---- Buy Panel (khung đặt hàng) ---- */
+#buyPanel{ position: relative; }
+#buyPanel.hidden{ display: none !important; }
 
 /* ---- Bottom Nav (fixed) ---- */
 .bottom-nav{
@@ -277,8 +275,6 @@ body.registered .registered-only{ display: block; }
 body:not(.connected) #walletInfo{ opacity: 0; transform: translateY(-6px); }
 body.connected #walletInfo{ opacity: 1; transform: translateY(0); }
 
-/* Optional: fade-in for cards/content */
-.card, .product-card{ animation: fadeup .22s ease both; }
 @keyframes fadeup{
   from{ opacity:0; transform: translateY(6px); }
   to{ opacity:1; transform: translateY(0); }
