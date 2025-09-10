@@ -13,6 +13,9 @@ body, html {
   color: #333;
   font-size: 16px;
   line-height: 1.6;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 a {
@@ -36,12 +39,12 @@ a {
 
 /* ================== HEADER ================== */
 header {
-  background-color: #1f2937;
   padding: 16px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: relative;
+  border-bottom: 1px solid #d1d5db;
 }
 
 .brand {
@@ -56,7 +59,7 @@ header {
 }
 
 .brand .brand-text {
-  color: #fff;
+  color: #333;
 }
 
 .brand .logo {
@@ -66,12 +69,12 @@ header {
 
 .slogan {
   font-size: 14px;
-  color: #d1d5db;
+  color: #6b7280;
 }
 
 .vin-price {
   font-size: 18px;
-  color: #ffffff;
+  color: #333;
   font-weight: bold;
 }
 
@@ -102,12 +105,12 @@ header {
 
 .wallet-box .account .mono {
   font-family: 'Courier New', Courier, monospace;
-  color: #fff;
+  color: #333;
 }
 
 .wallet-box .account .balance {
   font-size: 14px;
-  color: #d1d5db;
+  color: #6b7280;
 }
 
 .wallet-box .account .btn {
@@ -116,8 +119,8 @@ header {
 
 .wallet-box .account .btn.ghost {
   background-color: transparent;
-  border: 1px solid #d1d5db;
-  color: #d1d5db;
+  border: 1px solid #6b7280;
+  color: #6b7280;
 }
 
 .wallet-box .account .btn.ghost.small {
@@ -128,6 +131,7 @@ header {
 /* ================== MAIN ================== */
 main {
   padding: 24px 0;
+  flex-grow: 1; /* Cho phép main chiếm phần lớn không gian */
 }
 
 .searchBar {
@@ -255,31 +259,24 @@ main {
 
 .hidden {
   display: none !important;
-}
 
 /* ================== FOOTER ================== */
 footer {
-  background-color: #1f2937;
+  background-color: transparent;
   padding: 16px 0;
-  color: #d1d5db;
+  color: #333;
   font-size: 14px;
+  border-top: 1px solid #d1d5db;
 }
 
 footer a {
-  color: #d1d5db;
+  color: #333;
   margin-right: 20px;
   text-decoration: none;
 }
 
 footer a:hover {
   text-decoration: underline;
-}
-
-footer .disclaimer {
-  text-align: center;
-  font-size: 12px;
-  margin-top: 20px;
-  color: #9ca3af;
 }
 
 /* ================== MODAL ================== */
