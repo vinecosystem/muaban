@@ -116,7 +116,7 @@ function usdCentsToVinWei_BN(usdCents, vinPerUSD){
 async function refreshVinPrice(){
   try{
     $("#vinPriceUsd").textContent = "Loading…";
-    const res = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT");
+    const res = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT", { cache: "no-store" });
     const { price } = await res.json();
     const vinUsd = Number(price) * 100;
     $("#vinPriceUsd").textContent = fmt2(vinUsd);
@@ -235,8 +235,8 @@ async function submitCreate(){
       return toast("Điền đầy đủ 6 mục");
     }
 
-    // Tự lấy public key mã hoá của ví seller (ngầm)
-    let sellerPubB64 = ""); 
+    // Tự lấy public key mã hoá của ví seller (ngầm) — FIXED cú pháp
+    let sellerPubB64 = "";
     try{
       sellerPubB64 = await getWalletEncryptionPublicKey(user);
     }catch(e){
