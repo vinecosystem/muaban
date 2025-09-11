@@ -11,7 +11,7 @@
 <body>
   <!-- =================== HEADER =================== -->
   <header class="header container">
-    <!-- Logo và Slogan -->
+    <!-- Logo & slogan -->
     <div class="brand">
       <img src="logo.png" alt="muaban" class="logo-img" />
       <div class="brand-text">
@@ -31,14 +31,18 @@
       <div id="walletInfo" class="account hidden">
         <a id="accountShort" class="mono" target="_blank" rel="noopener">0x…</a>
         <span class="balance">VIN: <b id="vinBalance">0.0000</b> | VIC: <b id="vicBalance">0.0000</b></span>
-        <button id="btnDisconnect" class="btn ghost small">Ngắt</button>
+        <div class="row gap">
+          <button id="btnRegister" class="btn ghost small">Đăng ký (0.001 VIN)</button>
+          <button id="btnCreateProduct" class="btn small hidden">Đăng sản phẩm</button>
+          <button id="btnDisconnect" class="btn ghost small">Ngắt</button>
+        </div>
       </div>
     </div>
   </header>
 
   <!-- =================== MAIN =================== -->
   <main class="container">
-    <!-- Ô tìm kiếm và nút tìm -->
+    <!-- Tìm kiếm -->
     <div class="searchBar">
       <input id="searchInput" type="search" class="input" placeholder="Tìm sản phẩm..." />
       <button id="btnReload" class="btn">Tìm</button>
@@ -55,7 +59,7 @@
       <div class="links">
         <a href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638#code" target="_blank" rel="noopener">Hợp đồng Muaban</a>
         <a href="https://vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank" rel="noopener">VIN token</a>
-        <a href="https://ipfs.io/ipfs/" target="_blank" rel="noopener">Swap VIN/VIC</a>
+        <a href="https://vicscan.xyz" target="_blank" rel="noopener">VicScan</a>
         <a href="README.html" target="_blank" rel="noopener">Hướng dẫn</a>
       </div>
     </div>
@@ -76,8 +80,10 @@
         <div class="p-seller">
           <a class="p-seller-addr mono" target="_blank" rel="noopener"></a>
         </div>
-        <button class="btn buy-btn hidden">Mua</button>
-        <button class="btn update-btn hidden">Cập nhật</button>
+        <div class="row gap">
+          <button class="btn buy-btn hidden">Mua</button>
+          <button class="btn update-btn hidden">Cập nhật</button>
+        </div>
       </div>
     </article>
   </template>
@@ -102,11 +108,11 @@
           <label>Ví doanh thu<input id="pRevenueWallet" class="input" placeholder="0x…" required /></label>
           <label>Ví thuế<input id="pTaxWallet" class="input" placeholder="0x…" required /></label>
           <label>Ví phí giao hàng (tuỳ chọn)<input id="pShippingWallet" class="input" placeholder="0x…" /></label>
-          <label>Seller Public Key (mã hoá giao nhận)<textarea id="pSellerPubKey" class="input" rows="3" placeholder="bytes(…)" required></textarea></label>
+          <label>Seller Public Key (hex bytes)<textarea id="pSellerPubKey" class="input" rows="3" placeholder="0x…" required></textarea></label>
           <label>Kích hoạt ngay?
             <select id="pActive" class="input">
-              <option value="true">Có</option>
-              <option value="false" selected>Chưa</option>
+              <option value="true" selected>Có</option>
+              <option value="false">Chưa</option>
             </select>
           </label>
         </form>
@@ -155,29 +161,7 @@
   <div id="toast" class="toast hidden">—</div>
 
   <!-- =================== SCRIPTS =================== -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" defer></script>
-  <script src="app.js" defer></script>
-
-  <!-- =================== Đoạn script để lấy giá VIN theo USD =================== -->
-  <script>
-    // Lấy giá VIN từ Binance API
-    async function getVinPrice() {
-      try {
-        const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT');
-        const data = await response.json();
-        const vicPrice = parseFloat(data.price);
-        const vinPrice = (vicPrice * 100).toFixed(2); // VIN = VIC * 100
-        document.getElementById('vinPriceUsd').textContent = vinPrice;
-        return parseFloat(vinPrice);
-      } catch (error) {
-        console.error('Error fetching VIC price:', error);
-        document.getElementById('vinPriceUsd').textContent = 'Lỗi';
-        return 0;
-      }
-    }
-
-    // Gọi hàm để lấy giá VIN khi trang load
-    getVinPrice();
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js" integrity="sha384-lf0J4pQ7g9qPqk3mGf1O3R9oFqXvH9tYb+0n3xj3U3O3uLQ5K5p6Jg0v0Vv2e8Y2" crossorigin="anonymous"></script>
+  <script src="app.js"></script>
 </body>
 </html>
