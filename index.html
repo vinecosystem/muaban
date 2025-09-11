@@ -27,7 +27,7 @@
       <span>1 VIN ≈ </span><strong id="vinPriceUsd">—</strong><span> USD</span>
     </div>
 
-    <!-- Kết nối ví -->
+    <!-- Ví / Kết nối -->
     <div class="wallet-box">
       <button id="btnConnect" class="btn primary">Kết nối ví</button>
       <div id="walletInfo" class="account hidden">
@@ -38,19 +38,73 @@
     </div>
   </header>
 
+  <!-- =================== NAV =================== -->
+  <nav class="container" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+    <button id="btnViewProducts" class="btn outline">Sản phẩm</button>
+    <button id="btnBuyerOrders" class="btn ghost">Đơn của tôi (người mua)</button>
+    <button id="btnSellerOrders" class="btn ghost">Đơn của tôi (người bán)</button>
+  </nav>
+
   <!-- =================== MAIN =================== -->
   <main class="container">
-    <!-- Thanh tìm kiếm -->
+    <!-- Thanh tìm kiếm + hành động -->
     <div class="searchBar">
-      <input id="searchInput" type="search" class="input" placeholder="Tìm sản phẩm..." />
+      <input id="searchInput" type="search" class="input" placeholder="Tìm sản phẩm (tên, đơn vị)..." />
       <button id="btnReload" class="btn">Tìm</button>
       <button id="btnCreateProduct" class="btn primary hidden">Đăng sản phẩm</button>
       <button id="btnRegister" class="btn warn hidden">Đăng ký người bán (0.001 VIN)</button>
     </div>
 
-    <!-- Lưới sản phẩm -->
-    <div id="productList" class="grid"></div>
-    <p id="emptyProducts" class="muted" style="margin-top:.5rem;">Chưa có sản phẩm.</p>
+    <!-- ====== TAB: SẢN PHẨM ====== -->
+    <section id="tabProducts">
+      <div id="productList" class="grid"></div>
+      <p id="emptyProducts" class="muted" style="margin-top:.5rem;">Chưa có sản phẩm.</p>
+    </section>
+
+    <!-- ====== TAB: ĐƠN CỦA TÔI (NGƯỜI MUA) ====== -->
+    <section id="tabBuyer" class="hidden">
+      <h3>Đơn của tôi (người mua)</h3>
+      <p class="muted" style="margin:.25rem 0 1rem;">Xem trạng thái đơn đã đặt. Đến hạn bạn có thể bấm <b>Đã nhận hàng</b> hoặc <b>Yêu cầu hoàn VIN</b> (nếu quá hạn chưa nhận).</p>
+      <div id="buyerOrders" class="grid"></div>
+      <p id="emptyBuyerOrders" class="muted" style="margin-top:.5rem;">Chưa có đơn nào.</p>
+      <!-- Template buyer order card -->
+      <template id="tplBuyerOrder">
+        <div class="card">
+          <div class="p-body">
+            <div class="p-title"></div>
+            <div class="p-price-vin"></div>
+            <div class="muted mono" style="font-size:12px;margin:.25rem 0 .5rem;"></div>
+            <div class="p-actions">
+              <button class="btn success small confirm-btn">Đã nhận hàng</button>
+              <button class="btn outline small refund-btn">Yêu cầu hoàn VIN</button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </section>
+
+    <!-- ====== TAB: ĐƠN CỦA TÔI (NGƯỜI BÁN) ====== -->
+    <section id="tabSeller" class="hidden">
+      <h3>Đơn của tôi (người bán)</h3>
+      <p class="muted" style="margin:.25rem 0 1rem;">Các đơn mới sẽ hiện ở đây. Bấm <b>Giải mã địa chỉ</b> để xem thông tin giao hàng.</p>
+      <div id="sellerOrders" class="grid"></div>
+      <p id="emptySellerOrders" class="muted" style="margin-top:.5rem;">Chưa có đơn nào.</p>
+      <!-- Template seller order card -->
+      <template id="tplSellerOrder">
+        <div class="card">
+          <div class="p-body">
+            <div class="p-title"></div>
+            <div class="p-price-vin"></div>
+            <div class="muted mono" style="font-size:12px;margin:.25rem 0 .5rem;"></div>
+            <div class="p-actions">
+              <button class="btn small decrypt-btn">Giải mã địa chỉ</button>
+              <a class="btn ghost small mono tx-link" target="_blank" rel="noopener">Tx</a>
+            </div>
+            <pre class="mono muted hidden shipping-plain" style="white-space:pre-wrap;margin-top:.5rem;"></pre>
+          </div>
+        </div>
+      </template>
+    </section>
   </main>
 
   <!-- =================== FOOTER =================== -->
@@ -65,9 +119,27 @@
     </div>
   </footer>
 
+  <!-- =================== TEMPLATES: PRODUCT CARD =================== -->
+  <template id="tplProductCard">
+    <div class="card">
+      <div class="p-media"></div>
+      <div class="p-body">
+        <div class="p-title"></div>
+        <div class="p-price-vin"></div>
+        <div class="p-foot">
+          <span class="stock-badge"></span>
+          <div class="p-actions">
+            <button class="btn buy-btn hidden">Mua</button>
+            <button class="btn outline update-btn hidden">Cập nhật</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
   <!-- =================== MODALS =================== -->
-  <!-- Create Product (6 trường, tên tối đa 500 ký tự) -->
-  <div id="createModal" class="modal hidden">
+  <!-- Create Product -->
+  <div id="createModal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-box">
       <div class="modal-head">
         <h3>Đăng sản phẩm</h3>
@@ -79,7 +151,7 @@
           <input id="pName" type="text" class="input" maxlength="500" placeholder='VD: ÁO PHÔNG "NGƯỜI VIỆT NAM" size S-XL…' />
         </label>
         <label class="field">
-          <span>Link/ CID ảnh hoặc video (IPFS/http/https)</span>
+          <span>Link/CID ảnh hoặc video (IPFS/http/https)</span>
           <input id="pImageCID" type="text" class="input" placeholder="https://ipfs.io/ipfs/..." />
         </label>
         <label class="field">
@@ -106,8 +178,8 @@
     </div>
   </div>
 
-  <!-- Update Product (giá, ví nhận, thời gian, tồn kho, bật/tắt) -->
-  <div id="updateModal" class="modal hidden">
+  <!-- Update Product -->
+  <div id="updateModal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-box">
       <div class="modal-head">
         <h3>Cập nhật sản phẩm</h3>
@@ -135,7 +207,7 @@
           <input id="uActive" type="checkbox" />
           <span>Bật hiển thị (Active)</span>
         </label>
-        <p class="muted">Lưu ý: tên & hình không đổi bằng hàm cập nhật này (hợp đồng chỉ cho phép đổi thông số thương mại). :contentReference[oaicite:3]{index=3}</p>
+        <p class="muted">Lưu ý: Tên & hình không đổi bằng cập nhật này (đảm bảo nhất quán đơn).</p>
       </div>
       <div class="modal-foot">
         <button id="updateCancel" class="btn ghost">Hủy</button>
@@ -144,8 +216,8 @@
     </div>
   </div>
 
-  <!-- Buy (thông tin giao hàng — mã hóa ngầm) -->
-  <div id="buyModal" class="modal hidden">
+  <!-- Buy -->
+  <div id="buyModal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-box">
       <div class="modal-head">
         <h3>Mua hàng</h3>
@@ -176,27 +248,10 @@
     </div>
   </div>
 
-  <!-- =================== TEMPLATES + TOAST =================== -->
-  <template id="tplProductCard">
-    <div class="card">
-      <div class="p-media"></div>
-      <div class="p-body">
-        <div class="p-title"></div>
-        <div class="p-price-vin"></div>
-        <div class="p-foot">
-          <span class="stock-badge"></span>
-          <div class="p-actions">
-            <button class="btn buy-btn hidden">Mua</button>
-            <button class="btn outline update-btn hidden">Cập nhật</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </template>
+  <!-- =================== TOAST =================== -->
+  <div id="toast" class="toast hidden">—</div>
 
-  <div id="toast" class="toast hidden">...</div>
-
-  <!-- App -->
+  <!-- =================== APP =================== -->
   <script src="app.js"></script>
 </body>
 </html>
