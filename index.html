@@ -1,132 +1,216 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>muaban • Viction</title>
-  <meta name="theme-color" content="#0f172a" />
-  <link rel="icon" href="logo.png" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Muaban</title>
+  <link rel="icon" href="logo.png"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
-  <!-- =================== HEADER =================== -->
-  <header class="header container">
-    <div class="brand">
-      <img src="logo.png" alt="muaban" class="logo-img" />
-      <div class="brand-text">
-        <h1 class="logo">muaban</h1>
-        <div class="slogan">on-chain commerce • Viction</div>
+  <header class="header">
+    <div class="container brand">
+      <img class="logo-img" src="logo.png" alt="Logo"/>
+      <div>
+        <h1 class="logo">Muaban</h1>
+        <div class="slogan">Bán & mua on-chain, giao hàng off-chain</div>
       </div>
     </div>
 
-    <!-- Giá VIN theo USD -->
-    <div class="vin-price">
-      <span>1 VIN ≈ </span><strong id="vinPriceUsd">—</strong><span> USD</span>
+    <!-- Tỷ giá: 1 VIN ≈ ? USD -->
+    <div class="container" style="justify-self:center">
+      <span class="muted">1 VIN ≈ </span>
+      <span class="vin-price"><span id="vinPriceUsd">—</span> USD</span>
     </div>
 
-    <!-- Kết nối ví -->
-    <div class="wallet-box">
+    <!-- Ví -->
+    <div class="container wallet-box">
       <button id="btnConnect" class="btn primary">Kết nối ví</button>
       <div id="walletInfo" class="account hidden">
-        <a id="accountShort" class="mono" target="_blank" rel="noopener">0x…</a>
-        <span class="balance">VIN: <b id="vinBalance">0.0000</b> | VIC: <b id="vicBalance">0.0000</b></span>
+        <a id="accountShort" class="mono" target="_blank" rel="noreferrer">0x…</a>
+        <div class="balance mono">VIC: <span id="vicBalance">0.0000</span> • VIN: <span id="vinBalance">0.0000</span></div>
         <div class="row gap">
-          <button id="btnRegister" class="btn ghost small">Đăng ký (0.001 VIN)</button>
-          <button id="btnCreateProduct" class="btn small hidden">Đăng sản phẩm</button>
-          <button id="btnDisconnect" class="btn ghost small">Ngắt</button>
+          <button id="btnRegister" class="btn small ghost hidden">Trả phí 0.001 VIN để mở bán</button>
+          <button id="btnCreateProduct" class="btn small success hidden">Tạo sản phẩm</button>
+          <button id="btnDisconnect" class="btn small ghost">Ngắt</button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- =================== MAIN =================== -->
+  <!-- Thanh tìm kiếm -->
+  <section class="container" style="margin-top:12px;">
+    <div class="row gap" style="width:100%;">
+      <input id="searchInput" class="input" placeholder="Tìm sản phẩm (gõ tên hay từ khoá)"/>
+      <button id="searchBtn" class="btn">Tìm</button>
+      <button id="clearSearchBtn" class="btn ghost">Xoá</button>
+    </div>
+  </section>
+
   <main class="container">
-    <div id="productList" class="grid"></div>
-    <p id="emptyProducts" class="muted" style="margin-top:.5rem;">Chưa có sản phẩm.</p>
+    <p id="emptyProducts" class="muted" style="margin-top:12px;"></p>
+    <div id="productList" class="grid" style="margin-top:8px;"></div>
   </main>
 
-  <!-- =================== FOOTER =================== -->
   <footer class="footer">
-    <div class="container">
-      <div class="links">
-        <a href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638#code" target="_blank">Hợp đồng Muaban</a>
-        <a href="https://vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank">VIN token</a>
-        <a href="https://vicscan.xyz" target="_blank">VicScan</a>
-      </div>
+    <div class="container links">
+      <span class="muted">© Muaban</span>
     </div>
   </footer>
 
-  <!-- =================== TEMPLATE: SẢN PHẨM =================== -->
+  <!-- ======= Templates ======= -->
   <template id="tplProductCard">
-    <article class="card product">
-      <div class="p-media"></div>
+    <article class="card">
+      <div class="p-media"><img alt=""/></div>
       <div class="p-body">
         <div class="p-head">
-          <h3 class="p-title"></h3>
-          <span class="badge stock-badge"></span>
+          <div class="p-title"></div>
+          <span class="stock-badge"></span>
         </div>
         <div class="p-meta">
-          <span class="p-price-vin"></span>
+          <div class="p-price-vin mono">≈ — VIN/đơn vị</div>
         </div>
-        <div class="row gap p-actions">
-          <button class="btn buy-btn hidden">Mua</button>
-          <button class="btn update-btn hidden">Cập nhật sản phẩm</button>
+        <div class="p-actions row gap">
+          <button class="btn buy-btn">Mua</button>
+          <button class="btn ghost update-btn hidden">Cập nhật sản phẩm</button>
         </div>
       </div>
     </article>
   </template>
 
-  <!-- =================== MODAL TẠO SẢN PHẨM =================== -->
-  <div id="createModal" class="modal hidden" role="dialog" aria-modal="true">
+  <!-- ======= Modal: Tạo sản phẩm ======= -->
+  <div id="createModal" class="modal hidden">
     <div class="modal-card">
       <div class="modal-head">
-        <h3>Tạo sản phẩm</h3>
-        <button id="createClose" class="icon-btn">×</button>
+        <strong>Tạo sản phẩm</strong>
+        <button id="createClose" class="icon-btn">✕</button>
       </div>
       <div class="modal-body">
-        <form id="createForm" class="grid grid-2">
-          <label>Tên sản phẩm<input id="pName" class="input" required maxlength="64" /></label>
-          <label>Link Pitana (ảnh/video)<input id="pImageCID" class="input" required placeholder="ipfs://... hoặc https://ipfs.io/ipfs/..." /></label>
-          <label>Đơn vị tính<input id="pUnit" class="input" placeholder="cái, kg, hộp..." required /></label>
-          <label>Giá bán (USD)<input id="pPriceUsd" class="input" type="number" step="0.01" min="0.01" required /></label>
-          <label>Ví thanh toán<input id="pRevenueWallet" class="input" placeholder="0x…" required /></label>
-          <label>Thời gian giao (ngày)<input id="pDeliveryDays" class="input" type="number" min="1" value="7" /></label>
-        </form>
+        <div class="grid-2">
+          <label class="grid-span-2">
+            Tên sản phẩm (tối đa 500 kí tự)
+            <textarea id="pName" class="input" maxlength="500" placeholder='Ví dụ: ÁO PHÔNG "NGƯỜI VIỆT NAM" – cotton 2 chiều, đủ size S-XL…'></textarea>
+          </label>
+          <label>
+            Link Pitana / IPFS (ảnh/video)
+            <input id="pImageCID" class="input" placeholder="CID, ipfs://, hoặc https://"/>
+          </label>
+          <label>
+            Đơn vị tính
+            <input id="pUnit" class="input" placeholder="cái / chiếc / hộp / kg…"/>
+          </label>
+          <label>
+            Giá bán (USD – tổng đã gồm mọi phí)
+            <input id="pPriceUsd" class="input" inputmode="decimal" placeholder="ví dụ 13.50"/>
+          </label>
+          <label>
+            Ví nhận thanh toán
+            <input id="pRevenueWallet" class="input" placeholder="0x…"/>
+          </label>
+          <label>
+            Giao tối đa (ngày)
+            <input id="pDeliveryDays" class="input" inputmode="numeric" placeholder="ví dụ 7"/>
+          </label>
+        </div>
       </div>
       <div class="modal-foot">
         <button id="createCancel" class="btn ghost">Huỷ</button>
-        <button id="createSubmit" class="btn success">Đăng sản phẩm</button>
+        <button id="createSubmit" class="btn success">Đăng</button>
       </div>
     </div>
   </div>
 
-  <!-- =================== MODAL MUA HÀNG =================== -->
-  <div id="buyModal" class="modal hidden" role="dialog" aria-modal="true">
+  <!-- ======= Modal: Mua hàng ======= -->
+  <div id="buyModal" class="modal hidden">
     <div class="modal-card">
       <div class="modal-head">
-        <h3>Mua hàng</h3>
-        <button id="buyClose" class="icon-btn">×</button>
+        <strong>Thông tin giao hàng</strong>
+        <button id="buyClose" class="icon-btn">✕</button>
       </div>
       <div class="modal-body">
-        <form class="grid grid-2">
-          <label>Tên người nhận<input id="shipName" class="input" required /></label>
-          <label>Số điện thoại<input id="shipPhone" class="input" required /></label>
-          <label class="grid-span-2">Địa chỉ<textarea id="shipAddress" class="input" rows="3" required></textarea></label>
-          <label class="grid-span-2">Ghi chú<textarea id="shipNote" class="input" rows="2"></textarea></label>
-        </form>
+        <div class="grid-2">
+          <label>
+            Họ tên người nhận
+            <input id="shipName" class="input" placeholder="Nguyễn Văn A"/>
+          </label>
+          <label>
+            Số điện thoại
+            <input id="shipPhone" class="input" inputmode="tel" placeholder="09…"/>
+          </label>
+          <label class="grid-span-2">
+            Địa chỉ nhận hàng
+            <textarea id="shipAddress" class="input" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"></textarea>
+          </label>
+          <label class="grid-span-2">
+            Ghi chú (tuỳ chọn)
+            <textarea id="shipNote" class="input" placeholder="Size M / màu trắng…"></textarea>
+          </label>
+        </div>
       </div>
       <div class="modal-foot">
-        <button id="buyCancel" class="btn ghost">Huỷ</button>
-        <button id="buySubmit" class="btn primary">Thanh toán</button>
+        <button id="buyCancel" class="btn ghost">Đóng</button>
+        <button id="buySubmit" class="btn success">Xác nhận & Thanh toán VIN</button>
       </div>
     </div>
   </div>
 
-  <!-- =================== TOAST =================== -->
-  <div id="toast" class="toast hidden">—</div>
+  <!-- ======= Modal: Cập nhật sản phẩm (Seller) ======= -->
+  <div id="updateModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <strong>Cập nhật sản phẩm</strong>
+        <button id="updateClose" class="icon-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="grid-2">
+          <label>
+            Giá (USD)
+            <input id="uPriceUsd" class="input" inputmode="decimal"/>
+          </label>
+          <label>
+            Ship (USD)
+            <input id="uShipUsd" class="input" inputmode="decimal" value="0"/>
+          </label>
+          <label>
+            Thuế (bps)
+            <input id="uTaxBps" class="input" inputmode="numeric" value="0"/>
+          </label>
+          <label>
+            Giao tối đa (ngày)
+            <input id="uDeliveryDays" class="input" inputmode="numeric"/>
+          </label>
+          <label>
+            Ví nhận thanh toán
+            <input id="uRevenueWallet" class="input"/>
+          </label>
+          <label>
+            Ví nộp thuế
+            <input id="uTaxWallet" class="input"/>
+          </label>
+          <label>
+            Ví vận chuyển (tuỳ chọn)
+            <input id="uShippingWallet" class="input" placeholder="để trống = dùng ví nhận"/>
+          </label>
+          <label>
+            Tồn kho
+            <input id="uStock" class="input" inputmode="numeric"/>
+          </label>
+          <label class="row gap">
+            <input id="uActive" type="checkbox"/> Đang bán (active)
+          </label>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button id="updateCancel" class="btn ghost">Huỷ</button>
+        <button id="updateSubmit" class="btn success">Lưu</button>
+      </div>
+    </div>
+  </div>
 
-  <!-- =================== SCRIPTS =================== -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <!-- Toast -->
+  <div id="toast" class="toast hidden">---</div>
+
   <script src="app.js"></script>
 </body>
 </html>
