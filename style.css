@@ -168,6 +168,19 @@ textarea{ resize: vertical; min-height: 96px; }
   #btnCreateProduct{ order: 4; }
 }
 
+/* --------- (NEW) Số lượng & Tổng VIN trong modal mua --------- */
+.qty-row { display:flex; align-items:center; gap:.75rem; margin-top:.25rem; }
+.qty-row label { min-width:88px; color:#cbd5e1; font-weight:700; }
+.qty-input { width:120px; text-align:right; padding:.5rem .6rem; }
+
+.total-vin-row {
+  display:flex; justify-content:space-between; align-items:center;
+  margin:.5rem 0 .75rem; padding:.5rem .75rem;
+  border:1px dashed var(--line); border-radius:.5rem; background:#0b1526;
+  font-weight:800;
+}
+.total-vin-row .mono { font-variant-numeric: tabular-nums; }
+
 /* -------------------- 6) GRID & CARDS -------------------- */
 .grid{
   display: grid;
