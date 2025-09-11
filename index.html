@@ -217,36 +217,51 @@
   </div>
 
   <!-- Buy -->
-  <div id="buyModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-box">
-      <div class="modal-head">
-        <h3>Mua hàng</h3>
-        <button id="buyClose" class="icon-btn" aria-label="Close">✕</button>
+<div id="buyModal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Mua hàng</h3>
+      <button id="buyClose" class="icon-btn" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid" style="grid-template-columns: 1fr 1fr; gap:12px;">
+        <label class="field">
+          <span>Số lượng</span>
+          <input id="buyQty" type="number" class="input" min="1" step="1" value="1" />
+        </label>
+        <div class="field">
+          <span>VIN cần thanh toán</span>
+          <div class="price-chip" id="buyVinPreview" style="display:inline-block">—</div>
+          <div class="muted mono" id="buyVinBreakdown" style="font-size:12px;margin-top:6px;">
+            <!-- sẽ hiển thị: Doanh thu / Giao hàng / Thuế -->
+          </div>
+        </div>
       </div>
-      <div class="modal-body">
-        <label class="field">
-          <span>Tên người nhận</span>
-          <input id="shipName" class="input" placeholder="Nguyễn Văn A" />
-        </label>
-        <label class="field">
-          <span>Số điện thoại</span>
-          <input id="shipPhone" class="input" placeholder="09xx..." />
-        </label>
-        <label class="field">
-          <span>Địa chỉ</span>
-          <textarea id="shipAddress" class="input" rows="3" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"></textarea>
-        </label>
-        <label class="field">
-          <span>Phụ ghi (tuỳ chọn: size, màu…)</span>
-          <input id="shipNote" class="input" placeholder="Size L, màu trắng…" />
-        </label>
-      </div>
-      <div class="modal-foot">
-        <button id="buyCancel" class="btn ghost">Hủy</button>
-        <button id="buySubmit" class="btn primary">Thanh toán VIN</button>
-      </div>
+
+      <label class="field">
+        <span>Tên người nhận</span>
+        <input id="shipName" class="input" placeholder="Nguyễn Văn A" />
+      </label>
+      <label class="field">
+        <span>Số điện thoại</span>
+        <input id="shipPhone" class="input" placeholder="09xx..." />
+      </label>
+      <label class="field">
+        <span>Địa chỉ</span>
+        <textarea id="shipAddress" class="input" rows="3" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"></textarea>
+      </label>
+      <label class="field">
+        <span>Phụ ghi (tuỳ chọn: size, màu…)</span>
+        <input id="shipNote" class="input" placeholder="Size L, màu trắng…" />
+      </label>
+    </div>
+    <div class="modal-foot">
+      <button id="buyCancel" class="btn ghost">Hủy</button>
+      <button id="buySubmit" class="btn primary">Thanh toán VIN</button>
     </div>
   </div>
+</div>
+
 
   <!-- =================== TOAST =================== -->
   <div id="toast" class="toast hidden">—</div>
