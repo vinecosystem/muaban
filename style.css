@@ -3,10 +3,7 @@
 *::before,
 *::after { box-sizing: border-box; }
 
-html, body {
-  height: 100%;
-  margin: 0;
-}
+html, body { height: 100%; margin: 0; }
 
 body {
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -27,8 +24,7 @@ a { color: inherit; text-decoration: none; }
 .header {
   padding: 16px 0;
   display: flex; align-items: center; justify-content: space-between;
-  border-bottom: 1px solid #e5e7eb;
-  background: #fff;
+  border-bottom: 1px solid #e5e7eb; background: #fff;
 }
 
 .brand { display: flex; align-items: center; gap: 12px; }
@@ -84,10 +80,7 @@ main { flex: 1 0 auto; padding: 24px 0; }
 .p-seller { font-size: 12px; color: #6b7280; }
 
 /* ================== FOOTER ================== */
-.footer {
-  border-top: 1px solid #e5e7eb;
-  padding: 16px 0; background: #fff;
-}
+.footer { border-top: 1px solid #e5e7eb; padding: 16px 0; background: #fff; }
 .footer .links { display: flex; flex-wrap: wrap; gap: 16px; }
 
 /* ================== MODAL ================== */
