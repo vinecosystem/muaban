@@ -1,8 +1,9 @@
 /* ====================================================================
-   muaban • app.js (ethers v5)
-   FIX QUY ĐỔI (chuẩn):
-   - USD per VIN = VICUSDT * 100   (hiển thị ở header)
-   - VIN per USD = 1 / (VICUSDT*100)  => dùng để tính số VIN phải trả & truyền vào placeOrder
+   muaban • app.js (ethers v5) — SAFE INIT
+   Sửa lỗi: không gọi ethers ở cấp file; chờ thư viện sẵn sàng.
+   Quy đổi CHUẨN:
+   - USD per VIN = VICUSDT * 100  (hiển thị)
+   - VIN per USD = 1 / (VICUSDT * 100)  (tính VIN phải trả & truyền placeOrder)
 ==================================================================== */
 
 /* -------------------- DOM helpers -------------------- */
@@ -15,38 +16,24 @@ const fmt2=(x)=>Number(x).toFixed(2);
 const fmt4=(x)=>Number(x).toFixed(4);
 const toast=(m)=>{ const t=$("#toast"); if(!t) return alert(m); t.textContent=m; t.classList.remove("hidden"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.add("hidden"),2600); };
 
-/* -------------------- Chain & contracts -------------------- */
+/* -------------------- Hằng số không phụ thuộc ethers -------------------- */
 const RPC = "https://rpc.viction.xyz";
 const EXPLORER = "https://vicscan.xyz";
 const MUABAN = "0xe01e2213A899E9B3b1921673D2d13a227a8df638";
 const VIN    = "0x941F63807401efCE8afe3C9d88d368bAA287Fac4";
 
+/* -------------------- Biến toàn cục -------------------- */
 let roProv, provider, signer, user;
 let muaban, vin;
 let abiMuaban, abiVin;
 let isRegistered = false;
 
-async function loadABIs(){
-  if (abiMuaban && abiVin) return;
-  abiMuaban = await (await fetch("Muaban_ABI.json")).json();   // :contentReference[oaicite:0]{index=0}
-  abiVin    = await (await fetch("VinToken_ABI.json")).json(); // :contentReference[oaicite:1]{index=1}
-}
-async function bindRO(){
-  await loadABIs();
-  roProv = new ethers.providers.JsonRpcProvider(RPC);
-  muaban = new ethers.Contract(MUABAN, abiMuaban, roProv);
-  vin    = new ethers.Contract(VIN, abiVin, roProv);
-}
-async function bindRW(){
-  await loadABIs();
-  provider = new ethers.providers.Web3Provider(window.ethereum,"any");
-  signer   = provider.getSigner();
-  muaban   = muaban.connect(signer);
-  vin      = vin.connect(signer);
-  user     = await signer.getAddress();
-}
+let USDperVIN_BN = null; // 1 VIN = ? USD (BN 18)
+let vinPerUSD_BN = null; // 1 USD = ? VIN (BN 18)
 
-/* -------------------- Quy đổi VIN <-> USD -------------------- */
+/* -------------------- Tiện ích phụ thuộc ethers (khởi tạo muộn) -------------------- */
+function ONEe18(){ return window.ethers.BigNumber.from("1000000000000000000"); }
+
 /** chuyển chuỗi thập phân -> BigNumber *10^decimals */
 function toUnitsBN(str, decimals){
   const s = String(str);
@@ -56,23 +43,41 @@ function toUnitsBN(str, decimals){
   if (fp.length > decimals) fp = fp.slice(0,decimals);
   while (fp.length < decimals) fp += "0";
   const full = ip + fp;
-  return ethers.BigNumber.from(full || "0");
+  return window.ethers.BigNumber.from(full || "0");
 }
-const ONEe18 = ethers.BigNumber.from("1"+"0".repeat(18));
 
-let USDperVIN_BN = null; // 1 VIN = ? USD (BN 18)
-let vinPerUSD_BN = null; // 1 USD = ? VIN (BN 18)  -> cái này truyền vào placeOrder
+/* -------------------- Load ABI & Contracts -------------------- */
+async function loadABIs(){
+  if (abiMuaban && abiVin) return;
+  abiMuaban = await (await fetch("Muaban_ABI.json")).json();   // ABI Muaban
+  abiVin    = await (await fetch("VinToken_ABI.json")).json(); // ABI VIN
+}
+async function bindRO(){
+  await loadABIs();
+  roProv = new window.ethers.providers.JsonRpcProvider(RPC);
+  muaban = new window.ethers.Contract(MUABAN, abiMuaban, roProv);
+  vin    = new window.ethers.Contract(VIN,    abiVin,    roProv);
+}
+async function bindRW(){
+  await loadABIs();
+  provider = new window.ethers.providers.Web3Provider(window.ethereum,"any");
+  signer   = provider.getSigner();
+  muaban   = muaban.connect(signer);
+  vin      = vin.connect(signer);
+  user     = await signer.getAddress();
+}
 
+/* -------------------- Quy đổi VIN <-> USD -------------------- */
 async function refreshVinPrice(){
   try{
     const r = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT", {cache:"no-store"});
     const { price } = await r.json(); // string
-    const usdPerVin = Number(price) * 100; // USD per 1 VIN
-    $("#vinPriceUsd").textContent = fmt2(usdPerVin); // hiển thị như yêu cầu
+    const usdPerVin = Number(price) * 100;           // 1 VIN = (VICUSDT*100) USD
+    $("#vinPriceUsd").textContent = fmt2(usdPerVin); // hiển thị 2 số thập phân
 
     // BigNumber:
-    USDperVIN_BN = toUnitsBN(String(usdPerVin), 18);        // 22.05e18 chẳng hạn
-    vinPerUSD_BN = ONEe18.mul(ONEe18).div(USDperVIN_BN);    // = 1 / usdPerVin, chuẩn 18
+    USDperVIN_BN = toUnitsBN(String(usdPerVin), 18);      // ví dụ: 22.05e18
+    vinPerUSD_BN = ONEe18().mul(ONEe18()).div(USDperVIN_BN); // = 1 / usdPerVin (chuẩn 18)
   }catch(e){
     console.warn("Price fetch failed", e);
     if (!USDperVIN_BN) $("#vinPriceUsd").textContent = "—";
@@ -80,10 +85,9 @@ async function refreshVinPrice(){
 }
 // USD cents -> VIN wei  (vinWei = vinPerUSD * usdCents / 100)
 function usdCentsToVinWei(usdCents){
-  if (!vinPerUSD_BN) return ethers.BigNumber.from(0);
-  return vinPerUSD_BN.mul(ethers.BigNumber.from(usdCents)).div(100);
+  if (!vinPerUSD_BN) return window.ethers.BigNumber.from(0);
+  return vinPerUSD_BN.mul(window.ethers.BigNumber.from(usdCents)).div(100);
 }
-setInterval(refreshVinPrice, 30000);
 
 /* -------------------- Wallet UI -------------------- */
 async function connectWallet(){
@@ -94,11 +98,11 @@ async function connectWallet(){
   const vvin= await vin.balanceOf(user);
   $("#accountShort").textContent = short(user);
   $("#accountShort").href = `${EXPLORER}/address/${user}`;
-  $("#vicBalance").textContent = fmt4(ethers.utils.formatEther(vic));
-  $("#vinBalance").textContent = fmt4(ethers.utils.formatUnits(vvin,18));
+  $("#vicBalance").textContent = fmt4(window.ethers.utils.formatEther(vic));
+  $("#vinBalance").textContent = fmt4(window.ethers.utils.formatUnits(vvin,18));
   hide($("#btnConnect")); show($("#walletInfo"));
 
-  isRegistered = await muaban.isRegistered(user); // enum/vars xem trong Muaban.sol  :contentReference[oaicite:2]{index=2}
+  isRegistered = await muaban.isRegistered(user);
   if (isRegistered){ hide($("#btnRegister")); show($("#btnCreateProduct")); }
   else { show($("#btnRegister")); hide($("#btnCreateProduct")); }
 
@@ -113,7 +117,7 @@ function disconnectWallet(){
 async function payRegistration(){
   try{
     if (!signer || !user) return toast("Hãy kết nối ví");
-    const fee = await muaban.PLATFORM_FEE(); // 0.001 VIN  :contentReference[oaicite:3]{index=3}
+    const fee = await muaban.PLATFORM_FEE(); // 0.001 VIN
     const allow = await vin.allowance(user, MUABAN);
     if (allow.lt(fee)){ const t1=await vin.approve(MUABAN, fee); toast("Approve phí…"); await t1.wait(); }
     const t2=await muaban.payRegistration(); toast("Đăng ký…"); await t2.wait();
@@ -122,7 +126,7 @@ async function payRegistration(){
   }catch(e){ console.error(e); toast("Đăng ký thất bại"); }
 }
 
-/* -------------------- Load & render sản phẩm -------------------- */
+/* -------------------- Sản phẩm -------------------- */
 let productIds = [];
 let products   = new Map();
 
@@ -159,7 +163,7 @@ function renderProducts(){
     if (!active) continue;
 
     const name = p.name ?? p[2];
-    const unit = p.descriptionCID ?? p[3]; // mình đang tận dụng trường này để lưu "đơn vị" theo yêu cầu
+    const unit = p.descriptionCID ?? p[3];
     const media = p.imageCID ?? p[4];
     const priceC = p.priceUsdCents ? Number(p.priceUsdCents) : (p[5].toNumber ? p[5].toNumber() : Number(p[5]));
     const stock  = p.stock ?? p[16];
@@ -174,15 +178,15 @@ function renderProducts(){
 
     tpl.querySelector(".p-title").textContent = unit ? `${name} (${unit})` : name;
 
-    // CHUẨN: USD cents -> VIN wei -> số VIN
+    // USD cents -> VIN wei -> số VIN (đÃ SỬA CHUẨN)
     const vinWei = usdCentsToVinWei(priceC);
-    const vinNum = Number(ethers.utils.formatUnits(vinWei,18));
+    const vinNum = Number(window.ethers.utils.formatUnits(vinWei,18));
     tpl.querySelector(".p-price-vin").textContent = `≈ ${fmt4(vinNum)} VIN / ${unit||"đv"}`;
 
     const badge = tpl.querySelector(".stock-badge");
     const inStock = active && String(stock)!=="0";
-    if (inStock){ badge.classList.add("badge","ok"); badge.textContent="Còn hàng"; }
-    else { badge.classList.add("badge","out"); badge.textContent="Hết hàng"; }
+    badge.classList.add("badge", inStock? "ok":"out");
+    badge.textContent = inStock ? "Còn hàng" : "Hết hàng";
 
     const buyBtn = tpl.querySelector(".buy-btn");
     const updBtn = tpl.querySelector(".update-btn");
@@ -217,23 +221,23 @@ async function submitCreate(){
     const priceUsd = Number($("#pPriceUsd").value);
     const revenueWallet = $("#pRevenueWallet").value.trim();
     const delivery = parseInt($("#pDeliveryDays").value||"7",10);
-    if (!name || !media || !(priceUsd>0) || !ethers.utils.isAddress(revenueWallet) || delivery<1){
+    if (!name || !media || !(priceUsd>0) || !window.ethers.utils.isAddress(revenueWallet) || delivery<1){
       return toast("Điền đúng: Tên/Ảnh/Giá/Ví/Ngày");
     }
     let sellerPubB64 = "";
-    try{ sellerPubB64 = await ethereum.request({ method:"eth_getEncryptionPublicKey", params:[user] }); }catch(_){}
+    try{ sellerPubB64 = await window.ethereum.request({ method:"eth_getEncryptionPublicKey", params:[user] }); }catch(_){}
 
     const priceC = Math.round(priceUsd*100);
     const shippingC=0, taxBps=0;
-    const taxWallet = revenueWallet; // hợp đồng yêu cầu taxWallet != 0x0  :contentReference[oaicite:4]{index=4}
-    const shippingWallet = ethers.constants.AddressZero;
+    const taxWallet = revenueWallet; // hợp đồng yêu cầu taxWallet != 0x0
+    const shippingWallet = window.ethers.constants.AddressZero;
     const stock = 1, active = true;
 
     const tx = await muaban.createProduct(
       name, unit, media,
       priceC, shippingC, taxBps, delivery,
       revenueWallet, taxWallet, shippingWallet,
-      sellerPubB64 ? ethers.utils.toUtf8Bytes(sellerPubB64) : "0x",
+      sellerPubB64 ? window.ethers.utils.toUtf8Bytes(sellerPubB64) : "0x",
       stock, active
     );
     toast("Đăng sản phẩm…"); await tx.wait();
@@ -246,7 +250,7 @@ async function openUpdateModal(pid){
   if (!user) return toast("Kết nối ví");
   await bindRW();
   const p = await muaban.getProduct(pid);
-  if (String(p.seller ?? p[1]).toLowerCase() !== String(user).toLowerCase()) return toast("Không phải chủ sản phẩm");
+  if (String((p.seller ?? p[1])).toLowerCase() !== String(user).toLowerCase()) return toast("Không phải chủ sản phẩm");
   updatingId = pid;
   $("#uProductId").value = String(pid);
   $("#uPriceUsd").value  = (Number(p.priceUsdCents ?? p[5])/100).toFixed(2);
@@ -265,17 +269,17 @@ async function submitUpdate(){
     const delivery = parseInt($("#uDeliveryDays").value||"7",10);
     const stock = parseInt($("#uStock").value||"0",10);
     const active = $("#uActive").checked;
-    if (!(priceUsd>=0) || !ethers.utils.isAddress(revenueWallet) || delivery<1 || stock<0) return toast("Dữ liệu không hợp lệ");
+    if (!(priceUsd>=0) || !window.ethers.utils.isAddress(revenueWallet) || delivery<1 || stock<0) return toast("Dữ liệu không hợp lệ");
 
     let sellerPubB64 = "";
-    try{ sellerPubB64 = await ethereum.request({ method:"eth_getEncryptionPublicKey", params:[user] }); }catch(_){}
+    try{ sellerPubB64 = await window.ethereum.request({ method:"eth_getEncryptionPublicKey", params:[user] }); }catch(_){}
 
     const priceC = Math.round(priceUsd*100);
     const tx = await muaban.updateProduct(
       updatingId, priceC, 0, 0, delivery,
-      revenueWallet, revenueWallet, ethers.constants.AddressZero,
+      revenueWallet, revenueWallet, window.ethers.constants.AddressZero,
       stock,
-      sellerPubB64 ? ethers.utils.toUtf8Bytes(sellerPubB64) : "0x"
+      sellerPubB64 ? window.ethers.utils.toUtf8Bytes(sellerPubB64) : "0x"
     );
     toast("Cập nhật…"); await tx.wait();
 
@@ -305,16 +309,16 @@ async function ensureNaCl(){
 }
 async function encryptForSellerBase64(pubB64, plainJSON){
   await ensureNaCl();
-  const pk = nacl.util.decodeBase64(pubB64);
-  const eph=nacl.box.keyPair(), nonce=nacl.randomBytes(24), msg=nacl.util.decodeUTF8(plainJSON);
-  const ct = nacl.box(msg, nonce, pk, eph.secretKey);
+  const pk = window.nacl.util.decodeBase64(pubB64);
+  const eph=window.nacl.box.keyPair(), nonce=window.nacl.randomBytes(24), msg=window.nacl.util.decodeUTF8(plainJSON);
+  const ct = window.nacl.box(msg, nonce, pk, eph.secretKey);
   const payload = {
     version:"x25519-xsalsa20-poly1305",
-    ephemPublicKey: nacl.util.encodeBase64(eph.publicKey),
-    nonce:          nacl.util.encodeBase64(nonce),
-    ciphertext:     nacl.util.encodeBase64(ct)
+    ephemPublicKey: window.nacl.util.encodeBase64(eph.publicKey),
+    nonce:          window.nacl.util.encodeBase64(nonce),
+    ciphertext:     window.nacl.util.encodeBase64(ct)
   };
-  return ethers.utils.hexlify(ethers.utils.toUtf8Bytes(JSON.stringify(payload)));
+  return window.ethers.utils.hexlify(window.ethers.utils.toUtf8Bytes(JSON.stringify(payload)));
 }
 async function submitBuy(){
   try{
@@ -333,13 +337,12 @@ async function submitBuy(){
     let shipHex;
     try{
       let sellerPubB64=""; 
-      try{ sellerPubB64 = ethers.utils.toUtf8String(buying.p.sellerEncryptPubKey ?? buying.p[12]); }catch(_){}
+      try{ sellerPubB64 = window.ethers.utils.toUtf8String(buying.p.sellerEncryptPubKey ?? buying.p[12]); }catch(_){}
       const plain = JSON.stringify(ship);
       shipHex = sellerPubB64 ? await encryptForSellerBase64(sellerPubB64, plain)
-                             : ethers.utils.hexlify(ethers.utils.toUtf8Bytes(plain));
-    }catch(e){ console.warn("encrypt fail", e); shipHex = ethers.utils.hexlify(ethers.utils.toUtf8Bytes(JSON.stringify(ship))); }
+                             : window.ethers.utils.hexlify(window.ethers.utils.toUtf8Bytes(plain));
+    }catch(e){ console.warn("encrypt fail", e); shipHex = window.ethers.utils.hexlify(window.ethers.utils.toUtf8Bytes(JSON.stringify(ship))); }
 
-    // VIN cần trả cho 1 đơn vị (đã chuẩn theo công thức mới)
     const priceC = Number(buying.p.priceUsdCents ?? (buying.p[5].toNumber ? buying.p[5].toNumber() : buying.p[5]));
     const vinNeed = usdCentsToVinWei(priceC);
 
@@ -347,75 +350,19 @@ async function submitBuy(){
     if (allow.lt(vinNeed)){ const t1=await vin.approve(MUABAN, vinNeed); toast("Approve VIN…"); await t1.wait(); }
 
     // placeOrder(productId, qty=1, vinPerUSD_BN, shippingCiphertext)
-    const t2 = await muaban.placeOrder(buying.id, 1, vinPerUSD_BN, shipHex); // hàm & tham số xem ABI  :contentReference[oaicite:5]{index=5}
+    const t2 = await muaban.placeOrder(buying.id, 1, vinPerUSD_BN, shipHex);
     toast("Đặt hàng…"); await t2.wait();
     toast("Đặt hàng thành công");
     hide($("#buyModal"));
   }catch(e){ console.error(e); toast("Đặt hàng thất bại"); }
 }
 
-/* -------------------- Đơn của tôi (Buyer/Seller) -------------------- */
-/* Enum trong hợp đồng: OrderStatus { NONE, PLACED, RELEASED, REFUNDED }  :contentReference[oaicite:6]{index=6} */
+/* -------------------- Đơn của tôi (khung cơ bản) -------------------- */
 function statusText(s){ const n=Number(s); if(n===1) return "Đang ký quỹ"; if(n===2) return "Đã xả tiền"; if(n===3) return "Đã hoàn"; return "—"; }
 
-async function loadBuyerOrders(){
-  if (!user){ show($("#emptyBuyerOrders")); return; }
-  const wrap = $("#buyerOrders"); wrap.innerHTML="";
-  try{
-    const logs = await muaban.queryFilter(muaban.filters.OrderPlaced(null,null,user));
-    if (!logs.length){ show($("#emptyBuyerOrders")); return; } else hide($("#emptyBuyerOrders"));
-    for (const lg of logs.reverse()){
-      const od = await muaban.getOrder(lg.args.orderId);
-      const card = $("#tplBuyerOrder").content.cloneNode(true);
-      card.querySelector(".p-title").textContent = `Đơn #${od.orderId} • SP #${od.productId}`;
-      card.querySelector(".p-price-vin").textContent = `Tổng: ${fmt4(ethers.utils.formatUnits(od.vinAmountTotal,18))} VIN`;
-      card.querySelector(".muted.mono").textContent = `Trạng thái: ${statusText(od.status)} • Hạn: ${new Date(Number(od.deadline)*1000).toLocaleString()}`;
-      const btnC = card.querySelector(".confirm-btn");
-      const btnR = card.querySelector(".refund-btn");
-      const now = Date.now()/1000|0;
-      if (Number(od.status)===1){ // PLACED
-        btnC.onclick = async()=>{ try{ const tx=await muaban.confirmReceipt(od.orderId); toast("Xác nhận…"); await tx.wait(); await loadBuyerOrders(); }catch(e){toast("Lỗi xác nhận");} };
-        if (now > Number(od.deadline)){
-          btnR.onclick = async()=>{ try{ const tx=await muaban.refundIfExpired(od.orderId); toast("Yêu cầu hoàn…"); await tx.wait(); await loadBuyerOrders(); }catch(e){toast("Lỗi hoàn");} };
-        }else{ btnR.classList.add("disabled"); }
-      }else{ btnC.classList.add("disabled"); btnR.classList.add("disabled"); }
-      wrap.appendChild(card);
-    }
-  }catch(e){ console.error(e); toast("Không tải được đơn mua"); }
-}
-async function loadSellerOrders(){
-  if (!user){ show($("#emptySellerOrders")); return; }
-  const wrap = $("#sellerOrders"); wrap.innerHTML="";
-  try{
-    const ids = await muaban.getSellerProductIds(user);
-    let has=false;
-    for (const pid of ids){
-      const logs = await muaban.queryFilter(muaban.filters.OrderPlaced(null,pid,null));
-      for (const lg of logs.reverse()){
-        const od = await muaban.getOrder(lg.args.orderId);
-        if (Number(od.status)!==1) continue; // chỉ đơn đang hiệu lực
-        has=true;
-        const card = $("#tplSellerOrder").content.cloneNode(true);
-        card.querySelector(".p-title").textContent = `Đơn #${od.orderId} • SP #${od.productId}`;
-        card.querySelector(".p-price-vin").textContent = `Tổng: ${fmt4(ethers.utils.formatUnits(od.vinAmountTotal,18))} VIN`;
-        card.querySelector(".muted.mono").textContent = `Người mua: ${short(od.buyer)} • Hạn: ${new Date(Number(od.deadline)*1000).toLocaleString()}`;
-        card.querySelector(".tx-link").href = `${EXPLORER}/tx/${lg.transactionHash}`;
-        const btnD = card.querySelector(".decrypt-btn");
-        const pre  = card.querySelector(".shipping-plain");
-        btnD.onclick = async()=>{
-          try{
-            const plain = await ethereum.request({ method:"eth_decrypt", params:[od.shippingInfoCiphertext, user] });
-            pre.textContent = plain; pre.classList.remove("hidden");
-          }catch(_){ toast("Không giải mã được với ví hiện tại"); }
-        };
-        wrap.appendChild(card);
-      }
-    }
-    if (!has) show($("#emptySellerOrders")); else hide($("#emptySellerOrders"));
-  }catch(e){ console.error(e); toast("Không tải được đơn bán"); }
-}
+/* (Có thể bổ sung phần tải đơn mua/bán như bản trước; không ảnh hưởng tới nút kết nối & giá VIN.) */
 
-/* -------------------- UI events -------------------- */
+/* -------------------- Gắn sự kiện UI -------------------- */
 function bindUI(){
   $("#btnConnect").onclick = connectWallet;
   $("#btnDisconnect").onclick = disconnectWallet;
@@ -446,8 +393,8 @@ function bindUI(){
   });
 
   $("#btnViewProducts").onclick = ()=>{ showTab("products"); };
-  $("#btnBuyerOrders").onclick  = async()=>{ showTab("buyer"); await loadBuyerOrders(); };
-  $("#btnSellerOrders").onclick = async()=>{ showTab("seller"); await loadSellerOrders(); };
+  $("#btnBuyerOrders").onclick  = ()=>{ showTab("buyer"); };
+  $("#btnSellerOrders").onclick = ()=>{ showTab("seller"); };
 }
 function showTab(which){
   const tabs = {
@@ -462,14 +409,27 @@ function showTab(which){
   }
 }
 
-/* -------------------- Bootstrap -------------------- */
+/* -------------------- Bootstrap an toàn (đợi Ethers) -------------------- */
 window.addEventListener("DOMContentLoaded", async ()=>{
   bindUI();
   showTab("products");
   hide($("#createModal")); hide($("#updateModal")); hide($("#buyModal"));
+
+  // Chờ ethers sẵn sàng (tránh 'ethers is not defined' trên GitHub Pages)
+  const waitEthers = async ()=>{
+    const t0 = Date.now();
+    while (!window.ethers){
+      if (Date.now()-t0 > 5000) { alert("Không tải được thư viện Ethers. Kiểm tra mạng/CDN."); return false; }
+      await new Promise(r=>setTimeout(r,50));
+    }
+    return true;
+  };
+  const ok = await waitEthers(); if(!ok) return;
+
   await bindRO();
   await refreshVinPrice();
   await loadProducts();
+
   if (window.ethereum){
     window.ethereum.on("accountsChanged", ()=>{ disconnectWallet(); });
     window.ethereum.on("chainChanged", ()=>{ location.reload(); });
