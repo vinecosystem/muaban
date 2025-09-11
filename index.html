@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>muaban • Viction</title>
   <meta name="theme-color" content="#0f172a" />
   <link rel="icon" href="logo.png" />
@@ -11,7 +11,6 @@
 <body>
   <!-- =================== HEADER =================== -->
   <header class="header container">
-    <!-- Logo & slogan -->
     <div class="brand">
       <img src="logo.png" alt="muaban" class="logo-img" />
       <div class="brand-text">
@@ -42,13 +41,11 @@
 
   <!-- =================== MAIN =================== -->
   <main class="container">
-    <!-- Tìm kiếm -->
     <div class="searchBar">
       <input id="searchInput" type="search" class="input" placeholder="Tìm sản phẩm..." />
       <button id="btnReload" class="btn">Tìm</button>
     </div>
 
-    <!-- Danh sách sản phẩm -->
     <div id="productList" class="grid"></div>
     <p id="emptyProducts" class="muted" style="margin-top:.5rem;">Chưa có sản phẩm.</p>
   </main>
@@ -60,12 +57,11 @@
         <a href="https://vicscan.xyz/address/0xe01e2213A899E9B3b1921673D2d13a227a8df638#code" target="_blank" rel="noopener">Hợp đồng Muaban</a>
         <a href="https://vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank" rel="noopener">VIN token</a>
         <a href="https://vicscan.xyz" target="_blank" rel="noopener">VicScan</a>
-        <a href="README.html" target="_blank" rel="noopener">Hướng dẫn</a>
       </div>
     </div>
   </footer>
 
-  <!-- =================== TEMPLATE THẺ SẢN PHẨM =================== -->
+  <!-- =================== TEMPLATE SẢN PHẨM =================== -->
   <template id="tplProductCard">
     <article class="card product">
       <div class="p-img-wrap"><img class="p-img" alt="" /></div>
@@ -161,7 +157,8 @@
   <div id="toast" class="toast hidden">—</div>
 
   <!-- =================== SCRIPTS =================== -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js" integrity="sha384-lf0J4pQ7g9qPqk3mGf1O3R9oFqXvH9tYb+0n3xj3U3O3uLQ5K5p6Jg0v0Vv2e8Y2" crossorigin="anonymous"></script>
+  <!-- LƯU Ý: bỏ integrity để tránh bị chặn script nếu SRI lệch -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
   <script src="app.js"></script>
 </body>
 </html>
