@@ -224,6 +224,17 @@
         <button id="buyClose" class="icon-btn" aria-label="Close">✕</button>
       </div>
       <div class="modal-body">
+        <!-- SỐ LƯỢNG + TỔNG VIN (mới thêm) -->
+        <div class="form-row qty-row">
+          <label for="buyQty">Số lượng</label>
+          <input id="buyQty" type="number" inputmode="numeric" min="1" value="1" class="input qty-input" />
+        </div>
+        <div class="total-vin-row">
+          <span>Tổng cần ký (VIN):</span>
+          <b id="buyTotalVin" class="mono">—</b>
+        </div>
+
+        <!-- Thông tin giao hàng -->
         <label class="field">
           <span>Tên người nhận</span>
           <input id="shipName" class="input" placeholder="Nguyễn Văn A" />
