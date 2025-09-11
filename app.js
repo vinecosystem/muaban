@@ -32,12 +32,39 @@
     const abi = await (await fetch("Muaban_ABI.json")).json();
     const vinAbi = await (await fetch("VinToken_ABI.json")).json();
     muaban = new ethers.Contract(MUABAN, abi, provider);
-    const vinAddr = await muaban.VIN(); // lấy địa chỉ VIN từ hợp đồng nếu có
+    // ✅ Getter đúng là vin()
+    const vinAddr = await muaban.vin();
     vin = new ethers.Contract(vinAddr, vinAbi, provider);
   }
   async function bindRW(){
     if (!window.ethereum) throw new Error("No wallet");
-    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params:[{ chainId: CHAIN_ID_HEX }]});
+
+    const CHAIN_ID_HEX = "0x58"; // Viction mainnet (88)
+    const RPC_URL = "https://rpc.viction.xyz";
+
+    // ✅ Đảm bảo chain đã có trong ví
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: CHAIN_ID_HEX }],
+      });
+    } catch (e) {
+      if (e.code === 4902 || (e.data && e.data.originalError && e.data.originalError.code === 4902)) {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: CHAIN_ID_HEX,
+            chainName: 'Viction Mainnet',
+            nativeCurrency: { name: 'Viction', symbol: 'VIC', decimals: 18 },
+            rpcUrls: [RPC_URL],
+            blockExplorerUrls: ['https://vicscan.xyz'],
+          }],
+        });
+      } else {
+        throw e;
+      }
+    }
+
     const web3 = new ethers.providers.Web3Provider(window.ethereum, 'any');
     await web3.send('eth_requestAccounts', []);
     provider = web3;
@@ -49,18 +76,23 @@
   }
 
   /* -------------------- VIN/USD (VICUSDT * 100) -------------------- */
-  let vinPerUSD_BN = null; // VIN wei per 1 USD (từ VICUSDT * 100)
+  let vinPerUSD_BN = null; // VIN wei per 1 USD
+
   async function refreshVinPrice(){
-    // Lấy giá VIC/USDT từ Binance → 1 VIN = 100 VIC → VIN/USD = VIC/USDT * 100
+    // Lấy giá VIC/USDT → 1 VIN = 100 VIC → USD per VIN = VICUSDT * 100
     const res = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT");
     const j = await res.json();
     const vic = Number(j.price || 0);
-    const vinPerUsd = vic * 100;
-    $("#vinUsd").innerHTML = `<strong>${vinPerUsd.toFixed(2)}</strong> USD`;
-    // quy ước: 1 VIN = 10^18 wei
-    vinPerUSD_BN = ethers.utils.parseUnits(String(1 / vinPerUsd), 18).isZero()
-      ? ethers.BigNumber.from("1") // tránh 0
-      : ethers.utils.parseUnits(String(1 / vinPerUsd), 18);
+    const usdPerVin = vic * 100;
+
+    // ✅ đúng ID trong index.html là #vinPriceUsd
+    const el = document.getElementById("vinPriceUsd");
+    if (el) el.textContent = usdPerVin.toFixed(2);
+
+    // Hợp đồng cần VIN per USD (BN-18): 1 / usdPerVin
+    const inv = 1 / (usdPerVin || 1); // tránh chia 0
+    const s = String(inv);
+    vinPerUSD_BN = ethers.utils.parseUnits(s, 18);
   }
 
   async function refreshBalances(){
@@ -150,9 +182,6 @@
     }
     $("#emptyProducts").style.display = shown ? "none" : "block";
   }
-
-  /* -------------------- Tạo/Cập nhật sản phẩm (giữ nguyên logic cũ) -------------------- */
-  // ... (phần của bạn không đổi – rút gọn ở đây cho gọn bài; nếu cần tôi gửi full lại)
 
   /* -------------------- Mua hàng: chọn số lượng, xem trước VIN, mã hoá địa chỉ -------------------- */
   let buying = { id:null, p:null };
