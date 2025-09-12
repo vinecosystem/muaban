@@ -38,6 +38,7 @@ const esc = s => (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'
   // tải tỷ giá & danh sách sản phẩm cho khách chưa kết nối ví
   await refreshTicker();
   await listProducts();
+  updateTopButtons();
 
   // nếu user kết nối ví -> làm tươi UI
   // (nút kết nối nằm trong index.html)
