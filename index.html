@@ -23,9 +23,10 @@
         </div>
       </div>
       <div class="space"></div>
+      <!-- balances để trống mặc định + hidden; JS sẽ hiển thị sau khi kết nối ví -->
       <div id="balances" class="balances" hidden>
-        <span class="badge">VIN: <b id="bal-vin">0</b></span>
-        <span class="badge">VIC: <b id="bal-vic">0</b></span>
+        <span class="badge">VIN: <b id="bal-vin"></b></span>
+        <span class="badge">VIC: <b id="bal-vic"></b></span>
         <span class="badge mono" id="addr-short"></span>
       </div>
       <button id="btn-connect" class="btn">Kết nối ví</button>
@@ -37,7 +38,7 @@
     <section class="section">
       <div class="row" style="gap:10px;align-items:center">
         <span class="pill" id="vin-vnd">1 VIN = … VND</span>
-        <span class="help">Tính theo VIC/USDT (Binance) × 100 × USDT/VND (CoinGecko)</span>
+        <!-- ĐÃ BỎ dòng mô tả công thức tỷ giá cho gọn giao diện -->
       </div>
     </section>
 
@@ -52,9 +53,7 @@
         <button id="btn-buyer-orders" class="btn ghost" hidden>Đơn hàng mua</button>
         <button id="btn-seller-orders" class="btn ghost" hidden>Đơn hàng bán</button>
       </div>
-      <div id="tip" class="notice" style="margin-top:10px">
-        Xem sản phẩm không cần kết nối ví. Kết nối để đăng ký/đăng sản phẩm/mua hàng.
-      </div>
+      <!-- ĐÃ BỎ ô notice “Xem sản phẩm không cần kết nối ví…” -->
     </section>
 
     <!-- Danh sách sản phẩm -->
