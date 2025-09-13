@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>muaban.vin • on-chain commerce (Viction)</title>
-  <meta name="description" content="muaban.vin — thương mại điện tử phi tập trung, giá VND thanh toán VIN" />
+  <meta name="description" content="muaban.vin — Giá VND • Thanh toán VIN • Hợp đồng là trọng tài" />
   <link rel="icon" type="image/png" href="./logo.png" />
 
   <!-- Styles -->
@@ -21,7 +21,7 @@
         <img src="./logo.png" alt="logo" />
         <div>
           <div>muaban.vin</div>
-          <div class="tag">Giá VND • Thanh toán VIN • Hợp đồng là trọng tài</div>
+          <div class="tag">Giá theo VND • Thanh toán VIN • Hợp đồng là trọng tài</div>
         </div>
       </div>
       <div class="space"></div>
@@ -71,8 +71,9 @@
   <!-- =================== FOOTER =================== -->
   <footer class="wrap section">
     <div class="links">
-      <a id="link-contract" href="#" target="_blank" rel="noopener">Hợp đồng</a>
-      <a id="link-vin" href="#" target="_blank" rel="noopener">VIN Token</a>
+      <!-- Lấy theo tài liệu -->
+      <a id="link-contract" href="https://scan.viction.xyz/address/0xcC8bb4278FD8321830450460dE9E2FB743d08368" target="_blank" rel="noopener">Hợp đồng</a>
+      <a id="link-vin" href="https://scan.viction.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank" rel="noopener">VIN Token</a>
       <a id="link-swap" href="https://swap.viction.org/" target="_blank" rel="noopener">Swap VIN/VIC</a>
       <a href="https://vinecosystem.github.io/muaban/#huongdan" target="_blank" rel="noopener">Hướng dẫn</a>
     </div>
@@ -80,7 +81,7 @@
 
   <!-- =================== DIALOGS =================== -->
 
-  <!-- Dialog: Đăng sản phẩm -->
+  <!-- Dialog: Đăng sản phẩm (giá VND, đã gồm thuế & ship) -->
   <dialog id="dlg-create">
     <header class="wrap row">
       <div><b>Đăng sản phẩm</b></div>
@@ -96,7 +97,7 @@
           </div>
           <div>
             <label>Đơn vị tính</label>
-            <input name="unit" placeholder="cái, chiếc, hộp…" required />
+            <input name="unit" placeholder="cái, chiếc, hộp…" />
           </div>
         </div>
         <div class="two">
@@ -112,14 +113,14 @@
         <div class="two">
           <div>
             <label>Ví nhận thanh toán</label>
-            <input name="revenueWallet" placeholder="0x..." required />
+            <input name="payoutWallet" placeholder="0x..." required />
           </div>
           <div>
             <label>Thời gian giao hàng tối đa (ngày)</label>
             <input type="number" name="deliveryDaysMax" min="1" step="1" required />
           </div>
         </div>
-        <div class="help">Sản phẩm mới đăng mặc định <b>Còn hàng</b>. Khi hết hàng, vào “Cập nhật sản phẩm” để tắt bán hoặc đặt hết hàng.</div>
+        <div class="help">Giá lưu trực tiếp theo VND. Thanh toán sẽ quy đổi sang VIN tại thời điểm mua theo giá VIN/VND.</div>
         <div class="row" style="margin-top:12px">
           <button class="btn" type="submit">Đăng</button>
           <div class="space"></div>
@@ -152,7 +153,7 @@
         <div class="two">
           <div>
             <label>Ví nhận thanh toán</label>
-            <input name="revenueWallet" placeholder="0x..." required />
+            <input name="payoutWallet" placeholder="0x..." required />
           </div>
           <div>
             <label>Trạng thái bán</label>
@@ -262,7 +263,7 @@
     </div>
   </dialog>
 
-  <!-- Script nhỏ để đóng dialog theo data-close (an toàn, không ảnh hưởng app.js) -->
+  <!-- Script đóng dialog theo data-close -->
   <script>
     document.addEventListener('click', (e) => {
       const id = e.target && e.target.getAttribute && e.target.getAttribute('data-close');
@@ -273,7 +274,7 @@
     });
   </script>
 
-  <!-- App logic -->
+  <!-- App logic (phiên bản sẽ cập nhật theo hợp đồng mới) -->
   <script src="./app.js"></script>
 </body>
 </html>
