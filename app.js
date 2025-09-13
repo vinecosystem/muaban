@@ -154,8 +154,12 @@ async function connectWallet(){
     vin.connect(providerWrite).balanceOf(account),
     providerWrite.getBalance(account)
   ]);
-  $("#vinBalance").textContent = `VIN: ${ethers.utils.formatUnits(vinBal, 18).slice(0, 8)}`; // lấy 4 chữ số sau dấu chấm
-  $("#vicBalance").textContent = `VIC: ${parseFloat(ethers.utils.formatEther(vicBal)).toFixed(4)}`; // lấy 4 chữ số sau dấu chấm
+  // Lấy 4 chữ số sau dấu chấm cho VIN
+$("#vinBalance").textContent = `VIN: ${(ethers.utils.formatUnits(vinBal, 18)).toFixed(4)}`; 
+
+// Lấy 4 chữ số sau dấu chấm cho VIC
+$("#vicBalance").textContent = `VIC: ${parseFloat(ethers.utils.formatEther(vicBal)).toFixed(4)}`;
+
 
 
   // kiểm tra đăng ký
