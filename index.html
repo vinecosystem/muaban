@@ -4,14 +4,21 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>muaban.vin • on-chain commerce (Viction)</title>
-  <meta name="description" content="Giá theo VND • Thanh toán VIN • Đăng ký 0.001 VIN • Hợp đồng là trọng tài" />
   <link rel="icon" type="image/png" href="./logo.png" />
-
-  <!-- Styles -->
   <link rel="stylesheet" href="./style.css" />
-
-  <!-- Ethers v5 UMD -->
+  <!-- Ethers v5 -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+  <!-- Footer dính đáy & các tiện ích nhỏ -->
+  <style>
+    html, body { height:100%; }
+    body { display:flex; flex-direction:column; }
+    main { flex: 1 0 auto; }
+    .hidden { display:none !important; }
+    .header-right { display:flex; align-items:center; gap:.5rem; }
+    .price-chip { padding:.3rem .6rem; border:1px solid #e2e8f0; border-radius:.5rem; background:#fff; font-variant-numeric:tabular-nums; }
+    footer { flex-shrink:0; }
+  </style>
 </head>
 <body>
   <!-- =================== HEADER =================== -->
@@ -21,30 +28,32 @@
         <img src="./logo.png" alt="logo" />
         <div>
           <div>muaban.vin</div>
-          <div class="tag">Giá theo VND • Thanh toán VIN • Hợp đồng là trọng tài</div>
+          <div class="tag">Giá theo VND • Thanh toán VIN</div>
         </div>
       </div>
+
       <div class="space"></div>
 
-      <!-- Ẩn mặc định, chỉ hiện sau khi kết nối -->
+      <!-- Khu số dư: ẨN khi chưa kết nối -->
       <div id="balances" class="balances" hidden>
-        <span class="badge">VIN: <b id="bal-vin"></b></span>
-        <span class="badge">VIC: <b id="bal-vic"></b></span>
+        <span class="badge">VIN: <b id="bal-vin">0.0000</b></span>
+        <span class="badge">VIC: <b id="bal-vic">0.0000</b></span>
         <span class="badge mono" id="addr-short"></span>
       </div>
 
-      <button id="btn-connect" class="btn">Kết nối ví</button>
+      <!-- Nút kết nối / ngắt -->
+      <div class="header-right">
+        <button id="btn-disconnect" class="btn ghost" hidden>Ngắt</button>
+        <button id="btn-connect" class="btn">Kết nối ví</button>
+      </div>
     </div>
   </header>
 
   <!-- =================== MAIN =================== -->
   <main class="wrap">
-    <!-- Tỷ giá -->
+    <!-- Tỷ giá: chỉ hiển thị con số, bỏ mô tả công thức -->
     <section class="section">
-      <div class="row" style="gap:10px;align-items:center">
-        <span class="pill" id="vin-vnd">1 VIN = … VND</span>
-        <span class="muted">Tỷ giá = (VIC/USDT · Binance) × 100 × (USDT/VND · CoinGecko), làm tròn xuống.</span>
-      </div>
+      <span class="price-chip" id="vin-vnd">1 VIN = … VND</span>
     </section>
 
     <!-- Thanh công cụ + tìm kiếm -->
@@ -55,7 +64,7 @@
         <div class="space"></div>
 
         <!-- Khi ĐÃ kết nối nhưng CHƯA đăng ký → chỉ hiện nút này -->
-        <button id="btn-register" class="btn" hidden>Đăng ký (0.001 VIN)</button>
+        <button id="btn-register" class="btn" hidden>Đăng ký</button>
 
         <!-- Khi ĐÃ đăng ký → hiện các nút sau -->
         <button id="btn-create" class="btn secondary" hidden>Đăng sản phẩm</button>
@@ -71,7 +80,7 @@
     </section>
   </main>
 
-  <!-- =================== FOOTER =================== -->
+  <!-- =================== FOOTER (luôn ở đáy) =================== -->
   <footer class="wrap section">
     <div class="links">
       <a id="link-contract" href="https://scan.viction.xyz/address/0x190FD18820498872354eED9C4C080cB365Cd12E0" target="_blank" rel="noopener">Hợp đồng</a>
@@ -91,16 +100,16 @@
       <button class="btn ghost" data-close="dlg-register">Đóng</button>
     </header>
     <div class="content">
-      <p class="muted">Bạn cần đăng ký một lần với phí <b>0.001 VIN</b> để có thể đăng sản phẩm & mua hàng.</p>
+      <p class="muted">Bạn cần đăng ký để có thể đăng sản phẩm & mua hàng.</p>
       <div class="row" style="margin-top:12px">
-        <button id="btn-register-confirm" class="btn">Thanh toán 0.001 VIN</button>
+        <button id="btn-register-confirm" class="btn">Đăng ký</button>
         <div class="space"></div>
         <span id="register-msg" class="muted"></span>
       </div>
     </div>
   </dialog>
 
-  <!-- Đăng sản phẩm (giá VND, đã gồm thuế & ship) -->
+  <!-- Đăng sản phẩm (đơn giản hoá: chỉ 1 Link IPFS hiển thị) -->
   <dialog id="dlg-create">
     <header class="wrap row">
       <div><b>Đăng sản phẩm</b></div>
@@ -119,15 +128,11 @@
             <input name="unit" placeholder="cái, chiếc, hộp…" />
           </div>
         </div>
-        <div class="two">
-          <div>
-            <label>Link IPFS ảnh/video</label>
-            <input type="url" name="imageCID" placeholder="https://ipfs.io/ipfs/..." required />
-          </div>
-          <div>
-            <label>Link IPFS mô tả (descriptionCID)</label>
-            <input type="url" name="descriptionCID" placeholder="https://ipfs.io/ipfs/..." required />
-          </div>
+        <div>
+          <label>Link IPFS (ảnh hoặc mô tả)</label>
+          <!-- Chỉ 1 ô hiển thị; sẽ tự đồng bộ sang descriptionCID ẩn -->
+          <input type="url" name="imageCID" id="ipfs-visible" placeholder="https://ipfs.io/ipfs/..." required />
+          <input type="hidden" name="descriptionCID" id="ipfs-hidden" />
         </div>
         <div class="two">
           <div>
@@ -152,7 +157,6 @@
             </select>
           </div>
         </div>
-        <div class="help muted">Sản phẩm mặc định “Còn hàng” khi bật bán.</div>
         <div class="row" style="margin-top:12px">
           <button class="btn" type="submit">Đăng</button>
           <div class="space"></div>
@@ -232,7 +236,6 @@
           <label>Phụ ghi (ghi chú)</label>
           <input name="note" placeholder="tuỳ chọn" />
         </div>
-        <div class="help muted">Thông tin trên sẽ được mã hoá (ciphertext) và lưu on-chain.</div>
         <div class="two" style="margin-top:6px">
           <div>
             <label>Số lượng</label>
@@ -240,7 +243,7 @@
           </div>
           <div>
             <label>Tổng thanh toán (VIN)</label>
-            <div class="pill mono" id="buy-total-vin">…</div>
+            <div class="price-chip mono" id="buy-total-vin">…</div>
           </div>
         </div>
         <div class="row" style="margin-top:12px">
@@ -252,62 +255,36 @@
     </div>
   </dialog>
 
-  <!-- Đơn hàng MUA -->
-  <dialog id="dlg-buyer-orders">
-    <header class="wrap row">
-      <div><b>Đơn hàng mua</b></div>
-      <div class="space"></div>
-      <button class="btn ghost" data-close="dlg-buyer-orders">Đóng</button>
-    </header>
-    <div class="content">
-      <div class="notice muted">Bạn có thể <b>Xác nhận đã nhận hàng</b> (giải ngân cho người bán) hoặc <b>Hoàn tiền</b> nếu quá hạn giao.</div>
-      <div style="overflow:auto;margin-top:10px">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>ID</th><th>SP</th><th>SL</th><th>VIN</th><th>Hạn giao</th><th>Trạng thái</th><th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody id="buyer-orders-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </dialog>
-
-  <!-- Đơn hàng BÁN -->
-  <dialog id="dlg-seller-orders">
-    <header class="wrap row">
-      <div><b>Đơn hàng bán</b></div>
-      <div class="space"></div>
-      <button class="btn ghost" data-close="dlg-seller-orders">Đóng</button>
-    </header>
-    <div class="content">
-      <div class="notice muted">Thông tin giao hàng hiển thị dưới dạng ciphertext — bạn tự giải mã ở client.</div>
-      <div style="overflow:auto;margin-top:10px">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>ID</th><th>Buyer</th><th>SP</th><th>SL</th><th>VIN</th><th>Hạn giao</th><th>Trạng thái</th>
-            </tr>
-          </thead>
-          <tbody id="seller-orders-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </dialog>
-
   <!-- Close dialog via data-close -->
   <script>
+    // Đóng dialog qua thuộc tính data-close
     document.addEventListener('click', (e) => {
       const id = e.target && e.target.getAttribute && e.target.getAttribute('data-close');
       if (id) { const dlg = document.getElementById(id); if (dlg && typeof dlg.close === 'function') dlg.close(); }
+    });
+
+    // Đơn giản hoá: nút "Ngắt" → reload trang để trở về trạng thái chưa kết nối
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('btn-disconnect');
+      if (btn) btn.addEventListener('click', () => { location.reload(); });
+    });
+
+    // Đồng bộ 1 ô IPFS hiển thị sang descriptionCID ẩn (đáp ứng yêu cầu 1 link IPFS)
+    document.addEventListener('DOMContentLoaded', () => {
+      const vis = document.getElementById('ipfs-visible');
+      const hid = document.getElementById('ipfs-hidden');
+      if (vis && hid) {
+        const sync = () => { hid.value = vis.value; };
+        vis.addEventListener('input', sync);
+        sync();
+      }
     });
   </script>
 
   <!-- App logic -->
   <script src="./app.js"></script>
 
-  <!-- Cấu hình địa chỉ để app.js đọc (nếu muốn lấy từ DOM) -->
+  <!-- Cấu hình để app.js đọc nếu cần -->
   <script>
     window.__MUABAN_CONFIG__ = {
       CHAIN_ID: 88,
