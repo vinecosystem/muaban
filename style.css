@@ -252,3 +252,16 @@ footer .links{
 /* -------------------- MICRO-INTERACTIONS -------------------- */
 button:active{ transform: translateY(0); }
 .card:hover{ transform: translateY(-1px); transition: transform .12s ease; }
+
+/* ===================== Tỷ giá VIN ===================== */
+#vin-vnd{
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--chip);
+  padding: 5px 12px;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 999px;
+  box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
