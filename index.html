@@ -43,7 +43,7 @@
     <section class="section">
       <div class="row" style="gap:10px;align-items:center">
         <span class="pill" id="vin-vnd">1 VIN = … VND</span>
-        <span class="muted">Giá VIN/VND được tính từ VIC/USDT (Binance) × 100 và USDT/VND (CoinGecko).</span>
+        <span class="muted">Tỷ giá = (VIC/USDT · Binance) × 100 × (USDT/VND · CoinGecko), làm tròn xuống.</span>
       </div>
     </section>
 
@@ -74,7 +74,6 @@
   <!-- =================== FOOTER =================== -->
   <footer class="wrap section">
     <div class="links">
-      <!-- Cập nhật theo địa chỉ đã triển khai -->
       <a id="link-contract" href="https://scan.viction.xyz/address/0x190FD18820498872354eED9C4C080cB365Cd12E0" target="_blank" rel="noopener">Hợp đồng</a>
       <a id="link-vin" href="https://scan.viction.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank" rel="noopener">VIN Token</a>
       <a id="link-swap" href="https://swap.viction.org/" target="_blank" rel="noopener">Swap VIN/VIC</a>
@@ -116,7 +115,7 @@
             <input name="name" maxlength="500" required />
           </div>
           <div>
-            <label>Đơn vị tính (hiển thị phụ, tùy chọn)</label>
+            <label>Đơn vị tính (hiển thị phụ, tuỳ chọn – không lưu on-chain)</label>
             <input name="unit" placeholder="cái, chiếc, hộp…" />
           </div>
         </div>
@@ -126,8 +125,18 @@
             <input type="url" name="imageCID" placeholder="https://ipfs.io/ipfs/..." required />
           </div>
           <div>
+            <label>Link IPFS mô tả (descriptionCID)</label>
+            <input type="url" name="descriptionCID" placeholder="https://ipfs.io/ipfs/..." required />
+          </div>
+        </div>
+        <div class="two">
+          <div>
             <label>Giá bán (VND) — đã gồm thuế & phí</label>
             <input type="number" name="priceVND" min="1" step="1" required />
+          </div>
+          <div>
+            <label>Thời gian giao hàng tối đa (ngày)</label>
+            <input type="number" name="deliveryDaysMax" min="1" step="1" required />
           </div>
         </div>
         <div class="two">
@@ -136,11 +145,14 @@
             <input name="payoutWallet" placeholder="0x..." required />
           </div>
           <div>
-            <label>Thời gian giao hàng tối đa (ngày)</label>
-            <input type="number" name="deliveryDaysMax" min="1" step="1" required />
+            <label>Trạng thái khi đăng</label>
+            <select name="active">
+              <option value="true" selected>Đang bán</option>
+              <option value="false">Tắt bán</option>
+            </select>
           </div>
         </div>
-        <div class="help muted">Sản phẩm mặc định “Còn hàng”. Có thể bật/tắt bán sau này.</div>
+        <div class="help muted">Sản phẩm mặc định “Còn hàng” khi bật bán.</div>
         <div class="row" style="margin-top:12px">
           <button class="btn" type="submit">Đăng</button>
           <div class="space"></div>
@@ -220,7 +232,7 @@
           <label>Phụ ghi (ghi chú)</label>
           <input name="note" placeholder="tuỳ chọn" />
         </div>
-        <div class="help muted">Thông tin trên sẽ được mã hoá làm ciphertext và lưu on-chain.</div>
+        <div class="help muted">Thông tin trên sẽ được mã hoá (ciphertext) và lưu on-chain.</div>
         <div class="two" style="margin-top:6px">
           <div>
             <label>Số lượng</label>
@@ -270,7 +282,7 @@
       <button class="btn ghost" data-close="dlg-seller-orders">Đóng</button>
     </header>
     <div class="content">
-      <div class="notice muted">Thông tin giao hàng hiển thị dưới dạng ciphertext — chỉ bạn giải mã được ở client.</div>
+      <div class="notice muted">Thông tin giao hàng hiển thị dưới dạng ciphertext — bạn tự giải mã ở client.</div>
       <div style="overflow:auto;margin-top:10px">
         <table class="table">
           <thead>
@@ -288,10 +300,7 @@
   <script>
     document.addEventListener('click', (e) => {
       const id = e.target && e.target.getAttribute && e.target.getAttribute('data-close');
-      if (id) {
-        const dlg = document.getElementById(id);
-        if (dlg && typeof dlg.close === 'function') dlg.close();
-      }
+      if (id) { const dlg = document.getElementById(id); if (dlg && typeof dlg.close === 'function') dlg.close(); }
     });
   </script>
 
