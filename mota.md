@@ -7,7 +7,7 @@
 - Người bán phải giao hàng đúng hạn để được giải ngân.  
 - Nếu quá hạn, buyer bấm **Hoàn tiền** để lấy lại VIN.  
 
-**Địa chỉ hợp đồng Muaban (VIC):** `0xcC8bb4278FD8321830450460dE9E2FB743d08368`  
+**Địa chỉ hợp đồng Muaban (VIC):** `0x190FD18820498872354eED9C4C080cB365Cd12E0`  
 **Địa chỉ token VIN (VIC):** `0x941F63807401efCE8afe3C9d88d368bAA287Fac4`  
 **Logo & favicon:** `logo.png`  
 **Phí đăng ký ví:** 0.001 VIN  
