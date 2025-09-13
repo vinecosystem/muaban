@@ -67,8 +67,26 @@ let ordersSeller = [];                           // danh sách order của tôi 
 /* -------------------- 2) DOM helpers -------------------- */
 const $  = (q)=>document.querySelector(q);
 const $$ = (q)=>document.querySelectorAll(q);
-const show=(el)=>el && el.classList.remove("hidden");
-const hide=(el)=>el && el.classList.add("hidden");
+const show = (el)=>{
+  if(!el) return;
+  el.classList.remove("hidden");
+  if(el.classList.contains("modal")){
+    document.body.classList.add("no-scroll");
+    // Focus ô nhập đầu tiên để người dùng gõ ngay
+    const first = el.querySelector('input,select,textarea,button');
+    if(first){ setTimeout(()=>{ try{ first.focus(); }catch(e){} }, 50); }
+  }
+};
+const hide = (el)=>{
+  if(!el) return;
+  el.classList.add("hidden");
+  if(el.classList.contains("modal")){
+    // Nếu không còn modal nào mở thì mở khóa cuộn nền
+    const anyOpen = Array.from(document.querySelectorAll('.modal'))
+      .some(m=>!m.classList.contains('hidden'));
+    if(!anyOpen){ document.body.classList.remove("no-scroll"); }
+  }
+};
 const short=(a)=>a?`${a.slice(0,6)}…${a.slice(-4)}`:"";
 const fmt2=(x)=>Number(x).toFixed(2);
 const fmt0=(x)=>Number(x).toLocaleString("vi-VN", {maximumFractionDigits:0});
