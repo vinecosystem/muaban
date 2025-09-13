@@ -142,16 +142,36 @@
         "internalType": "bool",
         "name": "active",
         "type": "bool"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "stock",
-        "type": "uint256"
       }
     ],
     "name": "ProductUpdated",
     "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "Registered",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "REG_FEE",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [
@@ -197,11 +217,6 @@
         "internalType": "address",
         "name": "payoutWallet",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "stock",
-        "type": "uint256"
       },
       {
         "internalType": "bool",
@@ -276,6 +291,11 @@
             "internalType": "enum MuabanVND.OrderStatus",
             "name": "status",
             "type": "uint8"
+          },
+          {
+            "internalType": "string",
+            "name": "buyerInfoCipher",
+            "type": "string"
           }
         ],
         "internalType": "struct MuabanVND.Order",
@@ -339,11 +359,6 @@
             "type": "address"
           },
           {
-            "internalType": "uint256",
-            "name": "stock",
-            "type": "uint256"
-          },
-          {
             "internalType": "bool",
             "name": "active",
             "type": "bool"
@@ -362,6 +377,25 @@
         "internalType": "struct MuabanVND.Product",
         "name": "",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "seller",
+        "type": "address"
+      }
+    ],
+    "name": "getSellerProductIds",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
       }
     ],
     "stateMutability": "view",
@@ -421,9 +455,34 @@
         "internalType": "enum MuabanVND.OrderStatus",
         "name": "status",
         "type": "uint8"
+      },
+      {
+        "internalType": "string",
+        "name": "buyerInfoCipher",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "payRegistration",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -442,6 +501,11 @@
         "internalType": "uint256",
         "name": "vinPerVND",
         "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "buyerInfoCipher",
+        "type": "string"
       }
     ],
     "name": "placeOrder",
@@ -506,11 +570,6 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
-        "name": "stock",
-        "type": "uint256"
-      },
-      {
         "internalType": "bool",
         "name": "active",
         "type": "bool"
@@ -548,6 +607,25 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "name": "registered",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       },
       {
         "internalType": "uint256",
@@ -574,6 +652,24 @@
         "type": "uint256"
       },
       {
+        "internalType": "bool",
+        "name": "active",
+        "type": "bool"
+      }
+    ],
+    "name": "setProductActive",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "pid",
+        "type": "uint256"
+      },
+      {
         "internalType": "uint256",
         "name": "priceVND",
         "type": "uint256"
@@ -587,11 +683,6 @@
         "internalType": "address",
         "name": "payoutWallet",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "stock",
-        "type": "uint256"
       },
       {
         "internalType": "bool",
