@@ -1,7 +1,7 @@
 /* ====================================================================
    muaban.vin — app.js (ethers v5)
-   Phiên bản đầy đủ: Người bán đăng sản phẩm, người mua mua hàng,
-   hiển thị đơn mua/đơn bán, xác nhận & hoàn tiền.
+   Phiên bản đầy đủ: Kết nối ví, hiển thị số dư, đăng ký, đăng/cập nhật sản phẩm,
+   mua sản phẩm, xác nhận đơn hàng, hoàn tiền, v.v.
 ==================================================================== */
 
 /* -------------------- DOM helpers -------------------- */
@@ -11,10 +11,10 @@ const show=(el)=>el && el.removeAttribute('hidden');
 const hide=(el)=>el && el.setAttribute('hidden','');
 const short=(a)=>a?`${a.slice(0,6)}…${a.slice(-4)}`:"";
 const fmt=(n)=>new Intl.NumberFormat('vi-VN').format(Number(n||0));
-const fmtVIN=(x)=>Number(x).toFixed(4);
+const fmtVIN=(x)=>Number(x).toFixed(6);
 
 /* -------------------- Config -------------------- */
-const CONFIG = {
+const CONFIG = window.__MUABAN_CONFIG__ || {
   CHAIN_ID: 88,
   MUABAN_ADDR: "0x190FD18820498872354eED9C4C080cB365Cd12E0",
   VIN_ADDR: "0x941F63807401efCE8afe3C9d88d368bAA287Fac4"
