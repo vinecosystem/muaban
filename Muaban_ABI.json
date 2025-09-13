@@ -33,12 +33,6 @@
       },
       {
         "indexed": false,
-        "internalType": "address",
-        "name": "seller",
-        "type": "address"
-      },
-      {
-        "indexed": false,
         "internalType": "uint256",
         "name": "quantity",
         "type": "uint256"
@@ -46,26 +40,8 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "vinAmountTotal",
+        "name": "vinAmount",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "placedAt",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "deadline",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes",
-        "name": "shippingInfoCiphertext",
-        "type": "bytes"
       }
     ],
     "name": "OrderPlaced",
@@ -81,27 +57,9 @@
         "type": "uint256"
       },
       {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "productId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "buyer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "seller",
-        "type": "address"
-      },
-      {
         "indexed": false,
         "internalType": "uint256",
-        "name": "vinAmountTotal",
+        "name": "vinAmount",
         "type": "uint256"
       }
     ],
@@ -118,50 +76,13 @@
         "type": "uint256"
       },
       {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "productId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "buyer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "seller",
-        "type": "address"
-      },
-      {
         "indexed": false,
         "internalType": "uint256",
-        "name": "vinAmountTotal",
+        "name": "vinAmount",
         "type": "uint256"
       }
     ],
     "name": "OrderReleased",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "previousOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnershipTransferred",
     "type": "event"
   },
   {
@@ -187,68 +108,8 @@
       },
       {
         "indexed": false,
-        "internalType": "string",
-        "name": "descriptionCID",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "imageCID",
-        "type": "string"
-      },
-      {
-        "indexed": false,
         "internalType": "uint256",
-        "name": "priceUsdCents",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "shippingUsdCents",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint16",
-        "name": "taxRateBps",
-        "type": "uint16"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint32",
-        "name": "deliveryDaysMax",
-        "type": "uint32"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "revenueWallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "taxWallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "shippingWallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes",
-        "name": "sellerEncryptPubKey",
-        "type": "bytes"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "stock",
+        "name": "priceVND",
         "type": "uint256"
       }
     ],
@@ -266,40 +127,9 @@
       },
       {
         "indexed": false,
-        "internalType": "bool",
-        "name": "active",
-        "type": "bool"
-      }
-    ],
-    "name": "ProductStatusChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
         "internalType": "uint256",
-        "name": "productId",
+        "name": "priceVND",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "priceUsdCents",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "shippingUsdCents",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint16",
-        "name": "taxRateBps",
-        "type": "uint16"
       },
       {
         "indexed": false,
@@ -309,100 +139,19 @@
       },
       {
         "indexed": false,
-        "internalType": "address",
-        "name": "revenueWallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "taxWallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "shippingWallet",
-        "type": "address"
+        "internalType": "bool",
+        "name": "active",
+        "type": "bool"
       },
       {
         "indexed": false,
         "internalType": "uint256",
         "name": "stock",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes",
-        "name": "sellerEncryptPubKey",
-        "type": "bytes"
       }
     ],
     "name": "ProductUpdated",
     "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "wallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "RegistrationPaid",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "orderId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "seller",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint8",
-        "name": "rating",
-        "type": "uint8"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "scamFlag",
-        "type": "bool"
-      }
-    ],
-    "name": "Reviewed",
-    "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "PLATFORM_FEE",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
   },
   {
     "inputs": [
@@ -421,67 +170,42 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "name_",
+        "name": "name",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "descriptionCID_",
+        "name": "descriptionCID",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "imageCID_",
+        "name": "imageCID",
         "type": "string"
       },
       {
         "internalType": "uint256",
-        "name": "priceUsdCents_",
+        "name": "priceVND",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "shippingUsdCents_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint16",
-        "name": "taxRateBps_",
-        "type": "uint16"
       },
       {
         "internalType": "uint32",
-        "name": "deliveryDaysMax_",
+        "name": "deliveryDaysMax",
         "type": "uint32"
       },
       {
         "internalType": "address",
-        "name": "revenueWallet_",
+        "name": "payoutWallet",
         "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "taxWallet_",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "shippingWallet_",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "sellerEncryptPubKey_",
-        "type": "bytes"
       },
       {
         "internalType": "uint256",
-        "name": "stock_",
+        "name": "stock",
         "type": "uint256"
       },
       {
         "internalType": "bool",
-        "name": "active_",
+        "name": "active",
         "type": "bool"
       }
     ],
@@ -489,7 +213,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "productId",
+        "name": "pid",
         "type": "uint256"
       }
     ],
@@ -500,7 +224,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "orderId",
+        "name": "oid",
         "type": "uint256"
       }
     ],
@@ -535,7 +259,7 @@
           },
           {
             "internalType": "uint256",
-            "name": "vinAmountTotal",
+            "name": "vinAmount",
             "type": "uint256"
           },
           {
@@ -549,22 +273,12 @@
             "type": "uint256"
           },
           {
-            "internalType": "bytes",
-            "name": "shippingInfoCiphertext",
-            "type": "bytes"
-          },
-          {
-            "internalType": "enum Muaban.OrderStatus",
+            "internalType": "enum MuabanVND.OrderStatus",
             "name": "status",
             "type": "uint8"
-          },
-          {
-            "internalType": "bool",
-            "name": "reviewed",
-            "type": "bool"
           }
         ],
-        "internalType": "struct Muaban.Order",
+        "internalType": "struct MuabanVND.Order",
         "name": "",
         "type": "tuple"
       }
@@ -576,7 +290,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "productId",
+        "name": "pid",
         "type": "uint256"
       }
     ],
@@ -611,18 +325,8 @@
           },
           {
             "internalType": "uint256",
-            "name": "priceUsdCents",
+            "name": "priceVND",
             "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "shippingUsdCents",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint16",
-            "name": "taxRateBps",
-            "type": "uint16"
           },
           {
             "internalType": "uint32",
@@ -631,23 +335,13 @@
           },
           {
             "internalType": "address",
-            "name": "revenueWallet",
+            "name": "payoutWallet",
             "type": "address"
           },
           {
-            "internalType": "address",
-            "name": "taxWallet",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "shippingWallet",
-            "type": "address"
-          },
-          {
-            "internalType": "bytes",
-            "name": "sellerEncryptPubKey",
-            "type": "bytes"
+            "internalType": "uint256",
+            "name": "stock",
+            "type": "uint256"
           },
           {
             "internalType": "bool",
@@ -663,114 +357,11 @@
             "internalType": "uint64",
             "name": "updatedAt",
             "type": "uint64"
-          },
-          {
-            "internalType": "uint256",
-            "name": "stock",
-            "type": "uint256"
           }
         ],
-        "internalType": "struct Muaban.Product",
+        "internalType": "struct MuabanVND.Product",
         "name": "",
         "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "sellerAddr",
-        "type": "address"
-      }
-    ],
-    "name": "getSellerProductIds",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "sellerAddr",
-        "type": "address"
-      }
-    ],
-    "name": "getSellerStats",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "expiredRefundCount",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "scamCount",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "ratingSum",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "ratingCount",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct Muaban.SellerStats",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "orderId",
-        "type": "uint256"
-      }
-    ],
-    "name": "isOrderActive",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "isRegistered",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -813,7 +404,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "vinAmountTotal",
+        "name": "vinAmount",
         "type": "uint256"
       },
       {
@@ -827,42 +418,12 @@
         "type": "uint256"
       },
       {
-        "internalType": "bytes",
-        "name": "shippingInfoCiphertext",
-        "type": "bytes"
-      },
-      {
-        "internalType": "enum Muaban.OrderStatus",
+        "internalType": "enum MuabanVND.OrderStatus",
         "name": "status",
         "type": "uint8"
-      },
-      {
-        "internalType": "bool",
-        "name": "reviewed",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "owner",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "payRegistration",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -879,20 +440,15 @@
       },
       {
         "internalType": "uint256",
-        "name": "vinPerUSD",
+        "name": "vinPerVND",
         "type": "uint256"
-      },
-      {
-        "internalType": "bytes",
-        "name": "shippingInfoCiphertext_",
-        "type": "bytes"
       }
     ],
     "name": "placeOrder",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "orderId",
+        "name": "oid",
         "type": "uint256"
       }
     ],
@@ -936,18 +492,8 @@
       },
       {
         "internalType": "uint256",
-        "name": "priceUsdCents",
+        "name": "priceVND",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "shippingUsdCents",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint16",
-        "name": "taxRateBps",
-        "type": "uint16"
       },
       {
         "internalType": "uint32",
@@ -956,23 +502,13 @@
       },
       {
         "internalType": "address",
-        "name": "revenueWallet",
+        "name": "payoutWallet",
         "type": "address"
       },
       {
-        "internalType": "address",
-        "name": "taxWallet",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "shippingWallet",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "sellerEncryptPubKey",
-        "type": "bytes"
+        "internalType": "uint256",
+        "name": "stock",
+        "type": "uint256"
       },
       {
         "internalType": "bool",
@@ -988,55 +524,6 @@
         "internalType": "uint64",
         "name": "updatedAt",
         "type": "uint64"
-      },
-      {
-        "internalType": "uint256",
-        "name": "stock",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "productId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "quantity",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "vinPerUSD",
-        "type": "uint256"
-      }
-    ],
-    "name": "quoteVinForProduct",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "vinRevenue",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "vinShipping",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "vinTax",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "vinTotal",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1051,29 +538,6 @@
       }
     ],
     "name": "refundIfExpired",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "orderId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint8",
-        "name": "rating",
-        "type": "uint8"
-      },
-      {
-        "internalType": "bool",
-        "name": "scamFlag",
-        "type": "bool"
-      }
-    ],
-    "name": "reviewAfterRefund",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1105,119 +569,34 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "sellerStats",
-    "outputs": [
-      {
         "internalType": "uint256",
-        "name": "expiredRefundCount",
+        "name": "pid",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "scamCount",
+        "name": "priceVND",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "ratingSum",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "ratingCount",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "productId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "active_",
-        "type": "bool"
-      }
-    ],
-    "name": "setProductActive",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "transferOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "productId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "priceUsdCents_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "shippingUsdCents_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint16",
-        "name": "taxRateBps_",
-        "type": "uint16"
       },
       {
         "internalType": "uint32",
-        "name": "deliveryDaysMax_",
+        "name": "deliveryDaysMax",
         "type": "uint32"
       },
       {
         "internalType": "address",
-        "name": "revenueWallet_",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "taxWallet_",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "shippingWallet_",
+        "name": "payoutWallet",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "stock_",
+        "name": "stock",
         "type": "uint256"
       },
       {
-        "internalType": "bytes",
-        "name": "sellerEncryptPubKey_",
-        "type": "bytes"
+        "internalType": "bool",
+        "name": "active",
+        "type": "bool"
       }
     ],
     "name": "updateProduct",
