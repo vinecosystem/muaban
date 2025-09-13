@@ -6,6 +6,8 @@ pragma solidity ^0.8.20;
  * @notice On-chain commerce platform where product prices are stored in VND (integer).
  *         Payment is always made in VIN, converted at VIN/VND rate provided at purchase time.
  *         VIN tokens are held in escrow until buyer confirms delivery or deadline expires.
+ *         Users must register once (pay 0.001 VIN) before listing or buying.
+ *         The contract owner only receives the registration fee and has no further power.
  */
 
 interface IERC20 {
@@ -20,12 +22,34 @@ interface IERC20 {
 contract MuabanVND {
     IERC20 public immutable vin;
     uint8  public immutable vinDecimals;
+    address public immutable owner;
+
+    uint256 public constant REG_FEE = 1e15; // 0.001 VIN (18 decimals)
 
     constructor(address vinToken) {
         require(vinToken != address(0), "VIN_ADDRESS_ZERO");
         vin = IERC20(vinToken);
         vinDecimals = vin.decimals();
         require(vinDecimals == 18, "VIN_DECIMALS_MUST_BE_18");
+        owner = msg.sender;
+    }
+
+    // ---------- Registration ----------
+    mapping(address => bool) public registered;
+
+    event Registered(address indexed user);
+
+    modifier onlyRegistered() {
+        require(registered[msg.sender], "NOT_REGISTERED");
+        _;
+    }
+
+    function payRegistration() external {
+        require(!registered[msg.sender], "ALREADY_REGISTERED");
+        bool ok = vin.transferFrom(msg.sender, owner, REG_FEE);
+        require(ok, "VIN_TRANSFER_FAIL");
+        registered[msg.sender] = true;
+        emit Registered(msg.sender);
     }
 
     // ---------- Data Models ----------
@@ -38,7 +62,6 @@ contract MuabanVND {
         uint256 priceVND;        // Product price in VND (integer, tax & shipping included)
         uint32  deliveryDaysMax; // Max delivery days
         address payoutWallet;    // Seller's payout wallet
-        uint256 stock;
         bool    active;
         uint64  createdAt;
         uint64  updatedAt;
@@ -52,10 +75,11 @@ contract MuabanVND {
         address buyer;
         address seller;
         uint256 quantity;
-        uint256 vinAmount;     // Escrowed VIN amount
+        uint256 vinAmount;       // Escrowed VIN amount
         uint256 placedAt;
         uint256 deadline;
         OrderStatus status;
+        string  buyerInfoCipher; // Encrypted info (only seller can decrypt off-chain)
     }
 
     // ---------- Storage ----------
@@ -67,7 +91,7 @@ contract MuabanVND {
 
     // ---------- Events ----------
     event ProductCreated(uint256 indexed productId, address indexed seller, string name, uint256 priceVND);
-    event ProductUpdated(uint256 indexed productId, uint256 priceVND, uint32 deliveryDaysMax, bool active, uint256 stock);
+    event ProductUpdated(uint256 indexed productId, uint256 priceVND, uint32 deliveryDaysMax, bool active);
     event OrderPlaced(uint256 indexed orderId, uint256 indexed productId, address indexed buyer, uint256 quantity, uint256 vinAmount);
     event OrderReleased(uint256 indexed orderId, uint256 vinAmount);
     event OrderRefunded(uint256 indexed orderId, uint256 vinAmount);
@@ -85,9 +109,8 @@ contract MuabanVND {
         uint256 priceVND,
         uint32  deliveryDaysMax,
         address payoutWallet,
-        uint256 stock,
         bool    active
-    ) external returns (uint256 pid) {
+    ) external onlyRegistered returns (uint256 pid) {
         require(priceVND > 0, "PRICE_REQUIRED");
         require(deliveryDaysMax > 0, "DELIVERY_REQUIRED");
         require(payoutWallet != address(0), "PAYOUT_WALLET_ZERO");
@@ -102,7 +125,6 @@ contract MuabanVND {
             priceVND: priceVND,
             deliveryDaysMax: deliveryDaysMax,
             payoutWallet: payoutWallet,
-            stock: stock,
             active: active,
             createdAt: uint64(block.timestamp),
             updatedAt: uint64(block.timestamp)
@@ -117,9 +139,8 @@ contract MuabanVND {
         uint256 priceVND,
         uint32  deliveryDaysMax,
         address payoutWallet,
-        uint256 stock,
         bool    active
-    ) external {
+    ) external onlyRegistered {
         Product storage p = products[pid];
         require(p.seller == msg.sender, "NOT_SELLER");
         require(priceVND > 0, "PRICE_REQUIRED");
@@ -129,22 +150,33 @@ contract MuabanVND {
         p.priceVND = priceVND;
         p.deliveryDaysMax = deliveryDaysMax;
         p.payoutWallet = payoutWallet;
-        p.stock = stock;
         p.active = active;
         p.updatedAt = uint64(block.timestamp);
 
-        emit ProductUpdated(pid, priceVND, deliveryDaysMax, active, stock);
+        emit ProductUpdated(pid, priceVND, deliveryDaysMax, active);
+    }
+
+    function setProductActive(uint256 pid, bool active) external onlyRegistered {
+        Product storage p = products[pid];
+        require(p.seller == msg.sender, "NOT_SELLER");
+        p.active = active;
+        p.updatedAt = uint64(block.timestamp);
+    }
+
+    function getSellerProductIds(address seller) external view returns (uint256[] memory) {
+        return sellerProducts[seller];
     }
 
     // ---------- Orders ----------
     function placeOrder(
         uint256 productId,
         uint256 quantity,
-        uint256 vinPerVND  // VIN wei per 1 VND, provided by frontend
-    ) external returns (uint256 oid) {
+        uint256 vinPerVND,       // VIN wei per 1 VND, provided by frontend
+        string calldata buyerInfoCipher
+    ) external onlyRegistered returns (uint256 oid) {
         Product storage p = products[productId];
         require(p.seller != address(0), "PRODUCT_NOT_FOUND");
-        require(p.active && p.stock >= quantity, "OUT_OF_STOCK");
+        require(p.active, "PRODUCT_NOT_ACTIVE");
         require(quantity > 0, "QUANTITY_REQUIRED");
         require(vinPerVND > 0, "VIN_PER_VND_REQUIRED");
 
@@ -166,16 +198,14 @@ contract MuabanVND {
             vinAmount: vinAmount,
             placedAt: block.timestamp,
             deadline: block.timestamp + uint256(p.deliveryDaysMax) * 1 days,
-            status: OrderStatus.PLACED
+            status: OrderStatus.PLACED,
+            buyerInfoCipher: buyerInfoCipher
         });
-
-        // Reduce stock
-        p.stock -= quantity;
 
         emit OrderPlaced(oid, productId, msg.sender, quantity, vinAmount);
     }
 
-    function confirmReceipt(uint256 orderId) external {
+    function confirmReceipt(uint256 orderId) external onlyRegistered {
         Order storage o = orders[orderId];
         require(o.status == OrderStatus.PLACED, "NOT_PLACED");
         require(o.buyer == msg.sender, "NOT_BUYER");
@@ -186,7 +216,7 @@ contract MuabanVND {
         emit OrderReleased(orderId, o.vinAmount);
     }
 
-    function refundIfExpired(uint256 orderId) external {
+    function refundIfExpired(uint256 orderId) external onlyRegistered {
         Order storage o = orders[orderId];
         require(o.status == OrderStatus.PLACED, "NOT_PLACED");
         require(block.timestamp > o.deadline, "NOT_EXPIRED");
