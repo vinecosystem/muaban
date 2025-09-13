@@ -1,9 +1,9 @@
 /* ===================================================================
    muaban.vin — style.css
-   Mục tiêu: dễ sử dụng · chuyên nghiệp · mượt trên desktop & mobile
+   Mục tiêu: gọn gàng · dễ sử dụng · chuyên nghiệp · đẹp mắt
    =================================================================== */
 
-/* -------------------- Reset -------------------- */
+/* -------------------- RESET -------------------- */
 *,
 *::before,
 *::after {
@@ -12,269 +12,211 @@
 html, body {
   margin: 0;
   padding: 0;
-  font-family: "Segoe UI", Roboto, sans-serif;
-  font-size: 15px;
-  line-height: 1.5;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: #111;
   background: #fafafa;
-  height: 100%;
 }
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-a {
-  color: #0366d6;
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-}
+a { color: #0369a1; text-decoration: none; }
+a:hover { text-decoration: underline; }
 button, input, select {
-  font-family: inherit;
-  font-size: 1rem;
+  font: inherit;
 }
 
-/* -------------------- Layout -------------------- */
+/* -------------------- LAYOUT -------------------- */
 .wrap {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 1rem;
 }
+.section {
+  padding: 1rem 0;
+}
 .row {
   display: flex;
   align-items: center;
+  gap: .5rem;
+}
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
 }
 .space {
   flex: 1;
 }
-.section {
-  margin: 1rem 0;
-}
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 1rem;
 }
+.muted { color: #666; font-size: .9rem; }
+.mono { font-family: monospace; }
 
-/* -------------------- Header -------------------- */
+/* -------------------- HEADER -------------------- */
 header {
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
-  padding: 0.5rem 0;
+  padding: .5rem 0;
   position: sticky;
   top: 0;
   z-index: 10;
 }
-header .logo {
+.logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: .5rem;
 }
-header .logo img {
-  width: 40px;
-  height: 40px;
+.logo img {
+  width: 36px;
+  height: 36px;
 }
-header .tag {
-  font-size: 0.8rem;
-  color: #666;
+.logo .tag {
+  font-size: .8rem;
+  color: #555;
 }
 .balances {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
 }
 .badge {
   background: #f3f4f6;
-  border-radius: 0.4rem;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.85rem;
-}
-.mono {
-  font-family: monospace;
+  border: 1px solid #e5e7eb;
+  padding: .25rem .5rem;
+  border-radius: .375rem;
+  font-size: .85rem;
 }
 
-/* -------------------- Buttons -------------------- */
+/* -------------------- BUTTONS -------------------- */
 .btn {
+  background: #0369a1;
   border: none;
-  padding: 0.5rem 0.9rem;
-  border-radius: 0.4rem;
-  cursor: pointer;
-  background: #0366d6;
+  border-radius: .375rem;
   color: #fff;
-  font-weight: 500;
-  transition: background 0.2s;
+  padding: .45rem .9rem;
+  font-size: .95rem;
+  cursor: pointer;
+  transition: background .2s;
 }
-.btn:hover {
-  background: #0252aa;
-}
+.btn:hover { background: #075985; }
+.btn:disabled { background: #94a3b8; cursor: not-allowed; }
 .btn.secondary {
-  background: #10b981;
+  background: #2563eb;
 }
-.btn.secondary:hover {
-  background: #0b8f64;
-}
+.btn.secondary:hover { background: #1d4ed8; }
 .btn.ghost {
   background: transparent;
-  color: #0366d6;
+  color: #0369a1;
+  border: 1px solid #0369a1;
 }
 .btn.ghost:hover {
-  background: #f3f4f6;
+  background: #e0f2fe;
 }
 
-/* -------------------- Pills & Helpers -------------------- */
-.pill {
-  background: #f3f4f6;
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  font-size: 0.9rem;
+/* -------------------- INPUTS -------------------- */
+input, select {
+  width: 100%;
+  padding: .45rem .6rem;
+  border: 1px solid #d1d5db;
+  border-radius: .375rem;
 }
-.muted {
-  color: #666;
-  font-size: 0.9rem;
-}
-.notice {
-  background: #fef3c7;
-  padding: 0.5rem;
-  border: 1px solid #fde68a;
-  border-radius: 0.4rem;
-}
-
-/* -------------------- Search -------------------- */
-.search input {
-  flex: 1;
-  padding: 0.45rem 0.6rem;
-  border: 1px solid #ccc;
-  border-radius: 0.4rem;
-}
-.search input:focus {
+input:focus, select:focus {
+  border-color: #2563eb;
   outline: none;
-  border-color: #0366d6;
 }
 
-/* -------------------- Product Cards -------------------- */
-#list .card {
+/* -------------------- PRODUCT CARD -------------------- */
+.card {
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  overflow: hidden;
+  border-radius: .5rem;
+  padding: .75rem;
   display: flex;
   flex-direction: column;
+  gap: .5rem;
 }
 .card img {
   width: 100%;
-  height: 180px;
+  height: 160px;
   object-fit: cover;
+  border-radius: .375rem;
 }
-.card-body {
-  padding: 0.8rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+.card h3 {
+  margin: 0;
+  font-size: 1.1rem;
 }
-.card-title {
-  font-size: 1rem;
-  font-weight: 600;
+.card .price {
+  font-weight: bold;
+  color: #b91c1c;
 }
-.card-price {
-  font-weight: 600;
-  color: #d32f2f;
-}
-.card-meta {
-  font-size: 0.85rem;
+.card .unit {
+  font-size: .85rem;
   color: #555;
 }
 
-/* -------------------- Dialogs -------------------- */
+/* -------------------- DIALOG -------------------- */
 dialog {
   border: none;
-  border-radius: 0.5rem;
+  border-radius: .5rem;
   padding: 0;
-  width: 95%;
-  max-width: 550px;
+  max-width: 600px;
+  width: 100%;
 }
 dialog::backdrop {
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,.4);
 }
 dialog header {
-  padding: 0.8rem 1rem;
+  padding: .75rem 1rem;
   border-bottom: 1px solid #e5e7eb;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
+  font-weight: bold;
   background: #f9fafb;
 }
 dialog .content {
   padding: 1rem;
 }
-dialog form input,
-dialog form select {
-  width: 100%;
-  padding: 0.45rem 0.6rem;
-  border: 1px solid #ccc;
-  border-radius: 0.4rem;
+dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
 }
-dialog form label {
-  font-size: 0.85rem;
-  color: #333;
-}
-dialog .two {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-  margin-bottom: 0.8rem;
+dialog .row {
+  margin-top: .5rem;
 }
 
-/* -------------------- Tables -------------------- */
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-.table th,
-.table td {
-  border: 1px solid #e5e7eb;
-  padding: 0.4rem 0.6rem;
-  text-align: left;
-}
-.table th {
-  background: #f9fafb;
-  font-weight: 600;
+/* -------------------- SEARCH -------------------- */
+.search input {
+  max-width: 250px;
 }
 
-/* -------------------- Footer -------------------- */
+/* -------------------- FOOTER -------------------- */
 footer {
-  border-top: 1px solid #e5e7eb;
-  padding: 0.8rem 0;
   background: #fff;
-  margin-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+  padding: .75rem 0;
+  text-align: center;
 }
 footer .links {
   display: flex;
-  gap: 1rem;
   flex-wrap: wrap;
-  font-size: 0.9rem;
+  justify-content: center;
+  gap: 1.2rem;
+  font-size: .9rem;
 }
 
-/* -------------------- Responsive -------------------- */
-@media (max-width: 600px) {
-  .row, .balances {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .search {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  dialog .two {
+/* -------------------- RESPONSIVE -------------------- */
+@media (max-width: 640px) {
+  .two {
     grid-template-columns: 1fr;
-  }
-  header .logo img {
-    width: 32px;
-    height: 32px;
   }
   .grid {
     grid-template-columns: 1fr;
+  }
+  header .wrap.row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .5rem;
+  }
+  .balances {
+    flex-wrap: wrap;
   }
 }
