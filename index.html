@@ -3,29 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>muaban.vin • on-chain commerce (Viction)</title>
+  <title>muaban.vin • On-chain commerce</title>
   <link rel="icon" type="image/png" href="./logo.png" />
   <link rel="stylesheet" href="./style.css" />
   <!-- Ethers v5 -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-
-  <!-- Footer dính đáy & các tiện ích nhỏ -->
-  <style>
-    html, body { height:100%; }
-    body { display:flex; flex-direction:column; }
-    main { flex: 1 0 auto; }
-    .hidden { display:none !important; }
-    .header-right { display:flex; align-items:center; gap:.5rem; }
-    .price-chip { padding:.3rem .6rem; border:1px solid #e2e8f0; border-radius:.5rem; background:#fff; font-variant-numeric:tabular-nums; }
-    footer { flex-shrink:0; }
-  </style>
 </head>
+
 <body>
   <!-- =================== HEADER =================== -->
   <header>
     <div class="wrap row" style="gap:10px">
       <div class="logo">
-        <img src="./logo.png" alt="logo" />
+        <img src="./logo.png" alt="muaban.vin logo" />
         <div>
           <div>muaban.vin</div>
           <div class="tag">Giá theo VND • Thanh toán VIN</div>
@@ -34,7 +24,7 @@
 
       <div class="space"></div>
 
-      <!-- Khu số dư: ẨN khi chưa kết nối -->
+      <!-- Số dư: ẨN hoàn toàn khi chưa kết nối -->
       <div id="balances" class="balances" hidden>
         <span class="badge">VIN: <b id="bal-vin">0.0000</b></span>
         <span class="badge">VIC: <b id="bal-vic">0.0000</b></span>
@@ -42,7 +32,7 @@
       </div>
 
       <!-- Nút kết nối / ngắt -->
-      <div class="header-right">
+      <div class="row">
         <button id="btn-disconnect" class="btn ghost" hidden>Ngắt</button>
         <button id="btn-connect" class="btn">Kết nối ví</button>
       </div>
@@ -51,7 +41,7 @@
 
   <!-- =================== MAIN =================== -->
   <main class="wrap">
-    <!-- Tỷ giá: chỉ hiển thị con số, bỏ mô tả công thức -->
+    <!-- Tỷ giá: chỉ hiển thị con số, KHÔNG ghi công thức -->
     <section class="section">
       <span class="price-chip" id="vin-vnd">1 VIN = … VND</span>
     </section>
@@ -63,10 +53,10 @@
         <button id="btn-search" class="btn secondary">Tìm</button>
         <div class="space"></div>
 
-        <!-- Khi ĐÃ kết nối nhưng CHƯA đăng ký → chỉ hiện nút này -->
+        <!-- Chưa đăng ký → chỉ hiện nút này -->
         <button id="btn-register" class="btn" hidden>Đăng ký</button>
 
-        <!-- Khi ĐÃ đăng ký → hiện các nút sau -->
+        <!-- Đã đăng ký → hiện các nút sau -->
         <button id="btn-create" class="btn secondary" hidden>Đăng sản phẩm</button>
         <button id="btn-buyer-orders" class="btn ghost" hidden>Đơn hàng mua</button>
         <button id="btn-seller-orders" class="btn ghost" hidden>Đơn hàng bán</button>
@@ -109,7 +99,7 @@
     </div>
   </dialog>
 
-  <!-- Đăng sản phẩm (đơn giản hoá: chỉ 1 Link IPFS hiển thị) -->
+  <!-- Đăng sản phẩm (theo mô tả: chỉ 1 Link IPFS hiển thị) -->
   <dialog id="dlg-create">
     <header class="wrap row">
       <div><b>Đăng sản phẩm</b></div>
@@ -128,12 +118,14 @@
             <input name="unit" placeholder="cái, chiếc, hộp…" />
           </div>
         </div>
+
         <div>
-          <label>Link IPFS (ảnh hoặc mô tả)</label>
-          <!-- Chỉ 1 ô hiển thị; sẽ tự đồng bộ sang descriptionCID ẩn -->
+          <label>Link IPFS (ảnh/video)</label>
+          <!-- Chỉ 1 ô hiển thị; app.js sẽ copy sang descriptionCID để khớp hàm createProduct(...) -->
           <input type="url" name="imageCID" id="ipfs-visible" placeholder="https://ipfs.io/ipfs/..." required />
           <input type="hidden" name="descriptionCID" id="ipfs-hidden" />
         </div>
+
         <div class="two">
           <div>
             <label>Giá bán (VND) — đã gồm thuế & phí</label>
@@ -144,6 +136,7 @@
             <input type="number" name="deliveryDaysMax" min="1" step="1" required />
           </div>
         </div>
+
         <div class="two">
           <div>
             <label>Ví nhận thanh toán</label>
@@ -157,6 +150,7 @@
             </select>
           </div>
         </div>
+
         <div class="row" style="margin-top:12px">
           <button class="btn" type="submit">Đăng</button>
           <div class="space"></div>
@@ -255,36 +249,49 @@
     </div>
   </dialog>
 
-  <!-- Close dialog via data-close -->
-  <script>
-    // Đóng dialog qua thuộc tính data-close
-    document.addEventListener('click', (e) => {
-      const id = e.target && e.target.getAttribute && e.target.getAttribute('data-close');
-      if (id) { const dlg = document.getElementById(id); if (dlg && typeof dlg.close === 'function') dlg.close(); }
-    });
+  <!-- Đơn hàng mua -->
+  <dialog id="dlg-buyer-orders">
+    <header class="wrap row">
+      <div><b>Đơn hàng của tôi (mua)</b></div>
+      <div class="space"></div>
+      <button class="btn ghost" data-close="dlg-buyer-orders">Đóng</button>
+    </header>
+    <div class="content">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Mã</th><th>Sản phẩm</th><th>SL</th><th>VIN</th><th>Hạn</th><th>Trạng thái</th><th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="buyer-orders-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </dialog>
 
-    // Đơn giản hoá: nút "Ngắt" → reload trang để trở về trạng thái chưa kết nối
-    document.addEventListener('DOMContentLoaded', () => {
-      const btn = document.getElementById('btn-disconnect');
-      if (btn) btn.addEventListener('click', () => { location.reload(); });
-    });
+  <!-- Đơn hàng bán -->
+  <dialog id="dlg-seller-orders">
+    <header class="wrap row">
+      <div><b>Đơn hàng của tôi (bán)</b></div>
+      <div class="space"></div>
+      <button class="btn ghost" data-close="dlg-seller-orders">Đóng</button>
+    </header>
+    <div class="content">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Mã</th><th>Buyer</th><th>Sản phẩm</th><th>SL</th><th>VIN</th><th>Hạn</th><th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody id="seller-orders-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </dialog>
 
-    // Đồng bộ 1 ô IPFS hiển thị sang descriptionCID ẩn (đáp ứng yêu cầu 1 link IPFS)
-    document.addEventListener('DOMContentLoaded', () => {
-      const vis = document.getElementById('ipfs-visible');
-      const hid = document.getElementById('ipfs-hidden');
-      if (vis && hid) {
-        const sync = () => { hid.value = vis.value; };
-        vis.addEventListener('input', sync);
-        sync();
-      }
-    });
-  </script>
-
-  <!-- App logic -->
-  <script src="./app.js"></script>
-
-  <!-- Cấu hình để app.js đọc nếu cần -->
+  <!-- ============ App config (đặt TRƯỚC app.js) ============ -->
   <script>
     window.__MUABAN_CONFIG__ = {
       CHAIN_ID: 88,
@@ -292,5 +299,8 @@
       VIN_ADDR: "0x941F63807401efCE8afe3C9d88d368bAA287Fac4"
     };
   </script>
+
+  <!-- App logic (không nhúng ABI ở đây; app.js sẽ import ABI từ file JSON) -->
+  <script src="./app.js"></script>
 </body>
 </html>
