@@ -1,5 +1,5 @@
 /* ========== muaban.vin — style.css ========== */
-/* Design goals: đơn giản, dễ dùng, đẹp, mượt, responsive, dễ bảo trì */
+/* Mục tiêu: đơn giản, dễ dùng, đẹp, mượt, responsive, dễ bảo trì */
 
 /* ---- CSS Variables (Theme) ---- */
 :root {
@@ -10,7 +10,7 @@
   --card: #0f141b;
   --border: #1f2a36;
 
-  --accent: #f5c542;     /* chủ đạo */
+  --accent: #f5c542;     /* nút chính */
   --accent-2: #2b90d9;   /* link, nhấn phụ */
   --ok: #29a96a;         /* trạng thái OK */
   --danger: #e24d4d;     /* cảnh báo */
@@ -21,33 +21,30 @@
   --shadow-2: 0 8px 30px rgba(245,197,66,.22);
 }
 
-/* ---- Reset cơ bản ---- */
+/* ---- Reset ---- */
 * { box-sizing: border-box; }
 html, body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 a { color: var(--accent-2); text-decoration: none; }
 a:hover { text-decoration: underline; }
 img, video { display: block; max-width: 100%; }
 
-/* ---- Khối bố cục chung ---- */
+/* ---- Layout ---- */
 .wrap { max-width: 1100px; margin: 0 auto; padding: 16px; }
 .row { display: flex; align-items: center; gap: 12px; }
 .space { flex: 1; }
-
 .section { padding: 20px 0; }
 .muted { color: var(--muted); }
-.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 
 /* ---- Header ---- */
 header {
   position: sticky; top: 0; z-index: 10;
-  background: rgba(15, 20, 27, .85);
+  background: rgba(15,20,27,.85);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
 }
@@ -55,16 +52,16 @@ header {
 .logo img { width: 28px; height: 28px; }
 .tag { font-size: 13px; opacity: .85; }
 
-/* ---- Button ---- */
+/* ---- Buttons ---- */
 .btn {
   background: linear-gradient(180deg, #ffd76a, var(--accent));
   border: none; color: #3a2a00;
-  padding: 10px 14px; border-radius: 10px;
+  padding: 9px 14px; border-radius: 10px;
   font-weight: 700; cursor: pointer;
   box-shadow: var(--shadow-2);
   transition: transform .06s ease, filter .15s ease;
 }
-.btn:hover { filter: brightness(1.03); }
+.btn:hover { filter: brightness(1.05); }
 .btn:active { transform: translateY(1px); }
 .btn[disabled] { opacity: .6; cursor: not-allowed; box-shadow: none; }
 
@@ -78,7 +75,7 @@ header {
 }
 .btn.danger { background: var(--danger); color: #fff; }
 
-/* ---- Pills / Badges ---- */
+/* ---- Badges / Pills ---- */
 .pill {
   border: 1px solid var(--border);
   padding: 6px 10px; border-radius: 999px;
@@ -90,18 +87,17 @@ header {
   color: #cfe3ff; padding: 6px 10px; border-radius: 999px; font-size: 13px;
 }
 
-/* ---- Tìm kiếm ---- */
+/* ---- Search ---- */
 .search { display: flex; gap: 8px; flex-wrap: wrap; }
 .search input {
   flex: 1; min-width: 220px;
   padding: 10px 12px; border-radius: 10px;
   border: 1px solid var(--border);
   background: #0d131b; color: var(--text);
-  outline: none;
 }
 .search input::placeholder { color: #7d93aa; }
 
-/* ---- Thẻ sản phẩm ---- */
+/* ---- Product Grid ---- */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -113,7 +109,7 @@ header {
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow-1);
-  transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease;
+  transition: transform .08s ease, box-shadow .2s ease;
 }
 .card:hover {
   transform: translateY(-2px);
@@ -136,70 +132,57 @@ header {
 footer { border-top: 1px solid var(--border); margin-top: 30px; }
 .links { display: flex; flex-wrap: wrap; gap: 16px; }
 
-/* ---- Thông báo / Tip ---- */
+/* ---- Notice ---- */
 .notice {
   padding: 10px 12px;
   border: 1px dashed var(--border);
   border-radius: var(--radius);
   background: #0d131b;
+  font-size: 14px;
 }
 
-/* ---- Dialogs (modal) ---- */
+/* ---- Dialogs ---- */
 dialog {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  max-width: 680px; width: 96%;
+  max-width: 720px; width: 96%;
   background: var(--panel); color: var(--text);
   padding: 0; overflow: hidden;
 }
 dialog header {
   position: sticky; top: 0;
-  background: rgba(18, 24, 33, .9);
+  background: rgba(18,24,33,.9);
   border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
 }
 dialog .content { padding: 16px; }
-dialog::backdrop { background: rgba(0,0,0,.45); backdrop-filter: blur(1px); }
+dialog::backdrop { background: rgba(0,0,0,.45); backdrop-filter: blur(2px); }
 
 /* ---- Form ---- */
-form .row { display: flex; align-items: center; gap: 10px; }
-label { font-size: 13px; color: #aab8c6; display: block; margin-bottom: 6px; }
-input[type=text], input[type=number], input[type=url], textarea, select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: #0d131b;
-  color: var(--text);
+form label { font-size: 13px; color: #aab8c6; display: block; margin-bottom: 4px; }
+form input, form select {
+  width: 100%; padding: 9px 11px;
+  border-radius: 10px; border: 1px solid var(--border);
+  background: #0d131b; color: var(--text);
   outline: none;
 }
-textarea { min-height: 92px; resize: vertical; }
-select { cursor: pointer; }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.help { font-size: 12px; color: #9db1c6; }
+form input:focus, form select:focus { border-color: #2b90d9; }
 
-/* ---- Focus (Accessibility) ---- */
-:focus-visible {
-  outline: 2px solid #5aa9ff;
-  outline-offset: 2px;
-  border-radius: 8px;
+/* ---- Table (orders) ---- */
+.table {
+  width: 100%; border-collapse: collapse; font-size: 14px;
 }
+.table th, .table td {
+  border: 1px solid var(--border);
+  padding: 6px 8px; text-align: left;
+}
+.table th { background: #16202c; }
+.table tbody tr:nth-child(even) { background: #10161f; }
+.table tbody tr:hover { background: #1a2432; }
 
 /* ---- Responsive ---- */
-@media (max-width: 860px) {
-  .wrap { padding: 14px; }
-  .grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
-  .card .media { height: 170px; }
-}
 @media (max-width: 640px) {
-  .row { gap: 10px; }
-  header .wrap { padding: 12px; }
-  .two { grid-template-columns: 1fr; }
-  .balances { gap: 6px; }
-  .badge { font-size: 12px; padding: 5px 8px; }
-  .btn { padding: 9px 12px; }
-  .search { gap: 6px; }
-  .search input { min-width: 0; }
+  .row { flex-wrap: wrap; }
+  .search input { min-width: 100%; }
+  .table th, .table td { font-size: 12px; }
 }
-
-/* ---- Utility ---- */
-.hidden { display: none !important; }
