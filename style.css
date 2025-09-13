@@ -350,3 +350,45 @@ body.no-scroll { overflow: hidden; }
 
 /* Cải thiện cuộn mượt trong khối modal */
 .modal-content{ -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+
+/* Căn giữa các nút trong menu và thanh tìm kiếm */
+.search, .menu{
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.menu{
+  padding: 8px 0;
+  justify-content: center; /* Căn giữa các nút */
+}
+
+.menu .btn{
+  text-align: center;
+  flex: 1;
+}
+
+/* Căn giữa các link chân trang */
+.footer{
+  display: flex;
+  justify-content: center; /* Căn giữa */
+  gap: 16px;
+  padding: 18px 0 26px;
+  border-top: 1px solid var(--border-2);
+}
+.footer a{
+  color: var(--text-dim);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  text-align: center;
+}
+.footer a:hover{ 
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
