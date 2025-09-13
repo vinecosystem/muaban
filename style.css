@@ -1,267 +1,293 @@
-/* ===================================================================
+/* ==========================================================================
    muaban.vin — style.css
-   Mục tiêu: rõ ràng · dễ thao tác · chạy tốt desktop & mobile
-   =================================================================== */
+   Mục tiêu: rõ ràng, chuyên nghiệp, mượt trên desktop & mobile
+   ========================================================================== */
 
-/* -------------------- BASE & RESET -------------------- */
-:root{
-  --bg: #fafafa;
-  --card: #ffffff;
-  --text: #0f172a;
-  --muted: #64748b;
-  --border: #e5e7eb;
-  --primary: #0369a1;
-  --primary-600:#075985;
-  --secondary:#2563eb;
-  --secondary-600:#1d4ed8;
-  --ghost:#0369a1;
-  --chip:#f8fafc;
-  --danger:#b91c1c;
-  --ok:#0f766e;
-  --focus:#1d4ed8;
-  --radius: 10px;
-  --radius-sm: 8px;
-  --shadow: 0 6px 18px rgba(2,8,23,.06);
-}
-
+/* -------------------- 1) Reset & Variables -------------------- */
 *,
 *::before,
 *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-html, body { height: 100%; }
+
+:root{
+  /* Tone sáng, trung tính */
+  --bg:        #f7f8fb;
+  --surface:   #ffffff;
+  --border:    #e5e7eb;
+  --border-2:  #eef1f5;
+  --text:      #0f172a;
+  --text-dim:  #475569;
+
+  /* Accent */
+  --primary:   #2563eb; /* xanh dương hiện đại */
+  --primary-2: #1e40af;
+  --good:      #16a34a;
+  --warn:      #eab308;
+  --bad:       #e11d48;
+
+  /* Misc */
+  --chip:      #0ea5e9;
+  --muted:     #94a3b8;
+  --focus:     0 0 0 3px rgba(37, 99, 235, .25);
+  --radius:    12px;
+  --radius-sm: 10px;
+  --shadow:    0 6px 24px rgba(2, 6, 23, .06);
+  --shadow-sm: 0 3px 12px rgba(2, 6, 23, .05);
+}
+
+html, body{
+  height: 100%;
+}
 body{
-  margin:0; padding:0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
   color: var(--text);
   background: var(--bg);
-  display:flex; flex-direction:column; /* footer dính đáy */
+  display: flex;
+  flex-direction: column;
+  line-height: 1.5;
 }
-main{ flex:1 0 auto; }
-footer{ flex-shrink:0; }
 
-a{ color: var(--secondary); text-decoration: none; }
-a:hover{ text-decoration: underline; }
-
-[hidden]{ display:none !important; }
+/* Utilities */
+.container{
+  width: min(1200px, 92%);
+  margin: 0 auto;
+}
+.hidden{ display:none !important; }
 .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
-.muted{ color: var(--muted); }
-.space{ flex:1; }
 
-/* -------------------- LAYOUT -------------------- */
-.wrap{ max-width: 1120px; margin: 0 auto; padding: 0 16px; }
-.section{ padding: 14px 0; }
-
-.row{ display:flex; align-items:center; gap: 10px; }
-.two{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
+/* -------------------- 2) Header -------------------- */
+.header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  padding: 14px 0;
 }
-
-/* -------------------- HEADER -------------------- */
-header{
-  position: sticky; top:0; z-index: 100;
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 2px 10px rgba(2,8,23,.04);
-  padding: 8px 0;
+.brand{ display:flex; align-items:center; gap:12px; }
+.logo{
+  width: 44px; height: 44px; border-radius: 50%;
+  object-fit: cover;
+  box-shadow: var(--shadow-sm);
 }
-.logo{ display:flex; align-items:center; gap:10px; }
-.logo img{ width:38px; height:38px; }
-.logo .tag{ font-size: 12px; color: var(--muted); }
-
-.balances{ display:flex; align-items:center; gap: 8px; flex-wrap: wrap; }
-.badge{
-  background: var(--chip);
+.brand-title{
+  margin: 0; font-weight: 800; letter-spacing: .2px;
+  font-size: clamp(18px, 2.4vw, 22px);
+}
+.brand-sub{
+  margin: 0; color: var(--text-dim); font-size: 13px;
+}
+.header-right{
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;
+}
+.price-chip{
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 5px 10px;
+  padding: 8px 12px;
   font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.wallet-box{
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  box-shadow: var(--shadow-sm);
+}
+.wallet-box span{ font-size: 13px; color: var(--text-dim); }
+.wallet-box a{
+  text-decoration: none; color: var(--text);
+  background: #eef2ff; border: 1px solid #e5e7ff; padding: 4px 8px; border-radius: 999px; font-size: 12px;
 }
 
-/* -------------------- BUTTONS -------------------- */
+/* -------------------- 3) Buttons & Inputs -------------------- */
 .btn{
-  --_bg: var(--primary);
-  --_bgH: var(--primary-600);
-  background: var(--_bg);
-  color:#fff;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  padding: 9px 14px;
-  font-size: 15px;
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: .15s ease;
-  box-shadow: 0 1px 0 rgba(2,8,23,.06);
+  transition: .2s ease;
+  box-shadow: var(--shadow-sm);
+  font-size: 14px;
 }
-.btn:hover{ background: var(--_bgH); transform: translateY(-0.5px); }
-.btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
-.btn.secondary{ --_bg: var(--secondary); --_bgH: var(--secondary-600); }
-.btn.ghost{
-  background: transparent; color: var(--ghost);
-  border-color: var(--ghost);
+.btn:hover{ transform: translateY(-1px); }
+.btn:focus{ outline: none; box-shadow: var(--focus); }
+.btn.primary{
+  background: var(--primary); border-color: var(--primary);
+  color: #fff;
 }
-.btn.ghost:hover{ background: rgba(2,132,199,.08); }
-.btn.block{ width:100%; }
+.btn.primary:hover{ background: var(--primary-2); }
+.btn.small{ padding: 6px 10px; font-size: 12px; }
 
-/* Tập trung bàn phím */
-:focus-visible{
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
-  border-radius: 6px;
-}
-
-/* -------------------- FORMS -------------------- */
-input, select{
+input, select, textarea{
   width: 100%;
-  padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: #fff;
-  font-size: 15px;
-  transition: border-color .15s ease, box-shadow .15s ease;
-}
-input::placeholder{ color: #94a3b8; }
-input:focus, select:focus{
-  border-color: var(--secondary);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
   outline: none;
 }
+input:focus, select:focus, textarea:focus{ box-shadow: var(--focus); border-color: var(--primary); }
 
-.price-chip{
-  display:inline-block;
-  padding: 6px 10px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-variant-numeric: tabular-nums;
-  box-shadow: 0 2px 6px rgba(2,8,23,.04);
+/* -------------------- 4) Menu (sau khi kết nối) -------------------- */
+.menu{
+  display: flex; gap: 10px; flex-wrap: wrap;
+  padding: 8px 0 2px;
+  border-top: 1px solid var(--border-2);
+  border-bottom: 1px solid var(--border-2);
 }
+.menu .btn{ border-radius: 999px; }
 
-/* Ô tìm kiếm gọn */
-.search input{ max-width: 260px; }
+/* -------------------- 5) Search bar -------------------- */
+.search{
+  display: grid; grid-template-columns: 1fr auto; gap: 10px;
+  padding: 16px 0 6px;
+}
+#btnSearch{ padding-inline: 18px; }
 
-/* -------------------- PRODUCT GRID & CARD -------------------- */
-.grid{
-  display:grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+/* -------------------- 6) Product list -------------------- */
+.products{
+  display: grid;
   gap: 14px;
+  grid-template-columns: repeat(12, 1fr);
+  padding: 16px 0 28px;
 }
-.card{
-  background: var(--card);
+.product-card{
+  grid-column: span 12;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  overflow: hidden;
-  display:flex; flex-direction: column;
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 14px;
+  padding: 12px;
+  align-items: center;
 }
-.card > img{
-  width:100%; height: 170px; object-fit: cover;
-  display:block;
+.product-thumb{
+  width: 100%; height: 90px; border-radius: 10px; object-fit: cover;
+  background: #f3f4f6; border: 1px solid var(--border-2);
 }
-.card-body{ padding: 12px; display:flex; flex-direction:column; gap: 8px; }
-.card-title{
-  font-size: 16px; font-weight: 700; line-height: 1.3;
-  min-height: 40px; /* giữ chiều cao đều */
+.product-info{ display: grid; gap: 6px; }
+.product-title{
+  margin: 0; font-size: 16px; font-weight: 700; letter-spacing: .2px;
 }
-.card-price{ color: var(--danger); font-weight: 800; }
-.card-meta{ color: var(--muted); font-size: 13px; }
-.card .row{ justify-content:flex-start; gap: 8px; }
+.product-meta{
+  color: var(--text-dim); font-size: 13px;
+}
+.price-vnd{
+  font-weight: 800; letter-spacing: .2px;
+}
+.stock-badge{
+  display: inline-flex; align-items: center; gap:6px;
+  background: #ecfeff; color:#0369a1; border:1px solid #bae6fd;
+  padding: 4px 8px; border-radius: 999px; font-size: 12px;
+}
+.stock-badge.out{ background:#fff1f2; color:#be123c; border-color:#fecdd3; }
 
-/* -------------------- DIALOG -------------------- */
-dialog{
-  border:none; border-radius: 12px; padding: 0; max-width: 720px; width: 100%;
-  background: var(--card);
-  box-shadow: 0 30px 80px rgba(2,8,23,.25);
+.card-actions{
+  margin-top: 6px;
+  display: flex; gap: 8px; flex-wrap: wrap;
 }
-dialog::backdrop{ background: rgba(2,8,23,.45); }
-dialog header{
-  display:flex; align-items:center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  background: #f8fafc;
-  border-top-left-radius: 12px; border-top-right-radius: 12px;
-}
-dialog .content{ padding: 14px 16px 18px; }
-dialog form{ display:flex; flex-direction:column; gap: 12px; }
-dialog .help{ margin-top: -6px; }
-dialog .table-wrap{ overflow:auto; max-height: 70vh; }
+.card-actions .btn{ border-radius: 8px; }
 
-/* -------------------- TABLE -------------------- */
-.table{
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
+/* Breakpoints */
+@media (min-width: 640px){
+  .product-card{ grid-column: span 6; }
 }
-.table th, .table td{
-  padding: 10px 10px;
-  border-bottom: 1px solid var(--border);
-  vertical-align: middle;
-  text-align: left;
-}
-.table thead th{
-  position: sticky; top:0; z-index:1;
-  background:#f8fafc;
-  border-bottom: 1px solid var(--border);
-  font-weight: 700;
-}
-.table tbody tr:hover{ background: #f9fafb; }
-
-/* -------------------- FOOTER -------------------- */
-footer{
-  background: var(--card);
-  border-top: 1px solid var(--border);
-  padding: 12px 0;
-}
-footer .links{
-  display:flex; align-items:center; justify-content:center;
-  gap: 18px; flex-wrap: wrap;
-  font-size: 14px;
+@media (min-width: 940px){
+  .product-card{ grid-column: span 4; }
 }
 
-/* -------------------- UTILS -------------------- */
-.pill{
-  display:inline-flex; align-items:center; gap:6px;
-  background: var(--chip);
+/* -------------------- 7) Orders sections -------------------- */
+.orders{ padding: 6px 0 24px; }
+.orders h2{
+  font-size: 18px; margin: 6px 0 12px;
+}
+.order-list{
+  display: grid; gap: 10px;
+}
+.order-card{
+  background: var(--surface); border:1px solid var(--border); border-radius: var(--radius);
+  padding: 12px; box-shadow: var(--shadow-sm);
+  display: grid; gap: 6px;
+}
+.order-row{ display:flex; gap:8px; flex-wrap:wrap; font-size: 13px; color: var(--text-dim); }
+.order-strong{ font-weight:700; color: var(--text); }
+
+/* -------------------- 8) Modals -------------------- */
+.modal{
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, .38);
+  display: grid; place-items: center;
+  z-index: 50;
+  padding: 16px;
+}
+.modal-content{
+  width: min(680px, 96%);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 10px;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  display: grid; gap: 12px;
 }
-.notice{
-  background: #f1f5f9;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  padding: 10px 12px;
+.modal-content h2{
+  margin: 0 0 6px; font-size: 18px;
 }
-
-/* -------------------- RESPONSIVE -------------------- */
-@media (max-width: 980px){
-  .two{ grid-template-columns: 1fr; }
-  .search input{ max-width: 100%; }
-  .card > img{ height: 160px; }
+.modal-content label{
+  display: grid; gap: 6px; font-size: 14px; color: var(--text-dim);
 }
-@media (max-width: 680px){
-  header .wrap.row{ flex-direction: column; align-items: flex-start; gap: 8px; }
-  .balances{ gap:6px; }
-  .badge{ padding: 4px 8px; font-size: 12px; }
-  .btn{ padding: 9px 12px; }
-  .grid{ grid-template-columns: 1fr; }
-  dialog{ max-width: 94vw; }
+.modal-content .row{
+  display: flex; align-items: center; gap: 10px;
+}
+.hint{ margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.total-vin{
+  margin-top: 4px; font-weight: 800; letter-spacing: .3px;
+}
+.actions{
+  display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px;
 }
 
-/* -------------------- MICRO-INTERACTIONS -------------------- */
-button:active{ transform: translateY(0); }
-.card:hover{ transform: translateY(-1px); transition: transform .12s ease; }
-
-/* ===================== Tỷ giá VIN ===================== */
-#vin-vnd{
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: var(--chip);
-  padding: 5px 12px;
-  font-weight: 600;
-  font-size: 14px;
-  border-radius: 999px;
-  box-shadow: 0 2px 4px rgba(0,0,0,.1);
+/* -------------------- 9) Footer (stick to bottom) -------------------- */
+main{ flex: 1 0 auto; }
+.footer{
+  margin-top: auto;
+  display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+  padding: 18px 0 26px;
+  border-top: 1px solid var(--border-2);
 }
+.footer a{
+  color: var(--text-dim); text-decoration: none; font-weight: 600; font-size: 14px;
+  padding: 8px 10px; border-radius: 8px;
+  border: 1px solid transparent;
+}
+.footer a:hover{ color: var(--text); border-color: var(--border); background: var(--surface); box-shadow: var(--shadow-sm); }
+
+/* -------------------- 10) Helpers for dynamic items -------------------- */
+.tag{
+  display:inline-flex; align-items:center; gap:6px;
+  padding: 4px 8px; border-radius: 999px; font-size: 12px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-dim);
+}
+.badge{
+  padding: 2px 6px; border-radius: 6px; font-size: 12px; border:1px solid var(--border);
+}
+
+/* -------------------- 11) Product card content slots (for app.js) -------------------- */
+/* Khung đặt vị trí nội dung được render bằng JS */
+.product-top{ display:flex; align-items:center; justify-content: space-between; gap:10px; }
+.unit{ color: var(--text-dim); font-size: 13px; }
+
+/* -------------------- 12) Nice scroll (optional) -------------------- */
+:focus-visible{ outline: none; box-shadow: var(--focus); }
+::selection{ background: #c7d2fe; color: #111827; }
