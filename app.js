@@ -342,32 +342,44 @@ function openCreateForm(){
   show($("#formCreate"));
 }
 
-async function submitCreate(){
+function submitCreate(){
   try{
     const name = ($("#createName").value||"").trim();
     const ipfs = ($("#createIPFS").value||"").trim();
     const unit = ($("#createUnit").value||"").trim();
-    const priceVND = ethers.BigNumber.from(String(Math.max(1, Number($("#createPrice").value||0))));
-    const wallet = ($("#createWallet").value||"").trim();
-    const days = Number($("#createDays").value||0);
 
-    if (!name || !ipfs || !unit || !priceVND || !wallet || !days){ toast("Vui lòng nhập đủ thông tin."); return; }
+    // Lọc giá: chỉ giữ chữ số (chấp nhận người dùng gõ "1.200.000")
+    const priceRaw = ($("#createPrice").value||"").replace(/[^\d]/g, "");
+    const priceNum = priceRaw === "" ? 0 : Number(priceRaw);
+    const priceVND = ethers.BigNumber.from(String(Math.max(1, Math.floor(priceNum))));
+
+    // Ví nhận tiền: kiểm tra hợp lệ
+    const wallet = ($("#createWallet").value||"").trim();
+    if (!ethers.utils.isAddress(wallet)) { toast("Ví nhận tiền không hợp lệ."); return; }
+
+    // Ngày giao hàng: bắt buộc ≥ 1 (tránh revert DELIVERY_REQUIRED)
+    const days = Number($("#createDays").value||0);
+    if (!Number.isInteger(days) || days < 1) { toast("Số ngày giao hàng phải ≥ 1."); return; }
+
+    if (!name || !ipfs || !unit){ toast("Vui lòng nhập đủ thông tin."); return; }
 
     // Theo contract: createProduct(name, descriptionCID, imageCID, priceVND, deliveryDaysMax, payoutWallet, active)
-    // Dùng descriptionCID để lưu 'unit:<...>' (để UI hiển thị đơn vị)
     const descriptionCID = `unit:${unit}`;
-    const imageCID = ipfs; // hình/video IPFS
+    const imageCID = ipfs;
 
-    const tx = await muaban.createProduct(
-      name, descriptionCID, imageCID,
-      priceVND, days, wallet, true
-    );
-    const rc = await tx.wait();
+    // Ước tính gas để bắt lỗi sớm (tránh "Internal JSON-RPC error.")
+    await muaban.estimateGas.createProduct(name, descriptionCID, imageCID, priceVND, days, wallet, true);
+
+    const tx = await muaban.createProduct(name, descriptionCID, imageCID, priceVND, days, wallet, true);
+    await tx.wait();
+
     toast("Đăng sản phẩm thành công.");
     hide($("#formCreate"));
-    await loadAllProducts();
+    loadAllProducts && loadAllProducts();
   }catch(e){
-    console.error(e); toast(e?.data?.message || e?.message || "Đăng sản phẩm thất bại");
+    console.error(e);
+    const msg = e?.error?.data?.message || e?.data?.message || e?.reason || e?.message || "Đăng sản phẩm thất bại";
+    toast(msg);
   }
 }
 
