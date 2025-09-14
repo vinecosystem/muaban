@@ -133,12 +133,13 @@ async function fetchVinToVND(){
 
 /* -------------------- 5) Kết nối ví & trạng thái -------------------- */
 async function connectWallet(){
-  if (!window.ethereum) { toast("Vui lòng cài MetaMask / Wallet"); return; }
-  await providerWrite.send("eth_requestAccounts", []);
+  if(!window.ethereum){ toast("Vui lòng cài MetaMask"); return; }
+  await providerWrite.send("eth_requestAccounts",[]);
   const net = await providerWrite.getNetwork();
-  if (Number(net.chainId) !== CONFIG.CHAIN_ID){
-    toast("Sai mạng. Vui lòng chọn Viction (chainId=88).");
-    // không tự switch để tránh lỗi; user tự chọn
+  if(Number(net.chainId)!==CONFIG.CHAIN_ID){
+    try{
+      await providerWrite.send("wallet_switchEthereumChain",[ {chainId:"0x58"} ]);
+    }catch(e){ toast("Sai mạng. Chọn Viction chainId=88."); return; }
   }
   signer = providerWrite.getSigner();
   account = (await signer.getAddress()).toLowerCase();
