@@ -347,29 +347,46 @@ async function submitCreate(){
     const name = ($("#createName").value||"").trim();
     const ipfs = ($("#createIPFS").value||"").trim();
     const unit = ($("#createUnit").value||"").trim();
-    const priceVND = ethers.BigNumber.from(String(Math.max(1, Number($("#createPrice").value||0))));
+
+    // Giá VND chỉ nhận số nguyên: loại bỏ mọi ký tự không phải 0-9
+    const priceRaw = String($("#createPrice").value||"").replace(/[^\d]/g,"");
+    const priceVND = ethers.BigNumber.from(priceRaw || "0");
+
     const wallet = ($("#createWallet").value||"").trim();
-    const days = Number($("#createDays").value||0);
+    const days = Number(($("#createDays").value||"").toString().replace(/[^\d]/g,""));
 
-    if (!name || !ipfs || !unit || !priceVND || !wallet || !days){ toast("Vui lòng nhập đủ thông tin."); return; }
+    if (!name || !ipfs || !unit || priceVND.lte(0) || !wallet || !days){
+      toast("Vui lòng nhập đủ thông tin (Giá là số nguyên VND, Ngày giao > 0)."); return;
+    }
+    if (!ethers.utils.isAddress(wallet)){
+      toast("Payout wallet không hợp lệ (cần 0x...)"); return;
+    }
 
-    // Theo contract: createProduct(name, descriptionCID, imageCID, priceVND, deliveryDaysMax, payoutWallet, active)
-    // Dùng descriptionCID để lưu 'unit:<...>' (để UI hiển thị đơn vị)
     const descriptionCID = `unit:${unit}`;
-    const imageCID = ipfs; // hình/video IPFS
+    const imageCID = ipfs;
 
-    const tx = await muaban.createProduct(
-      name, descriptionCID, imageCID,
-      priceVND, days, wallet, true
+    // Pre-flight: bắt lỗi revert trước khi mở ví
+    await muaban.callStatic.createProduct(
+      name, descriptionCID, imageCID, priceVND, days, wallet, true
     );
-    const rc = await tx.wait();
+
+    // Gửi giao dịch thật
+    const tx = await muaban.createProduct(
+      name, descriptionCID, imageCID, priceVND, days, wallet, true
+    );
+    await tx.wait();
+
     toast("Đăng sản phẩm thành công.");
     hide($("#formCreate"));
     await loadAllProducts();
   }catch(e){
-    console.error(e); toast(e?.data?.message || e?.message || "Đăng sản phẩm thất bại");
+    console.error(e);
+    const msg =
+      e?.error?.data?.message || e?.data?.message || e?.reason || e?.message || "Đăng sản phẩm thất bại";
+    toast(msg);
   }
 }
+
 
 /* -------------------- 10) Cập nhật sản phẩm -------------------- */
 $(".modal#formUpdate .close").addEventListener("click", ()=> hide($("#formUpdate")));
