@@ -59,10 +59,10 @@ let muaban, vin;
 let isRegistered = false;
 
 let vinPerVNDWei = ethers.BigNumber.from("0");  // VIN wei cho 1 VND (ceil)
-let vinVND = 0;                                  // 1 VIN = ? VND (làm tròn xuống)
-let productsCache = [];                          // {pid, data}
-let ordersBuyer = [];                            // danh sách order của tôi (buyer)
-let ordersSeller = [];                           // danh sách order của tôi (seller)
+let vinVND = 0;                                  // 1 VIN = ? VND (floor)
+let productsCache = [];
+let ordersBuyer = [];
+let ordersSeller = [];
 
 /* -------------------- 2) DOM helpers -------------------- */
 const $  = (q)=>document.querySelector(q);
@@ -123,7 +123,7 @@ function initProviders(){
 async function fetchVinToVND(){
   try{
     const [vicPriceRes, usdtRes] = await Promise.all([
-      fetch(CONFIG.BINANCE_VICUSDT), 
+      fetch(CONFIG.BINANCE_VICUSDT),
       fetch(CONFIG.COINGECKO_USDT_VND)
     ]);
     const vicJson = await vicPriceRes.json();
@@ -133,8 +133,9 @@ async function fetchVinToVND(){
     const usdtVnd = Number(usdtJson?.tether?.vnd || 0);
     if (!vicUsdt || !usdtVnd) throw new Error("Không lấy được giá");
 
-    const val = vicUsdt * 100 * usdtVnd; // 1 VIN = (VIC/USDT * 100) * (USDT/VND)
+    const val = vicUsdt * 100 * usdtVnd;      // 1 VIN = (VIC/USDT * 100) * (USDT/VND)
     vinVND = Math.floor(val);
+
     const el = document.querySelector('#vinPrice');
     if (el) el.textContent = `1 VIN = ${vinVND.toLocaleString("vi-VN")} VND`;
 
@@ -295,7 +296,6 @@ function renderProducts(list){
     wrap.appendChild(card);
   });
 }
-
 function renderCardButtons(pid, p){
   if (!account) return "";
   if (p.seller && p.seller.toLowerCase() === account.toLowerCase()){
@@ -306,7 +306,6 @@ function renderCardButtons(pid, p){
   }
   return "";
 }
-
 function attachCardHandlers(card, pid, p){
   const btnBuy = card.querySelector('[data-action="buy"]');
   if (btnBuy){ btnBuy.addEventListener("click", ()=>{ openBuyForm(pid, p); }); }
@@ -594,8 +593,8 @@ function renderOrders(){
           <div class="order-row">Hạn giao: ${new Date(Number(order.deadline)*1000).toLocaleString("vi-VN")}</div>
           <div class="order-row">Trạng thái: ${statusText(order.status)}</div>
           <div class="card-actions">
-            ${canConfirm? `<button class=\"btn primary\" data-action=\"confirm\" data-oid=\"${orderId}\">Xác nhận đã nhận</button>`:""}
-            ${canRefund? `<button class=\"btn\" data-action=\"refund\" data-oid=\"${orderId}\">Hoàn tiền (quá hạn)</button>`:""}
+            ${canConfirm? `<button class="btn primary" data-action="confirm" data-oid="${orderId}">Xác nhận đã nhận</button>`:""}
+            ${canRefund? `<button class="btn" data-action="refund" data-oid="${orderId}">Hoàn tiền (quá hạn)</button>`:""}
           </div>`;
         const btnC = card.querySelector('[data-action="confirm"]');
         if (btnC) btnC.addEventListener("click", ()=>confirmReceipt(orderId));
@@ -611,17 +610,17 @@ function renderOrders(){
   if (sWrap){
     sWrap.innerHTML = "";
     if (!ordersSeller.length){
-      sWrap.innerHTML = `<div class=\"tag\">Chưa có đơn bán.</div>`;
+      sWrap.innerHTML = `<div class="tag">Chưa có đơn bán.</div>`;
     }else{
       ordersSeller.sort((a,b)=>b.orderId-a.orderId).forEach(({order, product, orderId, productId})=>{
         const card = document.createElement("div");
         card.className = "order-card";
         card.innerHTML = `
-          <div class=\"order-row\"><span class=\"order-strong\">${escapeHtml(product.name)}</span> <span class=\"badge mono\">#${productId}</span></div>
-          <div class=\"order-row\">Mã đơn: <span class=\"order-strong mono\">#${orderId}</span> · Buyer: ${short(order.buyer)}</div>
-          <div class=\"order-row\">Số lượng: ${order.quantity} · VIN escrow: ${ethers.utils.formatUnits(order.vinAmount,18)}</div>
-          <div class=\"order-row\">Hạn giao: ${new Date(Number(order.deadline)*1000).toLocaleString("vi-VN")}</div>
-          <div class=\"order-row\">Trạng thái: ${statusText(order.status)}</div>`;
+          <div class="order-row"><span class="order-strong">${escapeHtml(product.name)}</span> <span class="badge mono">#${productId}</span></div>
+          <div class="order-row">Mã đơn: <span class="order-strong mono">#${orderId}</span> · Buyer: ${short(order.buyer)}</div>
+          <div class="order-row">Số lượng: ${order.quantity} · VIN escrow: ${ethers.utils.formatUnits(order.vinAmount,18)}</div>
+          <div class="order-row">Hạn giao: ${new Date(Number(order.deadline)*1000).toLocaleString("vi-VN")}</div>
+          <div class="order-row">Trạng thái: ${statusText(order.status)}</div>`;
         sWrap.appendChild(card);
       });
     }
@@ -654,7 +653,6 @@ function ipfsToHttp(link){
   if (!link) return "";
   if (link.startsWith("ipfs://")){
     return "https://ipfs.io/ipfs/" + link.replace("ipfs://", "");
-    // có thể thay gateway khác nếu muốn
   }
   return link;
 }
