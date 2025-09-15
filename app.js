@@ -12,7 +12,7 @@
 const CONFIG = {
   CHAIN_ID: 88, // Viction mainnet
   RPC_URL: "https://rpc.viction.xyz",
-  EXPLORER: "https://scan.viction.xyz",
+  EXPLORER: "https://vicscan.xyz",
 
   // Địa chỉ (khớp với footer/index.html hiện tại)
   MUABAN_ADDR: "0x190FD18820498872354eED9C4C080cB365Cd12E0",
