@@ -88,7 +88,6 @@ const hide = (el)=>{
 const short=(a)=>a?`${a.slice(0,6)}…${a.slice(-4)}`:"";
 const fmt0=(x)=>Number(x).toLocaleString("vi-VN", {maximumFractionDigits:0});
 const toast=(m)=>{ alert(m); };
-
 /* ---------- Helper xử lý lỗi revert (thông điệp thân thiện) ---------- */
 function parseRevert(err){
   const raw = err?.error?.message || err?.data?.message || err?.reason || err?.message || "";
@@ -226,7 +225,6 @@ function refreshMenu(){
   }
   if (menu) menu.classList.remove('hidden');
 }
-
 /* -------------------- 6) Sản phẩm: load qua sự kiện -------------------- */
 async function loadAllProducts(){
   try{
@@ -441,14 +439,19 @@ async function submitUpdate(){
     await loadAllProducts();
   }catch(e){ console.error(e); toast(parseRevert(e)); }
 }
-
 /* -------------------- 11) Mua hàng -------------------- */
 const closeBuy = document.querySelector('.modal#formBuy .close');
-if (closeBuy){ closeBuy.addEventListener("click", ()=> hide(document.querySelector('#formBuy'))); }
+if (closeBuy){
+  closeBuy.addEventListener("click", ()=> hide(document.querySelector('#formBuy')));
+}
 const btnSubmitBuy = document.querySelector('#btnSubmitBuy');
-if (btnSubmitBuy){ btnSubmitBuy.addEventListener("click", submitBuy); }
+if (btnSubmitBuy){
+  btnSubmitBuy.addEventListener("click", submitBuy);
+}
 const buyQty = document.querySelector('#buyQty');
-if (buyQty){ buyQty.addEventListener("input", recalcBuyTotal); }
+if (buyQty){
+  buyQty.addEventListener("input", recalcBuyTotal);
+}
 
 let currentBuying = null; // {pid, product}
 
@@ -638,6 +641,7 @@ async function confirmReceipt(orderId){
     await loadMyOrders();
   }catch(e){ console.error(e); toast(parseRevert(e)); }
 }
+
 async function refundExpired(orderId){
   try{
     try{ await muaban.callStatic.refundIfExpired(orderId); }
@@ -648,46 +652,3 @@ async function refundExpired(orderId){
     await loadMyOrders();
   }catch(e){ console.error(e); toast(parseRevert(e)); }
 }
-
-/* -------------------- 13) Utils -------------------- */
-function ipfsToHttp(link){
-  if (!link) return "";
-  if (link.startsWith("ipfs://")){
-    return "https://ipfs.io/ipfs/" + link.replace("ipfs://", "");
-    // có thể thay gateway khác nếu muốn
-  }
-  return link;
-}
-function parseUnitFromCID(desc){
-  if (!desc) return "";
-  const m = /^unit:(.+)$/i.exec(desc.trim());
-  return m ? m[1].trim() : "";
-}
-function escapeHtml(str){
-  return String(str).replace(/[&<>"']/g, s=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[s]));
-}
-function statusText(code){
-  const m = {0:"-",1:"Đang xử lý",2:"Đã giải ngân",3:"Đã hoàn tiền"};
-  return m[Number(code)] || "-";
-}
-
-/* -------------------- 14) Gắn sự kiện UI chung -------------------- */
-const btnConnect = document.querySelector('#btnConnect');
-if (btnConnect){ btnConnect.addEventListener("click", connectWallet); }
-const btnDisconnect = document.querySelector('#btnDisconnect');
-if (btnDisconnect){ btnDisconnect.addEventListener("click", disconnectWallet); }
-
-// Đóng modal khi click nền tối
-$$('.modal').forEach(m=>{
-  m.addEventListener("click", (e)=>{ if (e.target.classList.contains('modal')) hide(e.currentTarget); });
-});
-
-/* -------------------- 15) Khởi chạy -------------------- */
-(async function main(){
-  initProviders();
-  await fetchVinToVND();
-  setInterval(fetchVinToVND, 60_000);
-  await loadAllProducts(); // cho khách chưa kết nối ví
-  const menu = document.querySelector('#menuBox');
-  if (menu) menu.classList.add('hidden');
-})();
