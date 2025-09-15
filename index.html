@@ -11,7 +11,11 @@
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <script defer src="app.js"></script>
 </head>
-<body>
+
+<body
+  data-muaban-addr="0x190FD18820498872354eED9C4C080cB365Cd12E0"
+  data-vin-addr="0x941F63807401efCE8afe3C9d88d368bAA287Fac4">
+
   <!-- =================== HEADER =================== -->
   <header class="header container">
     <div class="brand">
@@ -35,9 +39,7 @@
 
   <!-- =================== MENU SAU KHI KẾT NỐI =================== -->
   <nav id="menuBox" class="menu hidden">
-    <!-- Nếu CHƯA đăng ký: chỉ hiện nút Đăng ký -->
     <button id="btnRegister" class="btn">Đăng ký</button>
-    <!-- Khi ĐÃ đăng ký: hiện 3 nút dưới -->
     <button id="btnCreate" class="btn hidden">Đăng sản phẩm</button>
     <button id="btnOrdersBuy" class="btn hidden">Đơn hàng mua</button>
     <button id="btnOrdersSell" class="btn hidden">Đơn hàng bán</button>
@@ -55,7 +57,6 @@
       <!-- Sản phẩm sẽ load tại đây -->
     </div>
 
-    <!-- Khối danh sách đơn hàng của tôi (ẩn/hiện bằng JS) -->
     <section id="ordersBuySection" class="orders hidden">
       <h2>Đơn hàng mua</h2>
       <div id="ordersBuyList" class="order-list"></div>
@@ -67,8 +68,7 @@
     </section>
   </main>
 
-  <!-- =================== FORM ĐĂNG SẢN PHẨM (6 TRƯỜNG) =================== -->
-  <!-- Theo mô tả: 1) Tên (≤500) 2) Link IPFS (ảnh/video) 3) Đơn vị tính 4) Giá VND 5) Ví nhận thanh toán 6) Thời gian giao hàng (ngày) -->
+  <!-- =================== FORM ĐĂNG SẢN PHẨM =================== -->
   <section id="formCreate" class="modal hidden">
     <div class="modal-content">
       <h2>Đăng sản phẩm</h2>
@@ -98,7 +98,7 @@
     </div>
   </section>
 
-  <!-- =================== FORM CẬP NHẬT SẢN PHẨM (THÊM “Còn bán/ Hết hàng”) =================== -->
+  <!-- =================== FORM CẬP NHẬT SẢN PHẨM =================== -->
   <section id="formUpdate" class="modal hidden">
     <div class="modal-content">
       <h2>Cập nhật sản phẩm</h2>
@@ -124,7 +124,6 @@
   </section>
 
   <!-- =================== FORM MUA HÀNG =================== -->
-  <!-- Theo mô tả: có Họ tên, Địa chỉ, SĐT, Phụ ghi (UI mã hóa), Số lượng; hiển thị Tổng VIN -->
   <section id="formBuy" class="modal hidden">
     <div class="modal-content">
       <h2>Mua sản phẩm</h2>
@@ -152,13 +151,13 @@
     </div>
   </section>
 
- <!-- =================== FOOTER =================== -->
-<footer class="footer container">
-  <a href="https://ipfs.io/ipfs/bafybeigooqte3w5m3rok2r7c5czep2flsfeocwjpzzid3vxszdyib3rjpi" target="_blank" rel="noopener">Swap VIN/VIC</a>
-  <a href="https://docs.google.com/document/d/1MvQUoH-gB-PNHanTPBtn_UFzVJTC53DS/edit" target="_blank" rel="noopener">Hướng dẫn sử dụng</a>
-  <a href="https://www.vicscan.xyz/address/0x190FD18820498872354eED9C4C080cB365Cd12E0" target="_blank" rel="noopener">Hợp đồng</a>
-  <a href="https://www.vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank" rel="noopener">VIN Token</a>
-</footer>
+  <!-- =================== FOOTER =================== -->
+  <footer class="footer container">
+    <a href="https://ipfs.io/ipfs/bafybeigooqte3w5m3rok2r7c5czep2flsfeocwjpzzid3vxszdyib3rjpi" target="_blank" rel="noopener">Swap VIN/VIC</a>
+    <a href="https://docs.google.com/document/d/1MvQUoH-gB-PNHanTPBtn_UFzVJTC53DS/edit" target="_blank" rel="noopener">Hướng dẫn sử dụng</a>
+    <a href="https://www.vicscan.xyz/address/0x190FD18820498872354eED9C4C080cB365Cd12E0" target="_blank" rel="noopener">Hợp đồng</a>
+    <a href="https://www.vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank" rel="noopener">VIN Token</a>
+  </footer>
 
 </body>
 </html>
