@@ -416,7 +416,7 @@ async function submitCreate(){
     const days  = parseInt(($("#createDays").value||"").trim(), 10);
     const priceInput = parseVND($("#createPrice").value);
 
-    if (name.length > 500) name = name.slice(0,500); // hạn chế chuỗi quá dài
+    if (name.length > 500) name = name.slice(0,500);
 
     if (!name||!ipfs||!unit||!wallet){ toast("Điền đủ thông tin."); return; }
     if (!ethers.utils.isAddress(wallet)){ toast("Ví nhận thanh toán không hợp lệ."); return; }
@@ -427,24 +427,49 @@ async function submitCreate(){
     const imageCID = ipfs;
     const priceVND = ethers.BigNumber.from(String(priceInput));
 
-    // PRE-FLIGHT
+    // 1) SIMULATE trên public RPC (tránh -32603 của MetaMask Mobile)
+    const iface = new ethers.utils.Interface(MUABAN_ABI);
+    const data  = iface.encodeFunctionData(
+      "createProduct",
+      [name, descriptionCID, imageCID, priceVND, days, wallet, true]
+    );
     try{
-      const txData = await muaban.populateTransaction.createProduct(
-        name, descriptionCID, imageCID, priceVND, days, wallet, true
-      );
-      txData.from = account;
-      await providerWrite.call(txData);
+      await providerRead.call({
+        to: muaban.address,
+        from: account,
+        data,
+        gas: GAS_LIMIT_HEAVY, // fallback để một số node không từ chối call
+      });
     }catch(simErr){
-      toast(parseRevert(simErr)); return;
+      toast(parseRevert(simErr));
+      return;
     }
 
-    // SEND (legacy gas)
+    // 2) ƯỚC LƯỢNG GAS (+20% buffer), fallback = GAS_LIMIT_HEAVY
+    let gasLimit = GAS_LIMIT_HEAVY;
     try{
-      const ov = await buildOverrides("heavy");
-      const tx = await muaban.createProduct(name, descriptionCID, imageCID, priceVND, days, wallet, true, ov);
-      await tx.wait();
-    }catch(e){ showRpc(e, "send.createProduct"); return; }
+      const est = await muaban.estimateGas.createProduct(
+        name, descriptionCID, imageCID, priceVND, days, wallet, true, { from: account }
+      );
+      gasLimit = est.mul(120).div(100);
+    }catch(_){ /* giữ fallback */ }
 
+    // 3) GỬI THỦ CÔNG (legacy type-0) để tránh lỗi -32603
+    try{
+      const tx = await signer.sendTransaction({
+        to: muaban.address,
+        data,
+        gasLimit,
+        gasPrice: ethers.utils.parseUnits(LEGACY_GAS_PRICE_GWEI, "gwei"),
+        // KHÔNG set maxFeePerGas / maxPriorityFeePerGas (tránh EIP-1559)
+      });
+      await tx.wait();
+    }catch(e){
+      showRpc(e, "send.createProduct");
+      return;
+    }
+
+    // 4) Hoàn tất UI
     hide($("#formCreate"));
     toast("Đăng sản phẩm thành công.");
     const { muabanR } = initContractsForRead();
@@ -453,6 +478,7 @@ async function submitCreate(){
     showRpc(e, "submitCreate.catch");
   }
 }
+
 
 $(".modal#formUpdate .close")?.addEventListener("click", ()=>hide($("#formUpdate")));
 $("#btnSubmitUpdate")?.addEventListener("click", submitUpdate);
