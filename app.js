@@ -1,12 +1,11 @@
 /* ====================================================================
    muaban.vin — app.js (ethers v5)
-   BUILD: LEGACY GAS ONLY  (tránh -32603 / "Internal JSON-RPC error")
-   - Luôn dùng gasPrice (legacy), KHÔNG gửi EIP-1559 trên VIC
+   MỤC TIÊU: sửa lỗi "Internal JSON-RPC error" khi ký giao dịch & ổn định UI
+   - ÉP GIAO DỊCH LEGACY (type 0) dùng gasPrice; KHÔNG gửi EIP-1559 trên VIC
    - Preflight mọi giao dịch (populateTransaction + provider.call({from}))
-     để bắt revert reason rõ ràng trước khi gửi
-   - Chuẩn hoá giá VND (1.200.000 / 1,200,000 / 1200000 đều hợp lệ)
-   - Địa chỉ contract: ưu tiên <body data-muaban-addr / data-vin-addr>,
-     nếu không có thì dùng mặc định dưới.
+     để bắt revert rõ ràng (NOT_REGISTERED, PRICE_REQUIRED, ...)
+   - Tỷ giá VIN/VND: lấy từ nhiều nguồn; có thể override qua <body data-vin-vnd>
+   - Bám sát HTML (index.html) & ABI (Muaban_ABI.json, VinToken_ABI.json)
 ==================================================================== */
 
 /* -------------------- DOM helpers -------------------- */
@@ -14,7 +13,7 @@ const $  = (q)=>document.querySelector(q);
 const $$ = (q)=>document.querySelectorAll(q);
 const show = el=>{ if(!el) return; el.classList.remove('hidden'); };
 const hide = el=>{ if(!el) return; el.classList.add('hidden'); };
-const short=(a)=>a?`${a.slice(0,6)}…${a.slice(-4)}`:"";
+const short=(a)=>a?`${a.slice(0,6)}…${a.slice(-4)}`: "";
 const toast=(m)=>alert(m);
 
 /* -------------------- Cấu hình -------------------- */
@@ -27,21 +26,23 @@ const DEFAULTS = {
   VIN_ADDR:    "0x941F63807401efCE8afe3C9d88d368bAA287Fac4",
   // Phí đăng ký 0.001 VIN (18 decimals)
   REG_FEE_WEI: "1000000000000000",
-  // Nguồn tỷ giá
-  BINANCE_VICUSDT: "https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT",
-  COINGECKO_USDT_VND: "https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=vnd",
+  // Nguồn tỷ giá (đa nguồn để tránh lỗi CORS / rate-limit)
+  COINGECKO_VIC_VND: "https://api.coingecko.com/api/v3/simple/price?ids=viction&vs_currencies=vnd",
+  COINGECKO_USD_VND:  "https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=vnd",
+  COINGECKO_VIC_USD:  "https://api.coingecko.com/api/v3/simple/price?ids=viction&vs_currencies=usd",
+  BINANCE_VICUSDT:    "https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT", // có thể không luôn khả dụng
 };
 
 /* ---- GAS/FEES: ép legacy (gasPrice), không dùng EIP-1559 ---- */
 const GAS_LIMIT_LIGHT = ethers.BigNumber.from("200000");   // approve / confirm / refund
 const GAS_LIMIT_MED   = ethers.BigNumber.from("400000");   // payRegistration / updateProduct / placeOrder
 const GAS_LIMIT_HEAVY = ethers.BigNumber.from("800000");   // createProduct
-const LEGACY_GAS_PRICE_GWEI = "50"; // có thể tăng 100–200 nếu muốn “rộng” hơn
+const LEGACY_GAS_PRICE_GWEI = "50"; // tăng 100–200 nếu cần
 
 /* -------------------- State -------------------- */
 let providerRead, providerWrite, signer, account;
 let MUABAN_ABI, VIN_ABI;
-let muaban, vin;            // write
+let muaban, vin;            // viết
 let isRegistered = false;
 
 let vinPerVNDWei = ethers.BigNumber.from(0); // VIN wei cho 1 VND (ceil)
@@ -83,7 +84,7 @@ function parseRevert(err){
   return raw || "Giao dịch bị từ chối hoặc dữ liệu không hợp lệ.";
 }
 
-// Hiện lỗi RPC (chi tiết) — tiện debug trên mobile
+// Popup chi tiết RPC (tiện debug trên mobile)
 function showRpc(err, tag="RPC"){
   try{
     const obj = {
@@ -163,24 +164,56 @@ function initContractsForWrite(){
 }
 
 /* -------------------- Tỷ giá VIN/VND -------------------- */
+function bodyVinVndOverride(){
+  const raw = document.body?.dataset?.vinVnd;
+  const n = Number(raw);
+  return Number.isFinite(n) && n>0 ? Math.floor(n) : 0;
+}
 async function fetchVinToVND(){
   try{
-    const [vicPriceRes, usdtRes] = await Promise.all([
-      fetch(DEFAULTS.BINANCE_VICUSDT),
-      fetch(DEFAULTS.COINGECKO_USDT_VND)
-    ]);
-    const vicJson = await vicPriceRes.json();
-    const usdtJson = await usdtRes.json();
-    const vicUsdt = Number(vicJson?.price||0);
-    const usdtVnd = Number(usdtJson?.tether?.vnd||0);
-    if (!vicUsdt || !usdtVnd) throw new Error("Không lấy được giá");
+    // 1) Ưu tiên override qua data-vin-vnd
+    const override = bodyVinVndOverride();
+    if (override>0){
+      vinVND = override;
+    }else{
+      // 2) Nguồn chính: CoinGecko VIC→VND (trực tiếp)
+      let vicVnd = 0;
+      try{
+        const r = await fetch(DEFAULTS.COINGECKO_VIC_VND);
+        const j = await r.json();
+        vicVnd = Number(j?.viction?.vnd||0);
+      }catch(_){ /* bỏ qua, thử nguồn khác */ }
 
-    // 1 VIN = 100 VIC (theo mô tả)
-    vinVND = Math.floor(vicUsdt * 100 * usdtVnd);
+      if (vicVnd>0){
+        vinVND = Math.floor(vicVnd * 100); // 1 VIN = 100 VIC
+      }else{
+        // 3) Phương án 2: VIC→USD × USDT→VND
+        const [vicUsdRes, usdtVndRes] = await Promise.all([
+          fetch(DEFAULTS.COINGECKO_VIC_USD),
+          fetch(DEFAULTS.COINGECKO_USD_VND)
+        ]);
+        const vicUsd = Number((await vicUsdRes.json())?.viction?.usd||0);
+        const usdtVnd= Number((await usdtVndRes.json())?.tether?.vnd||0);
+        if (vicUsd>0 && usdtVnd>0){
+          vinVND = Math.floor(vicUsd * 100 * usdtVnd);
+        }else{
+          // 4) Dự phòng: Binance VIC/USDT × USDT/VND (có thể CORS tuỳ trình duyệt)
+          const [vicPriceRes2, usdtVndRes2] = await Promise.all([
+            fetch(DEFAULTS.BINANCE_VICUSDT),
+            fetch(DEFAULTS.COINGECKO_USD_VND)
+          ]);
+          const vicUsdt = Number((await vicPriceRes2.json())?.price||0);
+          const usdtVnd2= Number((await usdtVndRes2.json())?.tether?.vnd||0);
+          if (vicUsdt>0 && usdtVnd2>0) vinVND = Math.floor(vicUsdt * 100 * usdtVnd2);
+        }
+      }
+    }
+
+    if (!(vinVND>0)) throw new Error("Không lấy được giá");
 
     const ONE = ethers.BigNumber.from("1000000000000000000");
     vinPerVNDWei = ONE.div(vinVND);
-    if (ONE.mod(vinVND).gt(0)) vinPerVNDWei = vinPerVNDWei.add(1);
+    if (ONE.mod(vinVND).gt(0)) vinPerVNDWei = vinPerVNDWei.add(1); // ceil
 
     $("#vinPrice")?.replaceChildren(`1 VIN = ${vinVND.toLocaleString("vi-VN")} VND`);
   }catch(e){
@@ -254,9 +287,7 @@ async function loadAllProducts(muabanR){
     const iface = new ethers.utils.Interface(MUABAN_ABI);
     const topic = iface.getEventTopic("ProductCreated");
     const { MUABAN_ADDR } = readAddrs();
-    const logs = await providerRead.getLogs({
-      address: MUABAN_ADDR, fromBlock: 0, toBlock: "latest", topics: [topic]
-    });
+    const logs = await providerRead.getLogs({ address: MUABAN_ADDR, fromBlock: 0, toBlock: "latest", topics: [topic] });
     const pids = new Set();
     logs.forEach(l=>{ const parsed = iface.parseLog(l); pids.add(parsed.args.productId.toString()); });
 
@@ -320,7 +351,8 @@ $("#btnSearch")?.addEventListener("click", ()=>{
 
 /* -------------------- Legacy GAS overrides -------------------- */
 async function buildOverrides(kind="med"){
-  const ov = { gasPrice: ethers.utils.parseUnits(LEGACY_GAS_PRICE_GWEI, "gwei") };
+  // Ép kiểu legacy type 0 (tránh EIP-1559) + gasPrice cố định + gasLimit an toàn
+  const ov = { type: 0, gasPrice: ethers.utils.parseUnits(LEGACY_GAS_PRICE_GWEI, "gwei") };
   if (kind==="light") ov.gasLimit = GAS_LIMIT_LIGHT;
   else if (kind==="heavy") ov.gasLimit = GAS_LIMIT_HEAVY;
   else ov.gasLimit = GAS_LIMIT_MED;
@@ -497,7 +529,9 @@ function recalcBuyTotal(){
     const qty = Math.max(1, Number($("#buyQty").value||1));
     const totalVND = ethers.BigNumber.from(String(currentBuying.product.priceVND)).mul(qty);
     const vinAmt = totalVND.mul(vinPerVNDWei);
-    $("#buyTotalVIN").textContent = `Tổng VIN cần trả: ${ethers.utils.formatUnits(vinAmt,18)} VIN`;
+    // Hiển thị tối đa 6 chữ số thập phân cho VIN
+    const txt = Number(ethers.utils.formatUnits(vinAmt,18)).toLocaleString("en-US",{maximumFractionDigits:6});
+    $("#buyTotalVIN").textContent = `Tổng VIN cần trả: ${txt} VIN`;
   }catch(_){
     $("#buyTotalVIN").textContent = `Tổng VIN cần trả: ...`;
   }
@@ -532,6 +566,7 @@ async function submitBuy(){
 
     const cipher = btoa(unescape(encodeURIComponent(JSON.stringify(info))));
 
+    // Preflight placeOrder
     try{
       const txData = await muaban.populateTransaction.placeOrder(pid, qty, vinPerVNDWei, cipher);
       txData.from = account;
@@ -569,9 +604,7 @@ async function loadMyOrders(muabanR){
     const iface = new ethers.utils.Interface(MUABAN_ABI);
     const topic = iface.getEventTopic("OrderPlaced");
     const { MUABAN_ADDR } = readAddrs();
-    const logs = await providerRead.getLogs({
-      address: MUABAN_ADDR, fromBlock: 0, toBlock: "latest", topics: [topic]
-    });
+    const logs = await providerRead.getLogs({ address: MUABAN_ADDR, fromBlock: 0, toBlock: "latest", topics: [topic] });
 
     ordersBuyer = []; ordersSeller = [];
     for (const l of logs){
@@ -683,12 +716,7 @@ $$('.modal').forEach(m=>{
 });
 
 (async function main(){
-  try{
-    await loadAbis();
-  }catch(e){
-    showRpc(e, "loadAbis");
-    return;
-  }
+  try{ await loadAbis(); }catch(e){ showRpc(e, "loadAbis"); return; }
   initProviders();
   await fetchVinToVND();
   setInterval(fetchVinToVND, 60_000);
