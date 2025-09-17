@@ -416,7 +416,7 @@ async function submitCreate(){
     const days  = parseInt(($("#createDays").value||"").trim(), 10);
     const priceInput = parseVND($("#createPrice").value);
 
-    if (name.length > 500) name = name.slice(0,500); // hạn chế chuỗi quá dài
+    if (name.length > 500) name = name.slice(0,500);
 
     if (!name||!ipfs||!unit||!wallet){ toast("Điền đủ thông tin."); return; }
     if (!ethers.utils.isAddress(wallet)){ toast("Ví nhận thanh toán không hợp lệ."); return; }
@@ -427,21 +427,31 @@ async function submitCreate(){
     const imageCID = ipfs;
     const priceVND = ethers.BigNumber.from(String(priceInput));
 
-    // PRE-FLIGHT
+    // ================= PRE-FLIGHT (simulate) =================
+    // Tránh MetaMask -32603: simulate qua public RPC (providerRead), không dùng providerWrite
     try{
-      const txData = await muaban.populateTransaction.createProduct(
-        name, descriptionCID, imageCID, priceVND, days, wallet, true
+      const iface = new ethers.utils.Interface(MUABAN_ABI);
+      const data  = iface.encodeFunctionData(
+        "createProduct",
+        [name, descriptionCID, imageCID, priceVND, days, wallet, true]
       );
-      txData.from = account;
-      await providerWrite.call(txData);
+      // Thêm 'from' để pass qua onlyRegistered; thêm 'gas' để 1 số RPC không từ chối
+      await providerRead.call({
+        to: muaban.address,
+        from: account,
+        data,
+        gas: GAS_LIMIT_HEAVY, // cùng ngưỡng với khi gửi thật
+      });
     }catch(simErr){
       toast(parseRevert(simErr)); return;
     }
 
-    // SEND (legacy gas)
+    // ================= SEND (legacy gas) =================
     try{
-      const ov = await buildOverrides("heavy");
-      const tx = await muaban.createProduct(name, descriptionCID, imageCID, priceVND, days, wallet, true, ov);
+      const ov = await buildOverrides("heavy"); // type:0 + gasPrice + gasLimit đã cấu hình sẵn
+      const tx = await muaban.createProduct(
+        name, descriptionCID, imageCID, priceVND, days, wallet, true, ov
+      );
       await tx.wait();
     }catch(e){ showRpc(e, "send.createProduct"); return; }
 
