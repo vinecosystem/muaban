@@ -22,7 +22,7 @@ const DEFAULTS = {
   CHAIN_ID: 88, // Viction mainnet
   RPC_URL:  "https://rpc.viction.xyz",
   EXPLORER:"https://vicscan.xyz", // user-confirmed explorer
-  MUABAN_ADDR: "0x190F47526bBfE2F792D3b1B217fb3F43D120bdC3",
+  MUABAN_ADDR: "0x190FD18820498872354eED9C4C080cB365Cd12E0",
   VIN_ADDR:    "0x941F63807401efCE8afe3C9d88d368bAA287Fac4",
 };
 
