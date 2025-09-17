@@ -22,7 +22,7 @@ const DEFAULTS = {
   CHAIN_ID: 88, // Viction mainnet
   RPC_URL:  "https://rpc.viction.xyz",
   EXPLORER:"https://vicscan.xyz", // user-confirmed explorer
-  MUABAN_ADDR: "0x190FD18820498872354eED9C4C080cB365Cd12E0",
+  MUABAN_ADDR: "0x190F47526bBfE2F792D3b1B217fb3F43D120bdC3",
   VIN_ADDR:    "0x941F63807401efCE8afe3C9d88d368bAA287Fac4",
 };
 
@@ -363,7 +363,7 @@ $("#btnRegister")?.addEventListener("click", async()=>{
 /* -------------------- Create Product -------------------- */
 $("#btnCreate")?.addEventListener("click", ()=>{ show($("#formCreate")); });
 $("#createCancel")?.addEventListener("click", ()=> hide($("#formCreate")));
-$("#createSubmit")?.addEventListener("click", submitCreate);
+$("#btnSubmitCreate")?.addEventListener("click", submitCreate);
 
 async function submitCreate(){
   try{
@@ -471,7 +471,7 @@ function openBuyForm(p){
   $("#buyAddress").value = "";
   $("#buyNote").value = "";
   $("#buyQty").value = "1";
-  $("#buyVin").textContent = "0";
+  $("#buyTotalVIN").textContent = "Tổng VIN cần trả: 0";
   updateBuyTotal();
   show($("#formBuy"));
 }
@@ -487,14 +487,14 @@ function updateBuyTotal(){
     const totalVND = (Number(p.priceVND)||0) * qty;
     if (vinVND>0){
       const approxVin = Math.ceil(totalVND / vinVND);
-      $("#buyVin").textContent = String(approxVin);
+      $("#buyTotalVIN").textContent = `Tổng VIN cần trả: ${approxVin}`;
     }else{
-      $("#buyVin").textContent = "-";
+      $("#buyTotalVIN").textContent = "Tổng VIN cần trả: -";
     }
   }catch(_){ /* ignore */ }
 }
 
-$("#buySubmit")?.addEventListener("click", submitBuy);
+$("#btnSubmitBuy")?.addEventListener("click", submitBuy);
 async function submitBuy(){
   try{
     if (!account) { await connectWallet(); if (!account) return; }
@@ -692,10 +692,12 @@ if (window.ethereum){
 }
 
 (async function main(){
-  try{ await loadAbis(); }catch(e){ showRpc(e, "loadAbis"); return; }
+  // Luôn tải giá VIN trước, không phụ thuộc ABI
   initProviders();
   await fetchVinToVND();
   setInterval(fetchVinToVND, 60_000);
+  try{ await loadAbis(); }catch(e){ showRpc(e, "loadAbis"); /* vẫn tiếp tục phần đọc sản phẩm */ }
+
   const { muabanR } = initContractsForRead();
   await loadAllProducts(muabanR);
   $("#menuBox")?.classList.add('hidden');
