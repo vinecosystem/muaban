@@ -20,7 +20,7 @@ const toast=(m)=>alert(m);
 const DEFAULTS = {
   CHAIN_ID: 88,
   RPC_URL: "https://rpc.viction.xyz",
-  EXPLORER: "https://scan.viction.xyz",
+  EXPLORER: "https://vicscan.xyz",
   // Địa chỉ mặc định (có thể override qua <body data-*>):
   MUABAN_ADDR: "0x190FD18820498872354eED9C4C080cB365Cd12E0",
   VIN_ADDR:    "0x941F63807401efCE8afe3C9d88d368bAA287Fac4",
@@ -407,46 +407,54 @@ $("#btnCreate")?.addEventListener("click", ()=>{
 $(".modal#formCreate .close")?.addEventListener("click", ()=>hide($("#formCreate")));
 $("#btnSubmitCreate")?.addEventListener("click", submitCreate);
 
+// === REPLACE your old submitCreate with this one ===
 async function submitCreate(){
   try{
-    let name  = ($("#createName").value||"").trim();
-    const ipfs  = ($("#createIPFS").value||"").trim();
-    const unit  = ($("#createUnit").value||"").trim();
-    const wallet= ($("#createWallet").value||"").trim();
-    const days  = parseInt(($("#createDays").value||"").trim(), 10);
-    const priceInput = parseVND($("#createPrice").value);
+    // 1) Đọc & chuẩn hoá input
+    let name   = ($("#createName").value||"").trim();
+    const ipfs   = ($("#createIPFS").value||"").trim();
+    const unit   = ($("#createUnit").value||"").trim();
+    const wallet = ($("#createWallet").value||"").trim();
+    const days   = parseInt(($("#createDays").value||"").trim(), 10);
+    const priceVNDNum = parseVND($("#createPrice").value); // chỉ lấy số, "1200000" -> 1200000
 
-    if (name.length > 500) name = name.slice(0,500); // hạn chế chuỗi quá dài
-
-    if (!name||!ipfs||!unit||!wallet){ toast("Điền đủ thông tin."); return; }
-    if (!ethers.utils.isAddress(wallet)){ toast("Ví nhận thanh toán không hợp lệ."); return; }
-    if (!Number.isInteger(days) || days<=0){ toast("Số ngày giao ≥ 1."); return; }
-    if (!Number.isFinite(priceInput) || priceInput<=0){ toast("Giá (VND) phải > 0."); return; }
+    if (name.length > 500) name = name.slice(0,500);
+    if (!name || !ipfs || !unit || !wallet){ alert("Điền đủ thông tin."); return; }
+    if (!ethers.utils.isAddress(wallet)){ alert("Ví nhận thanh toán không hợp lệ."); return; }
+    if (!Number.isInteger(days) || days <= 0){ alert("Số ngày giao ≥ 1."); return; }
+    if (!Number.isFinite(priceVNDNum) || priceVNDNum <= 0){ alert("Giá (VND) phải > 0."); return; }
 
     const descriptionCID = `unit:${unit}`;
     const imageCID = ipfs;
-    const priceVND = ethers.BigNumber.from(String(priceInput));
+    const priceVND = ethers.BigNumber.from(String(priceVNDNum));
 
-    // PRE-FLIGHT
+    // 2) Simulate trước để bắt revert rõ ràng (NOT_REGISTERED/PRICE_REQUIRED/...)
     try{
       const txData = await muaban.populateTransaction.createProduct(
         name, descriptionCID, imageCID, priceVND, days, wallet, true
       );
-      txData.from = account;
-      await providerWrite.call(txData);
+      txData.from = account;               // rất quan trọng để simulate đúng context
+      await providerWrite.call(txData);    // nếu revert sẽ ném ra error có reason
     }catch(simErr){
-      toast(parseRevert(simErr)); return;
+      alert(parseRevert(simErr));          // hiển thị reason human-readable
+      return;
     }
 
-    // SEND (legacy gas)
+    // 3) Gửi giao dịch (legacy tx trên VIC: type:0 + gasPrice)
     try{
-      const ov = await buildOverrides("heavy");
-      const tx = await muaban.createProduct(name, descriptionCID, imageCID, priceVND, days, wallet, true, ov);
+      const ov = await buildOverrides("heavy"); // { type:0, gasPrice, gasLimit an toàn }
+      const tx = await muaban.createProduct(
+        name, descriptionCID, imageCID, priceVND, days, wallet, true, ov
+      );
       await tx.wait();
-    }catch(e){ showRpc(e, "send.createProduct"); return; }
+    }catch(sendErr){
+      showRpc(sendErr, "send.createProduct");   // popup chi tiết RPC để debug nếu cần
+      return;
+    }
 
+    // 4) OK: đóng form, reload danh sách
+    alert("Đăng sản phẩm thành công.");
     hide($("#formCreate"));
-    toast("Đăng sản phẩm thành công.");
     const { muabanR } = initContractsForRead();
     await loadAllProducts(muabanR);
   }catch(e){
