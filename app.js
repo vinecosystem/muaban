@@ -20,7 +20,7 @@ const toast=(m)=>alert(m);
 const DEFAULTS = {
   CHAIN_ID: 88,
   RPC_URL: "https://rpc.viction.xyz",
-  EXPLORER: "https://scan.viction.xyz",
+  EXPLORER: "https://vicscan.xyz",
   // Địa chỉ mặc định (có thể override qua <body data-*>):
   MUABAN_ADDR: "0x190FD18820498872354eED9C4C080cB365Cd12E0",
   VIN_ADDR:    "0x941F63807401efCE8afe3C9d88d368bAA287Fac4",
@@ -720,7 +720,14 @@ $$('.modal').forEach(m=>{
   initProviders();
   await fetchVinToVND();
   setInterval(fetchVinToVND, 60_000);
+
+  // lần đầu load danh sách sản phẩm (chế độ đọc, chưa cần ví)
   const { muabanR } = initContractsForRead();
   await loadAllProducts(muabanR);
-  $("#menuBox")?.classList.add('hidden');
+
+  // lắng nghe thay đổi tài khoản / chain để tự reload đảm bảo state sạch
+  if (window.ethereum){
+    window.ethereum.on("accountsChanged", ()=>location.reload());
+    window.ethereum.on("chainChanged",   ()=>location.reload());
+  }
 })();
