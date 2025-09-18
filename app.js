@@ -19,7 +19,7 @@ const isAddr = (a)=>/^0x[0-9a-fA-F]{40}$/.test(a||"");
 const CFG = {
   CHAIN_ID: 88,
   RPC_URL: "https://rpc.viction.xyz",
-  EXPLORER: "https://scan.viction.xyz",
+  EXPLORER: "https://vicscan.xyz",
   MUABAN_ADDR: "0x190FD18820498872354eED9C4C080cB365Cd12E0",
   VIN_ADDR:    "0x941F63807401efCE8afe3C9d88d368bAA287Fac4",
   REG_FEE_WEI: "1000000000000000", // 0.001 VIN
