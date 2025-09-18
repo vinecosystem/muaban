@@ -1,394 +1,157 @@
-/* ==========================================================================
-   muaban.vin — style.css
-   Mục tiêu: rõ ràng, chuyên nghiệp, mượt trên desktop & mobile
-   ========================================================================== */
-
-/* -------------------- 1) Reset & Variables -------------------- */
-*,
-*::before,
-*::after { box-sizing: border-box; }
-
-:root{
-  /* Tone sáng, trung tính */
-  --bg:        #f7f8fb;
-  --surface:   #ffffff;
-  --border:    #e5e7eb;
-  --border-2:  #eef1f5;
-  --text:      #0f172a;
-  --text-dim:  #475569;
-
-  /* Accent */
-  --primary:   #2563eb; /* xanh dương hiện đại */
-  --primary-2: #1e40af;
-  --good:      #16a34a;
-  --warn:      #eab308;
-  --bad:       #e11d48;
-
-  /* Misc */
-  --chip:      #0ea5e9;
-  --muted:     #94a3b8;
-  --focus:     0 0 0 3px rgba(37, 99, 235, .25);
-  --radius:    12px;
-  --radius-sm: 10px;
-  --shadow:    0 6px 24px rgba(2, 6, 23, .06);
-  --shadow-sm: 0 3px 12px rgba(2, 6, 23, .05);
-}
-
-html, body{
-  height: 100%;
-}
-body{
-  margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
-  color: var(--text);
-  background: var(--bg);
-  display: flex;
-  flex-direction: column;
+/* ========== RESET & BASE ========== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: Arial, sans-serif;
+  background: #f9f9f9;
+  color: #222;
   line-height: 1.5;
 }
+.hidden { display: none !important; }
+a { color: #0066cc; text-decoration: none; }
+a:hover { text-decoration: underline; }
 
-/* Utilities */
-.container{
-  width: min(1200px, 92%);
-  margin: 0 auto;
+h2 { margin: 1em 0 0.5em; font-size: 1.4em; }
+label { display: block; margin: 0.5em 0 0.2em; }
+input, button {
+  font-size: 1em;
+  padding: 0.5em;
+  border: 1px solid #ccc;
+  border-radius: 6px;
 }
-.hidden{ display:none !important; }
-.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+input[type="number"] { width: 120px; }
+button { cursor: pointer; }
+.btn { background: #eee; border: 1px solid #ccc; margin: 0.2em; }
+.btn.primary { background: #0066cc; color: white; border: none; }
+.btn.primary:hover { background: #0055aa; }
 
-/* -------------------- 2) Header -------------------- */
-.header{
+/* ========== HEADER ========== */
+header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.5em 1em;
+  background: white;
+  border-bottom: 1px solid #ddd;
+}
+header .logo { height: 40px; margin-right: 10px; }
+header .slogan { font-weight: bold; color: #444; }
+header .header-left { display: flex; align-items: center; }
+header .header-right { display: flex; align-items: center; gap: 0.5em; }
+header .balance { font-size: 0.9em; color: #333; }
+
+/* ========== NAV MENU ========== */
+nav {
+  display: flex; justify-content: center;
+  background: #fafafa;
+  border-bottom: 1px solid #ddd;
+  padding: 0.5em;
+}
+nav .btn { margin: 0 0.5em; }
+
+/* ========== SECTIONS ========== */
+section {
+  padding: 1em;
+  max-width: 900px;
+  margin: auto;
+  background: white;
+  margin-top: 1em;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Search */
+#searchBox { text-align: center; }
+#searchBox input { width: 60%; max-width: 400px; }
+
+/* Product list */
+#productList { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
+.product {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 0;
+  gap: 1em;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 0.8em;
+  background: #fff;
+  transition: box-shadow 0.2s;
 }
-.brand{ display:flex; align-items:center; gap:12px; }
-.logo{
-  width: 44px; height: 44px; border-radius: 50%;
-  object-fit: cover;
-  box-shadow: var(--shadow-sm);
-}
-.brand-title{
-  margin: 0; font-weight: 800; letter-spacing: .2px;
-  font-size: clamp(18px, 2.4vw, 22px);
-}
-.brand-sub{
-  margin: 0; color: var(--text-dim); font-size: 13px;
-}
-.header-right{
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;
-}
-.price-chip{
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-  box-shadow: var(--shadow-sm);
-}
-.wallet-box{
-  display: flex; align-items: center; gap: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 10px;
-  box-shadow: var(--shadow-sm);
-}
-.wallet-box span{ font-size: 13px; color: var(--text-dim); }
-.wallet-box a{
-  text-decoration: none; color: var(--text);
-  background: #eef2ff; border: 1px solid #e5e7ff; padding: 4px 8px; border-radius: 999px; font-size: 12px;
-}
-
-/* -------------------- 3) Buttons & Inputs -------------------- */
-.btn{
-  appearance: none;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: .2s ease;
-  box-shadow: var(--shadow-sm);
-  font-size: 14px;
-}
-.btn:hover{ transform: translateY(-1px); }
-.btn:focus{ outline: none; box-shadow: var(--focus); }
-.btn.primary{
-  background: var(--primary); border-color: var(--primary);
-  color: #fff;
-}
-.btn.primary:hover{ background: var(--primary-2); }
-.btn.small{ padding: 6px 10px; font-size: 12px; }
-
-input, select, textarea{
+.product:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+.product img.thumb { width: 100px; height: 100px; object-fit: cover; border-radius: 6px; }
+.product .title { font-size: 1.1em; margin-bottom: 0.3em; }
+.product .price { font-weight: bold; color: #d9534f; }
+.product .status { font-size: 0.9em; margin: 0.2em 0; color: #555; }
+.product .actions button { margin-right: 0.3em; }
+/* ========== FORM ========== */
+#createForm input,
+#buyForm input {
   width: 100%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 14px;
-  outline: none;
+  margin-bottom: 0.8em;
 }
-input:focus, select:focus, textarea:focus{ box-shadow: var(--focus); border-color: var(--primary); }
-
-/* -------------------- 4) Menu (sau khi kết nối) -------------------- */
-.menu{
-  display: flex; gap: 10px; flex-wrap: wrap;
-  padding: 8px 0 2px;
-  border-top: 1px solid var(--border-2);
-  border-bottom: 1px solid var(--border-2);
-}
-.menu .btn{ border-radius: 999px; }
-
-/* -------------------- 5) Search bar -------------------- */
-.search{
-  display: grid; grid-template-columns: 1fr auto; gap: 10px;
-  padding: 16px 0 6px;
-}
-#btnSearch{ padding-inline: 18px; }
-
-/* -------------------- 6) Product list -------------------- */
-.products{
-  display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(12, 1fr);
-  padding: 16px 0 28px;
-}
-.product-card{
-  grid-column: span 12;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  display: grid;
-  grid-template-columns: 112px 1fr;
-  gap: 14px;
-  padding: 12px;
-  align-items: center;
-}
-.product-thumb{
-  width: 100%; height: 90px; border-radius: 10px; object-fit: cover;
-  background: #f3f4f6; border: 1px solid var(--border-2);
-}
-.product-info{ display: grid; gap: 6px; }
-.product-title{
-  margin: 0; font-size: 16px; font-weight: 700; letter-spacing: .2px;
-}
-.product-meta{
-  color: var(--text-dim); font-size: 13px;
-}
-.price-vnd{
-  font-weight: 800; letter-spacing: .2px;
-}
-.stock-badge{
-  display: inline-flex; align-items: center; gap:6px;
-  background: #ecfeff; color:#0369a1; border:1px solid #bae6fd;
-  padding: 4px 8px; border-radius: 999px; font-size: 12px;
-}
-.stock-badge.out{ background:#fff1f2; color:#be123c; border-color:#fecdd3; }
-
-.card-actions{
-  margin-top: 6px;
-  display: flex; gap: 8px; flex-wrap: wrap;
-}
-.card-actions .btn{ border-radius: 8px; }
-
-/* Breakpoints */
-@media (min-width: 640px){
-  .product-card{ grid-column: span 6; }
-}
-@media (min-width: 940px){
-  .product-card{ grid-column: span 4; }
+#createForm button,
+#buyForm button {
+  margin-top: 0.5em;
 }
 
-/* -------------------- 7) Orders sections -------------------- */
-.orders{ padding: 6px 0 24px; }
-.orders h2{
-  font-size: 18px; margin: 6px 0 12px;
-}
-.order-list{
-  display: grid; gap: 10px;
-}
-.order-card{
-  background: var(--surface); border:1px solid var(--border); border-radius: var(--radius);
-  padding: 12px; box-shadow: var(--shadow-sm);
-  display: grid; gap: 6px;
-}
-.order-row{ display:flex; gap:8px; flex-wrap:wrap; font-size: 13px; color: var(--text-dim); }
-.order-strong{ font-weight:700; color: var(--text); }
-
-/* -------------------- 8) Modals -------------------- */
-.modal{
-  position: fixed; inset: 0;
-  background: rgba(15, 23, 42, .38);
-  display: grid; place-items: center;
-  z-index: 50;
-  padding: 16px;
-}
-.modal-content{
-  width: min(680px, 96%);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 18px;
-  box-shadow: var(--shadow);
-  display: grid; gap: 12px;
-}
-.modal-content h2{
-  margin: 0 0 6px; font-size: 18px;
-}
-.modal-content label{
-  display: grid; gap: 6px; font-size: 14px; color: var(--text-dim);
-}
-.modal-content .row{
-  display: flex; align-items: center; gap: 10px;
-}
-.hint{ margin: 2px 0 0; color: var(--muted); font-size: 13px; }
-.total-vin{
-  margin-top: 4px; font-weight: 800; letter-spacing: .3px;
-}
-.actions{
-  display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px;
+/* Card info (đăng ký ví) */
+.card.info {
+  background: #eef6ff;
+  padding: 1em;
+  border-radius: 8px;
+  border: 1px solid #bcd;
+  text-align: center;
 }
 
-/* -------------------- 9) Footer (stick to bottom) -------------------- */
-main{ flex: 1 0 auto; }
-.footer{
-  margin-top: auto;
-  display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
-  padding: 18px 0 26px;
-  border-top: 1px solid var(--border-2);
-}
-.footer a{
-  color: var(--text-dim); text-decoration: none; font-weight: 600; font-size: 14px;
-  padding: 8px 10px; border-radius: 8px;
-  border: 1px solid transparent;
-}
-.footer a:hover{ color: var(--text); border-color: var(--border); background: var(--surface); box-shadow: var(--shadow-sm); }
-
-/* -------------------- 10) Helpers for dynamic items -------------------- */
-.tag{
-  display:inline-flex; align-items:center; gap:6px;
-  padding: 4px 8px; border-radius: 999px; font-size: 12px;
-  border: 1px solid var(--border); background: var(--surface); color: var(--text-dim);
-}
-.badge{
-  padding: 2px 6px; border-radius: 6px; font-size: 12px; border:1px solid var(--border);
-}
-
-/* -------------------- 11) Product card content slots (for app.js) -------------------- */
-/* Khung đặt vị trí nội dung được render bằng JS */
-.product-top{ display:flex; align-items:center; justify-content: space-between; gap:10px; }
-.unit{ color: var(--text-dim); font-size: 13px; }
-
-/* -------------------- 12) Nice scroll (optional) -------------------- */
-:focus-visible{ outline: none; box-shadow: var(--focus); }
-::selection{ background: #c7d2fe; color: #111827; }
-
-/* ============ Mobile-first usability tweaks ============ */
-
-/* Khóa cuộn nền khi mở modal */
-body.no-scroll { overflow: hidden; }
-
-/* Modal chiếm chiều cao màn hình, phần nội dung cuộn bên trong */
-.modal { padding: 0; }
-.modal-content{
-  max-height: 92vh;           /* desktop/tablet */
-  overflow: auto;
+/* ========== ORDERS ========== */
+#ordersBuyList, #ordersSellList {
   display: flex;
   flex-direction: column;
+  gap: 1em;
 }
-
-/* Thanh actions “dính” ở cuối modal để luôn bấm được */
-.modal-content .actions{
-  position: sticky;
-  bottom: 0;
-  background: linear-gradient(to top, var(--surface), rgba(255,255,255,0.92));
-  padding-top: 10px;
-  box-shadow: 0 -6px 16px rgba(2,6,23,.08);
-  z-index: 5;
+.order {
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 0.8em;
+  background: #fff;
 }
+.order .actions { margin-top: 0.5em; }
 
-/* Tăng kích thước vùng chạm trên mobile, an toàn với tai thỏ */
-@media (max-width: 640px){
-  .modal-content{
-    width: 100%;
-    height: 100vh;
-    max-height: 100vh;
-    border-radius: 0;
-    padding: 14px 14px calc(16px + env(safe-area-inset-bottom));
-  }
-  .modal-content h2{
-    position: sticky;
-    top: 0;
-    background: var(--surface);
-    padding-bottom: 8px;
-    margin-bottom: 4px;
-    z-index: 6;
-  }
-
-  /* Nút & input to, dễ bấm — tránh bị bàn phím che */
-  .btn{ padding: 14px 16px; font-size: 16px; min-height: 44px; }
-  input, select, textarea{ padding: 14px; font-size: 16px; min-height: 44px; }
-
-  /* Nút ở khu actions tự giãn đều, dễ bấm */
-  .actions{ display: flex; gap: 10px; }
-  .actions .btn{ flex: 1; }
-
-  /* Danh sách sản phẩm sát lề đẹp hơn trên mobile */
-  .products{ gap: 12px; }
-  .product-card{ grid-template-columns: 96px 1fr; padding: 10px; }
-  .product-thumb{ height: 80px; }
-}
-
-/* Cải thiện cuộn mượt trong khối modal */
-.modal-content{ -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
-
-/* Căn giữa các nút trong menu và thanh tìm kiếm */
-.search, .menu{
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-.menu{
-  padding: 8px 0;
-  justify-content: center; /* Căn giữa các nút */
-}
-
-.menu .btn{
+/* ========== FOOTER ========== */
+footer {
+  margin-top: 2em;
+  padding: 1em;
   text-align: center;
-  flex: 1;
+  background: #fafafa;
+  border-top: 1px solid #ddd;
+}
+footer .links {
+  margin-bottom: 0.5em;
+}
+footer .links a {
+  margin: 0 0.8em;
+  font-weight: bold;
+}
+footer .note {
+  font-size: 0.8em;
+  color: #555;
 }
 
-/* Căn giữa các link chân trang */
-.footer{
-  display: flex;
-  justify-content: center; /* Căn giữa */
-  gap: 16px;
-  padding: 18px 0 26px;
-  border-top: 1px solid var(--border-2);
+/* ========== TOAST ========== */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.85);
+  color: white;
+  padding: 0.8em 1.2em;
+  border-radius: 6px;
+  font-size: 0.9em;
+  z-index: 1000;
+  transition: opacity 0.3s ease;
 }
-.footer a{
-  color: var(--text-dim);
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 14px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  text-align: center;
-}
-.footer a:hover{ 
-  color: var(--text);
-  border-color: var(--border);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+.toast.show { display: block !important; opacity: 1; }
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 700px) {
+  #productList { grid-template-columns: 1fr; }
+  header, nav { flex-direction: column; text-align: center; }
+  header .header-left, header .header-right { margin: 0.3em 0; }
+  #searchBox input { width: 90%; }
 }
