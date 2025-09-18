@@ -468,11 +468,15 @@ async function submitCreate(){
       gasLimit
     };
 
+    console.log("Sending transaction: ", txReq); // Log for debugging
+
     try{
       // Ưu tiên signer.sendTransaction (được ethers chuẩn hoá)
       const tx = await signer.sendTransaction(txReq);
+      console.log("Transaction sent:", tx); // Log for debugging
       await tx.wait();
     }catch(err1){
+      console.log("Error sending transaction:", err1); // Log for debugging
       // Fallback: gọi thẳng eth_sendTransaction (đưa số về hex)
       try{
         const hex = ethers.utils.hexlify;
@@ -484,11 +488,9 @@ async function submitCreate(){
           gas: hex(txReq.gasLimit),
           gasPrice: hex(txReq.gasPrice),
           nonce: hex(txReq.nonce),
-          // type & chainId nhiều ví sẽ tự thêm; nếu ví yêu cầu, thêm:
-          // chainId: ethers.utils.hexValue(txReq.chainId),
-          // type: "0x0",
         };
         const hash = await providerWrite.send("eth_sendTransaction", [reqHex]);
+        console.log("Transaction sent via eth_sendTransaction:", hash); // Log for debugging
         // chờ mined
         await providerWrite.waitForTransaction(hash);
       }catch(err2){
