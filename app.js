@@ -1,6 +1,6 @@
 /* ====================================================================
    muaban.vin — app.js (ethers v5)
-   - Sửa triệt để "Internal JSON-RPC error" bằng simulate + legacy tx
+   - Tính giá VIN chính xác theo VIC/USDT từ Binance và USDT/VND từ CoinGecko
    - Đầy đủ: kết nối ví, đăng ký, đăng/cập nhật SP, mua hàng (số lượng),
              đơn mua/đơn bán (xác nhận/hoàn tiền), tìm kiếm, hiển thị giá
 ==================================================================== */
@@ -20,7 +20,7 @@ const fmt4 =(x)=>Number(x).toFixed(4);
 const CFG = {
   CHAIN_ID: 88,
   RPC_URL: "https://rpc.viction.xyz",
-  EXPLORER: "https://vicscan.xyz",
+  EXPLORER: "https://scan.viction.xyz",
 
   MUABAN_ADDR: "0x190FD18820498872354eED9C4C080cB365Cd12E0",  // override: <body data-muaban-addr="0x...">
   VIN_ADDR:    "0x941F63807401efCE8afe3C9d88d368bAA287Fac4",  // override: <body data-vin-addr="0x...">
@@ -34,12 +34,10 @@ const CFG = {
   GAS_MED:   "400000",
   GAS_HEAVY: "900000",
 
-  // tỷ giá VIN/VND: nếu có sẵn, set qua <body data-vin-vnd="6500">
-  // nếu không, app thử tính qua 2 bước (tùy bạn sẽ cập nhật API thật sau):
-  // (a) VIC/USDT (Binance) + (b) USDT/VND (Coingecko) + (c) HỆ SỐ quy đổi VIN↔VIC nếu bạn có (mặc định 1 VIN = 1 VIC)
+  // tỷ giá VIN/VND: tính từ VIC/USDT (Binance) và USDT/VND (CoinGecko)
   BINANCE_VICUSDT: "https://api.binance.com/api/v3/ticker/price?symbol=VICUSDT",
   COINGECKO_USDT_VND: "https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=vnd",
-  VIN_PER_VIC: 1, // nếu thực tế 1 VIN = X VIC, hãy sửa số này hoặc set <body data-vin-per-vic="X">
+  VIN_PER_VIC: 100, // 1 VIN = 100 VIC theo mô tả
 };
 
 /* Allow override từ <body data-*> */
@@ -142,7 +140,7 @@ async function computeVinVnd(){
     const priceUsdVnd = usdtvnd && usdtvnd.tether && usdtvnd.tether.vnd ? Number(usdtvnd.tether.vnd) : NaN;
     if (Number.isFinite(priceVicUsd) && Number.isFinite(priceUsdVnd)){
       const vicVnd = priceVicUsd * priceUsdVnd;
-      const vinVnd = vicVnd * Number(CFG.VIN_PER_VIC || 1);
+      const vinVnd = vicVnd * Number(CFG.VIN_PER_VIC || 100); // 1 VIN = 100 VIC
       if (vinVnd>0) return vinVnd;
     }
   }catch(_){}
@@ -530,8 +528,7 @@ async function submitBuy(){
     txData.from = account;
     txData.type = 0;
     txData.gasPrice = ethers.utils.parseUnits(CFG.GAS_PRICE_GWEI, "gwei");
-    try{ await providerWrite.call(txData); }
-    catch(simErr){ toast(parseRevert(simErr)); return; }
+    try{ await providerWrite.call(txData); }catch(simErr){ toast(parseRevert(simErr)); return; }
 
     // send thật
     const tx = await muaban.placeOrder(
