@@ -20,7 +20,7 @@ const fmt4 =(x)=>Number(x).toFixed(4);
 const CFG = {
   CHAIN_ID: 88,
   RPC_URL: "https://rpc.viction.xyz",
-  EXPLORER: "https://scan.viction.xyz",
+  EXPLORER: "https://vicscan.xyz",
 
   MUABAN_ADDR: "0x190FD18820498872354eED9C4C080cB365Cd12E0",  // override: <body data-muaban-addr="0x...">
   VIN_ADDR:    "0x941F63807401efCE8afe3C9d88d368bAA287Fac4",  // override: <body data-vin-addr="0x...">
