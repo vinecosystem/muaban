@@ -1,164 +1,172 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Muaban.vin - Mua bán thông minh, giao dịch an toàn</title>
-  <meta name="theme-color" content="#0f172a" />
-  <link rel="icon" href="logo.png" />
-  <link rel="stylesheet" href="style.css" />
-  <!-- ethers.js UMD -->
+  <meta charset="UTF-8">
+  <title>Muaban.vin – Thương mại điện tử Web3</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Logo & favicon -->
+  <link rel="icon" href="logo.png" type="image/png">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Ethers.js -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <script defer src="app.js"></script>
 </head>
 <body>
-  <!-- =================== HEADER =================== -->
-  <header class="header container">
-    <div class="brand">
-      <img src="logo.png" alt="muaban" class="logo" />
-      <div class="brand-text">
-        <h1 class="brand-title">Muaban.vin</h1>
-        <p class="brand-sub">Mua bán thông minh, giao dịch an toàn</p>
-      </div>
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <img src="logo.png" alt="Muaban.vin" class="logo">
+      <span class="slogan">Mua bán minh bạch – On-chain an toàn</span>
     </div>
     <div class="header-right">
-      <div id="vinPrice" class="price-chip">Loading price...</div>
       <button id="btnConnect" class="btn primary">Kết nối ví</button>
-      <div id="walletBox" class="wallet-box hidden">
-        <span id="vinBalance">VIN: 0</span>
-        <span id="vicBalance">VIC: 0</span>
-        <a id="accountShort" class="mono" target="_blank" rel="noopener">0x…</a>
-        <button id="btnDisconnect" class="btn small">Ngắt</button>
+      <div id="walletInfo" class="hidden">
+        <span id="accountShort" class="mono">0x…</span>
+        <span class="balance">VIN: <b id="vinBalance">0.0000</b> | VIC: <b id="vicBalance">0.0000</b></span>
+        <button id="btnDisconnect" class="btn">Ngắt</button>
       </div>
     </div>
   </header>
 
-  <!-- =================== MENU SAU KHI KẾT NỐI =================== -->
-  <nav id="menuBox" class="menu hidden">
-    <!-- Nếu CHƯA đăng ký: chỉ hiện nút Đăng ký -->
-    <button id="btnRegister" class="btn">Đăng ký</button>
-    <!-- Khi ĐÃ đăng ký: hiện 3 nút dưới -->
-    <button id="btnCreate" class="btn hidden">Đăng sản phẩm</button>
-    <button id="btnOrdersBuy" class="btn hidden">Đơn hàng mua</button>
-    <button id="btnOrdersSell" class="btn hidden">Đơn hàng bán</button>
+  <!-- MENU (ẩn/hiện theo trạng thái ví) -->
+  <nav id="menu" class="hidden">
+    <button id="btnCreate" class="btn">Đăng sản phẩm</button>
+    <button id="btnOrdersBuy" class="btn">Đơn hàng mua</button>
+    <button id="btnOrdersSell" class="btn">Đơn hàng bán</button>
   </nav>
 
-  <!-- =================== THANH TÌM KIẾM =================== -->
-  <section class="search container">
-    <input id="searchInput" type="text" placeholder="Tìm sản phẩm theo tên…" />
+  <!-- TỶ GIÁ -->
+  <section id="exchangeRate">
+    <p><span id="vinRate">1 VIN = … VND</span></p>
+  </section>
+
+  <!-- TÌM KIẾM -->
+  <section id="searchBox">
+    <input type="text" id="searchInput" placeholder="Tìm sản phẩm theo tên…">
     <button id="btnSearch" class="btn">Tìm</button>
   </section>
 
-  <!-- =================== DANH SÁCH SẢN PHẨM =================== -->
-  <main class="container">
-    <div id="productList" class="products">
-      <!-- Sản phẩm sẽ load tại đây -->
-    </div>
+  <!-- DANH SÁCH SẢN PHẨM -->
+  <section id="productList">
+    <!-- Sản phẩm sẽ hiển thị bằng JS -->
+  </section>
+  <!-- FORM ĐĂNG SẢN PHẨM -->
+  <section id="createForm" class="hidden">
+    <h2>Đăng sản phẩm</h2>
+    <label>Tên sản phẩm</label>
+    <input type="text" id="createName" maxlength="500">
 
-    <!-- Khối danh sách đơn hàng của tôi (ẩn/hiện bằng JS) -->
-    <section id="ordersBuySection" class="orders hidden">
-      <h2>Đơn hàng mua</h2>
-      <div id="ordersBuyList" class="order-list"></div>
-    </section>
+    <label>Link IPFS ảnh/video</label>
+    <input type="text" id="createIPFS">
 
-    <section id="ordersSellSection" class="orders hidden">
-      <h2>Đơn hàng bán</h2>
-      <div id="ordersSellList" class="order-list"></div>
-    </section>
-  </main>
+    <label>Đơn vị tính (cái/chiếc/…)</label>
+    <input type="text" id="createUnit">
 
-  <!-- =================== FORM ĐĂNG SẢN PHẨM (6 TRƯỜNG) =================== -->
-  <!-- Theo mô tả: 1) Tên (≤500) 2) Link IPFS (ảnh/video) 3) Đơn vị tính 4) Giá VND 5) Ví nhận thanh toán 6) Thời gian giao hàng (ngày) -->
-  <section id="formCreate" class="modal hidden">
-    <div class="modal-content">
-      <h2>Đăng sản phẩm</h2>
-      <label>Tên sản phẩm (≤ 500 ký tự)
-        <input id="createName" maxlength="500" />
-      </label>
-      <label>Link IPFS (ảnh hoặc video)
-        <input id="createIPFS" placeholder="ipfs://CID hoặc https://ipfs.io/ipfs/CID" />
-      </label>
-      <label>Đơn vị tính
-        <input id="createUnit" placeholder="cái / hộp / chiếc …" />
-      </label>
-      <label>Giá bán (VNĐ)
-        <input id="createPrice" type="number" min="1" inputmode="numeric" />
-      </label>
-      <label>Ví nhận thanh toán
-        <input id="createWallet" placeholder="0x…" />
-      </label>
-      <label>Thời gian giao hàng (ngày)
-        <input id="createDays" type="number" min="1" />
-      </label>
-      <p class="hint">* Sản phẩm mới đăng mặc định là <b>Còn hàng</b>.</p>
-      <div class="actions">
-        <button id="btnSubmitCreate" class="btn primary">Đăng</button>
-        <button class="btn close">Đóng</button>
-      </div>
+    <label>Giá bán (VNĐ)</label>
+    <input type="number" id="createPrice" min="1">
+
+    <label>Ví nhận thanh toán</label>
+    <input type="text" id="createWallet">
+
+    <label>Thời gian giao hàng (ngày)</label>
+    <input type="number" id="createDays" min="1">
+
+    <button id="btnSubmitCreate" class="btn primary">Đăng</button>
+    <button id="btnCancelCreate" class="btn">Hủy</button>
+  </section>
+
+  <!-- FORM MUA SẢN PHẨM -->
+  <section id="buyForm" class="hidden">
+    <h2>Mua sản phẩm</h2>
+    <input type="hidden" id="buyProductId">
+
+    <label>Họ tên</label>
+    <input type="text" id="buyName">
+
+    <label>Địa chỉ</label>
+    <input type="text" id="buyAddress">
+
+    <label>Số điện thoại</label>
+    <input type="text" id="buyPhone">
+
+    <label>Phụ ghi</label>
+    <input type="text" id="buyNote">
+
+    <label>Số lượng</label>
+    <input type="number" id="buyQuantity" min="1" value="1">
+
+    <p><b>Tổng thanh toán: <span id="buyTotalVIN">0</span> VIN</b></p>
+
+    <button id="btnSubmitBuy" class="btn primary">Mua</button>
+    <button id="btnCancelBuy" class="btn">Hủy</button>
+  </section>
+  <!-- ĐĂNG KÝ VÍ (0.001 VIN) -->
+  <section id="registerBox" class="hidden">
+    <div class="card info">
+      <p>Ví của bạn chưa đăng ký. Phí đăng ký: <b>0.001 VIN</b>.</p>
+      <button id="btnRegister" class="btn primary">Đăng ký ngay</button>
     </div>
   </section>
 
-  <!-- =================== FORM CẬP NHẬT SẢN PHẨM (THÊM “Còn bán/ Hết hàng”) =================== -->
-  <section id="formUpdate" class="modal hidden">
-    <div class="modal-content">
-      <h2>Cập nhật sản phẩm</h2>
-      <input id="updatePid" type="hidden" />
-      <label>Giá bán (VNĐ)
-        <input id="updatePrice" type="number" min="1" />
-      </label>
-      <label>Thời gian giao hàng (ngày)
-        <input id="updateDays" type="number" min="1" />
-      </label>
-      <label>Ví nhận thanh toán
-        <input id="updateWallet" placeholder="0x…" />
-      </label>
-      <label class="row">
-        <input id="updateActive" type="checkbox" />
-        <span>Còn bán (bật) / Hết hàng (tắt)</span>
-      </label>
-      <div class="actions">
-        <button id="btnSubmitUpdate" class="btn primary">Cập nhật</button>
-        <button class="btn close">Đóng</button>
-      </div>
+  <!-- ĐƠN HÀNG MUA -->
+  <section id="ordersBuy" class="hidden">
+    <h2>Đơn hàng mua</h2>
+    <div id="ordersBuyList" class="list">
+      <!-- JS render các đơn đã mua; mỗi đơn có nút Xác nhận đã nhận / Hoàn tiền -->
     </div>
   </section>
 
-  <!-- =================== FORM MUA HÀNG =================== -->
-  <!-- Theo mô tả: có Họ tên, Địa chỉ, SĐT, Phụ ghi (UI mã hóa), Số lượng; hiển thị Tổng VIN -->
-  <section id="formBuy" class="modal hidden">
-    <div class="modal-content">
-      <h2>Mua sản phẩm</h2>
-      <div id="buyProductInfo" class="product-brief"></div>
-      <label>Họ tên
-        <input id="buyName" />
-      </label>
-      <label>Địa chỉ
-        <input id="buyAddress" />
-      </label>
-      <label>SĐT
-        <input id="buyPhone" />
-      </label>
-      <label>Phụ ghi
-        <input id="buyNote" />
-      </label>
-      <label>Số lượng
-        <input id="buyQty" type="number" min="1" value="1" />
-      </label>
-      <div id="buyTotalVIN" class="total-vin">Tổng VIN cần trả: 0</div>
-      <div class="actions">
-        <button id="btnSubmitBuy" class="btn primary">Mua</button>
-        <button class="btn close">Đóng</button>
-      </div>
+  <!-- ĐƠN HÀNG BÁN -->
+  <section id="ordersSell" class="hidden">
+    <h2>Đơn hàng bán</h2>
+    <div id="ordersSellList" class="list">
+      <!-- JS render các đơn mới của sản phẩm mình bán; hiển thị hạn giao hàng -->
     </div>
   </section>
 
- <!-- =================== FOOTER =================== -->
-<footer class="footer container">
-  <a href="https://ipfs.io/ipfs/bafybeigooqte3w5m3rok2r7c5czep2flsfeocwjpzzid3vxszdyib3rjpi" target="_blank" rel="noopener">Swap VIN/VIC</a>
-  <a href="https://docs.google.com/document/d/1MvQUoH-gB-PNHanTPBtn_UFzVJTC53DS/edit" target="_blank" rel="noopener">Hướng dẫn sử dụng</a>
-  <a href="https://www.vicscan.xyz/address/0x190FD18820498872354eED9C4C080cB365Cd12E0" target="_blank" rel="noopener">Hợp đồng</a>
-  <a href="https://www.vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4" target="_blank" rel="noopener">VIN Token</a>
-</footer>
+  <!-- FOOTER -->
+  <footer>
+    <div class="links">
+      <a id="linkContract" target="_blank" rel="noopener"
+         href="https://vicscan.xyz/address/0x190FD18820498872354eED9C4C080cB365Cd12E0">
+        Hợp đồng
+      </a>
+      <a id="linkVin" target="_blank" rel="noopener"
+         href="https://vicscan.xyz/token/0x941F63807401efCE8afe3C9d88d368bAA287Fac4">
+        VIN Token
+      </a>
+      <a id="linkSwap" target="_blank" rel="noopener" href="https://frollswap.com/">Swap VIN/VIC</a>
+      <a id="linkGuide" target="_blank" rel="noopener" href="huongdan.html">Hướng dẫn</a>
+    </div>
+    <div class="note">
+      <small>Muaban.vin — hợp đồng là trọng tài, thanh toán VIN, giá theo VND:contentReference[oaicite:3]{index=3}.</small>
+    </div>
+  </footer>
 
+  <!-- Toast + vùng tạm -->
+  <div id="toast" class="toast hidden"></div>
+  <template id="productItemTpl">
+    <!-- JS sẽ clone và điền dữ liệu -->
+    <article class="product">
+      <img class="thumb" alt="">
+      <div class="meta">
+        <h3 class="title"></h3>
+        <div class="price"></div>
+        <div class="status"></div>
+        <div class="actions"></div>
+      </div>
+    </article>
+  </template>
+
+  <!-- SCRIPTS -->
+  <script>
+    /* Các hằng số dùng bởi app.js */
+    window.MUABAN_ADDR = "0x190FD18820498872354eED9C4C080cB365Cd12E0";  /* từ mô tả:contentReference[oaicite:4]{index=4} */
+    window.VIN_ADDR    = "0x941F63807401efCE8afe3C9d88d368bAA287Fac4";  /* VIN trên VIC:contentReference[oaicite:5]{index=5} */
+  </script>
+  <script src="app.js"></script>
 </body>
 </html>
