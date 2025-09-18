@@ -416,7 +416,7 @@ async function submitCreate(){
     const days  = parseInt(($("#createDays").value||"").trim(), 10);
     const priceInput = parseVND($("#createPrice").value);
 
-    if (name.length > 500) name = name.slice(0,500); // hạn chế chuỗi quá dài
+    if (name.length > 500) name = name.slice(0,500);
 
     if (!name||!ipfs||!unit||!wallet){ toast("Điền đủ thông tin."); return; }
     if (!ethers.utils.isAddress(wallet)){ toast("Ví nhận thanh toán không hợp lệ."); return; }
@@ -427,24 +427,77 @@ async function submitCreate(){
     const imageCID = ipfs;
     const priceVND = ethers.BigNumber.from(String(priceInput));
 
-    // PRE-FLIGHT
+    // 1) SIMULATE qua public RPC (tránh -32603 khi call qua ví)
+    const iface = new ethers.utils.Interface(MUABAN_ABI);
+    const data  = iface.encodeFunctionData(
+      "createProduct",
+      [name, descriptionCID, imageCID, priceVND, days, wallet, true]
+    );
     try{
-      const txData = await muaban.populateTransaction.createProduct(
-        name, descriptionCID, imageCID, priceVND, days, wallet, true
-      );
-      txData.from = account;
-      await providerWrite.call(txData);
+      await providerRead.call({
+        to: muaban.address,
+        from: account,
+        data,
+        gas: GAS_LIMIT_HEAVY
+      });
     }catch(simErr){
-      toast(parseRevert(simErr)); return;
+      toast(parseRevert(simErr));
+      return;
     }
 
-    // SEND (legacy gas)
+    // 2) ƯỚC LƯỢNG GAS (+20%), fallback = GAS_LIMIT_HEAVY
+    let gasLimit = GAS_LIMIT_HEAVY;
     try{
-      const ov = await buildOverrides("heavy");
-      const tx = await muaban.createProduct(name, descriptionCID, imageCID, priceVND, days, wallet, true, ov);
-      await tx.wait();
-    }catch(e){ showRpc(e, "send.createProduct"); return; }
+      const est = await muaban.estimateGas.createProduct(
+        name, descriptionCID, imageCID, priceVND, days, wallet, true, { from: account }
+      );
+      gasLimit = est.mul(120).div(100);
+    }catch(_){ /* giữ fallback */ }
 
+    // 3) GỬI THỦ CÔNG — ép legacy + from + chainId (fix MetaMask Mobile -32603)
+    const gasPrice = ethers.utils.parseUnits(LEGACY_GAS_PRICE_GWEI, "gwei");
+    const txReq = {
+      from: account,
+      to:   muaban.address,
+      data,
+      value: 0,
+      nonce: await providerWrite.getTransactionCount(account, "latest"),
+      chainId: DEFAULTS.CHAIN_ID,
+      type: 0,                // QUAN TRỌNG: ép legacy
+      gasPrice,
+      gasLimit
+    };
+
+    try{
+      // Ưu tiên signer.sendTransaction (được ethers chuẩn hoá)
+      const tx = await signer.sendTransaction(txReq);
+      await tx.wait();
+    }catch(err1){
+      // Fallback: gọi thẳng eth_sendTransaction (đưa số về hex)
+      try{
+        const hex = ethers.utils.hexlify;
+        const reqHex = {
+          from: txReq.from,
+          to:   txReq.to,
+          data: txReq.data,
+          value: "0x0",
+          gas: hex(txReq.gasLimit),
+          gasPrice: hex(txReq.gasPrice),
+          nonce: hex(txReq.nonce),
+          // type & chainId nhiều ví sẽ tự thêm; nếu ví yêu cầu, thêm:
+          // chainId: ethers.utils.hexValue(txReq.chainId),
+          // type: "0x0",
+        };
+        const hash = await providerWrite.send("eth_sendTransaction", [reqHex]);
+        // chờ mined
+        await providerWrite.waitForTransaction(hash);
+      }catch(err2){
+        showRpc(err2, "send.createProduct");
+        return;
+      }
+    }
+
+    // 4) Hoàn tất UI
     hide($("#formCreate"));
     toast("Đăng sản phẩm thành công.");
     const { muabanR } = initContractsForRead();
