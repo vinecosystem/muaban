@@ -136,7 +136,7 @@ async function ensureVictionNetwork() {
           method: 'wallet_addEthereumChain',
           params: [{
             chainId: CONFIG.CHAIN_ID_HEX,
-            chainName: 'Viction Mainnet',
+            chainName: 'Viction',
             rpcUrls: [CONFIG.RPC_URL],
             nativeCurrency: { name: 'VIC', symbol: 'VIC', decimals: 18 },
             blockExplorerUrls: [CONFIG.EXPLORER],
