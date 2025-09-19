@@ -19,7 +19,7 @@
   const CHAIN_ID_HEX = "0x58"; // 88 (Viction mainnet)
   const RPCS = [
     "https://rpc.viction.xyz",
-    "https://rpc.tomochain.com",
+    "https://vicscan.xyz",
   ];
 
   const MUABAN_ADDR = "0x190FD18820498872354eED9C4C080cB365Cd12E0";
